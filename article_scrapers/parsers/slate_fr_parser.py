@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import time
+import os
 
 class ArticleParser:
     def __init__(self, debug=False):
@@ -19,11 +20,16 @@ class ArticleParser:
         response.raise_for_status()
         return BeautifulSoup(response.content, 'html.parser')
     
-    def get_soup_from_localfile(self, filepath):
+    def get_soup_from_localfile(self, file_name):
         """
         Get a BeautifulSoup object from a local html file
         """
-        with open(filepath, "r", encoding="utf-8") as f:
+
+        # Get the absolute path to the test file
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Get root dir
+        test_file_path = os.path.join(base_dir, "test_data", file_name)
+        
+        with open(test_file_path, "r", encoding="utf-8") as f:
             return BeautifulSoup(f.read(), 'html.parser')
 
 
