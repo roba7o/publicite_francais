@@ -3,11 +3,12 @@ from bs4 import BeautifulSoup
 import time
 
 class ArticleParser:
-    def __init__(self):
+    def __init__(self, debug=False):
         # This user-agent header is used to mimic a browser visit
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
             }
+        self.debug = debug
         
 
     def get_soup_from_url(self, url):
@@ -25,81 +26,62 @@ class ArticleParser:
         with open(filepath, "r", encoding="utf-8") as f:
             return BeautifulSoup(f.read(), 'html.parser')
 
-    def parse_article_content(self, soup):
-        """
-        Parse article content from a BeautifulSoup object
-        """
 
+
+
+    def parse_article_content(self, soup):
         try:
-            article = soup.find('article') # for this website the main content is in an article tag <article>
+            # First check for article tag to validate we're on an article page
+            article = soup.find('article')
             if not article:
+                print("WARNING: No <article> tag found - this might not be an article page")
                 return None
 
-            content_div = article.find('div', class_='content')
-            if content_div:
-                paragraphs = content_div.find_all(['p', 'h2', 'h3'])
-            else:
-                paragraphs = article.find_all(['p', 'h2', 'h3'])
+            # Get all text in the article -> relevent text exclusively wrapped as <p> tags
+            paragraphs = article.find_all('p')
+            if self.debug:
+                print(f"\nFound {len(paragraphs)} total paragraphs in article")
+                print("First few paragraphs:")
+                for i, p in enumerate(paragraphs[:3]):
+                    print(f"{i+1}. First 50 chars: {p.get_text()[:50]}...")
 
+            # Filter out paragraphs with classes (these are usually metadata, not article content)
             content = []
             for p in paragraphs:
-                # Skiping certain classes that might contain unwanted content
-                if p.get('class') and any(c in ['card-text', 'card-title'] for c in p['class']):
-                    continue
+                # Skip paragraphs with classes like 'reading-time', etc. (exclusive <p> tags)
+                if not p.get('class'):
+                    text = p.get_text(separator=' ', strip=True)
+                    if text:  # Only add non-empty paragraphs
+                        content.append(text)
 
-                # Get the text, preserving some formatting
-                text = p.get_text(separator=' ', strip=True)
-                if text:    # only adding non-empty paragraphs
-                    content.append(text)
-                    
-            full_text = '\n\n'.join(content)
+            if not content:
+                print("WARNING: No content extracted from paragraphs")
+                return None
 
             return {
-                'full_text': full_text,
+                'full_text': '\n\n'.join(content),
                 'num_paragraphs': len(content)
             }
+                
         except Exception as e:
-            print(f"Error parsing article content: {e}")
+            print(f"Error parsing article: {e}")
             return None
-        
-    def get_article_content(self, source, is_local=False):
-        """
-        Parse article content from a given url or local file
-        Args:
-            source: str, url or filepath
-            is_local: bool, whether the source is a local file or a url
-        """
-
-        try:
-            if is_local:
-                soup = self.get_soup_from_localfile(source)
-            else:
-                time.sleep(1)   #only sleep for html requests
-                soup = self.get_soup_from_url(source)
-
-            result = self.parse_article_content(soup)
-            if result and not is_local:
-                result['url'] = source
-
-            return result
-        
-        except Exception as e:
-            print(f"Error proccessing {'file' if is_local else 'url'}: {source}: {e}")
-            return None
-
 
 def main():
     parser = ArticleParser()
 
     test_url = "https://www.slate.fr/monde/regle-baillon-mondial-trump-entraver-acces-avortement-mexico-city-policy-anti-ivg-dangers-mort-femmes-deces-grossesse"
 
-    #TODO Remove on final version
-    # For development purposes, you can save the html content of the page to a local file
-    result = parser.get_article_content("test_article.html", is_local=True)
+    # TODO change for live version
 
-    # For production, you can use the url directly
-    # result = parser.get_article_content(test_url)
+    live = False
 
+    if live:
+        soup = parser.get_soup_from_url(test_url)
+    else:
+        soup = parser.get_soup_from_localfile("test_slate_article.html")
+
+    result = parser.parse_article_content(soup)
 
     if result:
         print(f"Successfully parsed article")
