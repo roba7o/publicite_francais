@@ -1,6 +1,6 @@
-from base_parser import BaseParser
+from parsers.base_parser import BaseParser
 
-class ArticleParser(BaseParser):
+class SlateFrArticleParser(BaseParser):
 
     def parse_article_content(self, soup):
         try:
@@ -40,29 +40,3 @@ class ArticleParser(BaseParser):
             print(f"Error parsing article: {e}")
             return None
 
-def main():
-    parser = ArticleParser()
-
-    test_url = "https://www.slate.fr/monde/regle-baillon-mondial-trump-entraver-acces-avortement-mexico-city-policy-anti-ivg-dangers-mort-femmes-deces-grossesse"
-
-    # TODO change for live version
-
-    live = False
-
-    if live:
-        soup = parser.get_soup_from_url(test_url)
-    else:
-        soup = parser.get_soup_from_localfile("test_slate_article.html")
-
-    result = parser.parse_article_content(soup)
-
-    if result:
-        print(f"Successfully parsed article")
-        print(f"number of paragraphs: {result['num_paragraphs']}")
-        print("\nFirst 500 characters of content:")
-        print(result['full_text'][:500])
-    else:
-        print("Failed to parse article")
-
-if __name__ == "__main__":
-    main()
