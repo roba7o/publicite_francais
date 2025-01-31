@@ -13,6 +13,7 @@ keeping it simple at start, no need for relational db
 from parsers.slate_fr_parser import SlateFrArticleParser
 # from scrapers.slate_fr_scraper import SlateFrScraper
 
+from utils.csv_writer import write_to_csv
 
 
 def main():
@@ -37,13 +38,26 @@ def main():
     result = slate_parser.parse_article_content(soup)
 
     if result:
+        
         print(f"Successfully parsed article")
         print(f"number of paragraphs: {result['num_paragraphs']}")
         print("\nFirst 500 characters of content:")
         print(result['full_text'][:500])
+        write_to_csv({
+            'word_frequencies': count_word_frequencies(result['full_text']),
+            'source': 'Slate.fr',
+            'date': result['date'],
+            'title': result['title']
+        })
     else:
         print("Failed to parse article")
 
+def count_word_frequencies(text):
+    """Counts word frequencies from the article text"""
+    from collections import Counter
+    words = text.split()
+    word_frequencies = Counter(words)
+    return word_frequencies
 
 if __name__ == '__main__':
     main()

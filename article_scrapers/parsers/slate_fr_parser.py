@@ -1,42 +1,47 @@
 from parsers.base_parser import BaseParser
 
 class SlateFrArticleParser(BaseParser):
+        def __init__(self):
+            super().__init__()
 
-    def parse_article_content(self, soup):
-        try:
-            # First check for article tag to validate we're on an article page
-            article = soup.find('article')
-            if not article:
-                print("WARNING: No <article> tag found - this might not be an article page")
-                return None
+        def parse_article_content(self, soup):
+            """ parses the article content from a Slate.fr article page and extracts metadata """
+            try:
+                # First check for article tag to validate we're on an <article> page
+                article = soup.find('article')
+                if not article:
+                    print("WARNING: No <article> tag found - this might not be an <article> page")
+                    return None
 
-            # Get all text in the article -> relevent text exclusively wrapped as <p> tags
-            paragraphs = article.find_all('p')
-            if self.debug:
-                print(f"\nFound {len(paragraphs)} total paragraphs in article")
-                print("First few paragraphs:")
-                for i, p in enumerate(paragraphs[:3]):
-                    print(f"{i+1}. First 50 chars: {p.get_text()[:50]}...")
-
-            # Filter out paragraphs with classes (these are usually metadata, not article content)
-            content = []
-            for p in paragraphs:
-                # Skip paragraphs with classes like 'reading-time', etc. (exclusive <p> tags)
-                if not p.get('class'):
-                    text = p.get_text(separator=' ', strip=True)
-                    if text:  # Only add non-empty paragraphs
-                        content.append(text)
-
-            if not content:
-                print("WARNING: No content extracted from paragraphs")
-                return None
-
-            return {
-                'full_text': '\n\n'.join(content),
-                'num_paragraphs': len(content)
-            }
+                # Checking if paragraphs are nested the <article> tag
+                paragraphs = self.extract_paragraphs(article)
+                if not paragraphs:
+                    print("WARNING: No content extracted from paragraphs")
+                    return None
                 
-        except Exception as e:
-            print(f"Error parsing article: {e}")
-            return None
+                return {
+                    'full_text': '\n\n'.join(paragraphs),
+                    'num_paragraphs': len(paragraphs),
+                    'title': self.extract_title(soup),
+                    'date': self.extract_date(soup)
+                }
+            
+            except Exception as e:
+                print(f"Error parsing article: {e}")
+                return None
 
+                    
+        def extract_paragraphs(self, article):
+            """Extracts text from paragraphs in the article"""
+            paragraphs = article.find_all('p')
+            return [p.get_text(separator=' ', strip=True) for p in paragraphs if not p.get('class')]
+
+        def extract_title(self, soup):
+            """Extracts the title of the article"""
+            title_tag = soup.find('h1')
+            return title_tag.get_text(strip=True) if title_tag else "Unknown title"
+        
+        def extract_date(self, soup):
+            """Extracts the date of the article"""
+            date_tag = soup.find('time')
+            return date_tag.get_text(strip=True) if date_tag else "Unknown date"
