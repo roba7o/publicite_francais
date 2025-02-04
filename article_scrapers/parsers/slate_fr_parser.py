@@ -20,10 +20,10 @@ class SlateFrArticleParser(BaseParser):
                     return None
                 
                 return {
-                    'full_text': '\n\n'.join(paragraphs),
-                    'num_paragraphs': len(paragraphs),
-                    'title': self.extract_title(soup),
-                    'date': self.extract_date(soup)
+                    'full_text': '\n\n'.join(paragraphs) if paragraphs else "No content",
+                    'num_paragraphs': len(paragraphs) if paragraphs else 0,
+                    'title': self.extract_title(soup) or "Unknown title",
+                    'date': self.extract_date(soup) or "Unknown date",
                 }
             
             except Exception as e:
