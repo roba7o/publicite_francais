@@ -5,6 +5,7 @@ Grabbing top 8 artcilces from slate.fr which are then passed on to parser
 """
 import requests
 from bs4 import BeautifulSoup
+from urllib.parse import urljoin
 class SlateFrURLScraper:
     def __init__(self, debug=False):
         self.debug = debug
@@ -29,7 +30,15 @@ class SlateFrURLScraper:
             for card in cards[:8]:
                 a_tag = card.find('a', href=True) #first <a> tag with href
                 if a_tag:
-                    urls.append(self.base_url + a_tag['href'])
+                    url = a_tag["href"]
+                    # Check if the URL is already absolute
+                    if url.startswith("http://") or url.startswith("https://"):
+                        full_url = url  # No need to join, it's already an absolute URL
+                    else:
+                        full_url = urljoin(self.base_url, url)  # Join with the base URL for relative URLs
+                    urls.append(full_url)
+                
+
             
             urls = list(set(urls))  #remove duplicates
 
