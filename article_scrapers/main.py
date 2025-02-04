@@ -12,7 +12,6 @@ keeping it simple at start, no need for relational db
 
 from parsers.slate_fr_parser import SlateFrArticleParser
 # from scrapers.slate_fr_scraper import SlateFrScraper
-
 from utils.csv_writer import write_to_csv
 
 
@@ -24,40 +23,32 @@ def main():
     # TODO Grabbing slate urls
     # slate_urls = slate_scraper.get_article_urls()
 
-    test_slate_url = "https://www.slate.fr/monde/regle-baillon-mondial-trump-entraver-acces-avortement-mexico-city-policy-anti-ivg-dangers-mort-femmes-deces-grossesse"
+    test_slate_urls = [
+        "https://www.slate.fr/monde/regle-baillon-mondial-trump-entraver-acces-avortement-mexico-city-policy-anti-ivg-dangers-mort-femmes-deces-grossesse",
+        "https://www.slate.fr/monde/canada-quelque-chose-mysterieux-tue-grands-requins-blancs-cerveau-inflammation-maladie-autopsie-deces-mort-scientifiques"
+    ]
 
-    # TODO change for live version
+    test_local_files = [
+        "test_slate_article.html",
+        "test_slate_article2.html"
+    ]
 
-    live = False
+    live = True # TODO change for live version
 
     if live:
-        soup = slate_parser.get_soup_from_url(test_slate_url)
+        soups_url_pairs = [(slate_parser.get_soup_from_url(url), url) for url in test_slate_urls]
     else:
-        soup = slate_parser.get_soup_from_localfile("test_slate_article.html")
+        soups_url_pairs = [(slate_parser.get_soup_from_localfile(file), file) for file in test_local_files]
 
-    result = slate_parser.parse_article_content(soup)
-
-    if result:
-        
-        print(f"Successfully parsed article")
-        print(f"number of paragraphs: {result['num_paragraphs']}")
-        print("\nFirst 500 characters of content:")
-        print(result['full_text'][:500])
-        write_to_csv({
-            'word_frequencies': count_word_frequencies(result['full_text']),
-            'source': 'Slate.fr',
-            'date': result['date'],
-            'title': result['title']
-        })
-    else:
-        print("Failed to parse article")
-
-def count_word_frequencies(text):
-    """Counts word frequencies from the article text"""
-    from collections import Counter
-    words = text.split()
-    word_frequencies = Counter(words)
-    return word_frequencies
+    for soup, url in soups_url_pairs:
+        if soup:
+            parsed_content = slate_parser.parse_article_content(soup)
+            if parsed_content:
+                slate_parser.to_csv(parsed_content, url)
+            else:
+                print("Error parsing article")
+        else:
+            print("Error fetching article")
 
 if __name__ == '__main__':
     main()
