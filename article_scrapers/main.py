@@ -5,14 +5,69 @@ imports all the parsers
 returns csv with all the words and their frequencies and metadata such as 
 source, date, etc
 
-keeping it simple at start, no need for relational db
+keeping it simple at start, will add more features later
+
+saves to csv for local storage, but streams to postgresql for long term
 
 
 """
 
+import os
+import shutil
+import psycopg2
+
 from parsers.slate_fr_parser import SlateFrArticleParser
 from scrapers.slate_fr_scraper import SlateFrURLScraper
 from utils.csv_writer import write_to_csv
+
+import psycopg2
+
+# Database Connection Details
+DB_CONFIG = {
+    "dbname": "scraped_data",
+    "user": "postgres",
+    "password": "francais",
+    "host": "localhost",
+    "port": "5432",
+}
+
+
+def connect_to_db():
+    """Establishes a connection to PostgreSQL."""
+    try:
+        conn = psycopg2.connect(**DB_CONFIG)
+        return conn
+    except Exception as e:
+        print(f"❌ Database connection error: {e}")
+        return None
+    
+def bulk_insert_csv_to_db(csv_file, conn):
+    """Loads CSV data into PostgreSQL using COPY and then deletes the file."""
+    temp_file = csv_file.replace(".csv", "_backup.csv")  # Rename for debugging
+
+    try:
+        cur = conn.cursor()
+        with open(csv_file, "r", encoding="utf-8") as f:
+            next(f)  # Skip header row if CSV has one
+            cur.copy_expert(
+                "COPY articles (word, frequency, date, title, url) FROM STDIN WITH CSV",
+                f
+            )
+        conn.commit()
+        print("✅ Data successfully inserted into PostgreSQL")
+
+        # Rename for debugging, then delete
+        shutil.move(csv_file, temp_file)
+        os.remove(temp_file)
+        print(f"🗑️ Deleted CSV: {temp_file}")
+
+    except Exception as e:
+        print(f"❌ Error loading CSV into PostgreSQL: {e}")
+        conn.rollback()
+    finally:
+        cur.close()
+
+
 
 
 def main():
@@ -47,6 +102,7 @@ def main():
     else:
         soups_url_pairs = [(slate_parser.get_soup_from_localfile(file), file) for file in test_local_files]
 
+    
     for soup, url in soups_url_pairs:
         if soup:
             parsed_content = slate_parser.parse_article_content(soup)
