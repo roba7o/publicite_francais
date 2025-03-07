@@ -3,7 +3,9 @@ import os
 from datetime import datetime
 
 def write_to_csv(data, output_dir="output"):
-    """Writes parsed article data to a timestamped CSV file in the output directory."""
+    """Writes parsed article data to a timestamped CSV file in the output directory.
+    Skips writing if the file already exists for the current day."""
+    
     # Ensure output directory exists
     os.makedirs(output_dir, exist_ok=True)
 
@@ -11,15 +13,17 @@ def write_to_csv(data, output_dir="output"):
     today = datetime.today().strftime('%Y-%m-%d')
     filename = os.path.join(output_dir, f"{today}.csv")
 
-    # Check if file exists to decide on writing headers
-    file_exists = os.path.isfile(filename)
+    # Check if the file already exists for the current day
+    if os.path.isfile(filename):
+        print(f"❌ CSV for today ({today}) already exists. Skipping write.")
+        return  # Exit if the file already exists
 
+    # If file doesn't exist, write to it
     with open(filename, mode='a', newline='', encoding='utf-8') as file:
         writer = csv.DictWriter(file, fieldnames=["word", "source", "date", "title", "frequency"])
 
-        # Write header only if file is new
-        if not file_exists:
-            writer.writeheader()
+        # Write header only if file doesn't exist
+        writer.writeheader()
 
         # Write the parsed data
         for word, frequency in data["word_frequencies"].items():
@@ -30,5 +34,5 @@ def write_to_csv(data, output_dir="output"):
                 "title": data["title"],
                 "frequency": frequency
             })
-    
+
     print(f"✅ Data written to {filename}")
