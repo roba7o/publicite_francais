@@ -56,13 +56,13 @@ class BaseParser:
     def to_csv(self, dict_content, url):
         try:    
             write_to_csv({
-                'word_frequencies': self.count_word_frequency(dict_content['full_text']),
-                'source': url,
-                'date': dict_content['date'],
-                'title': dict_content['title']
+                "word_frequencies": self.count_word_frequency(dict_content["full_text"]),
+                "source": url,
+                "date": dict_content["date"],
+                "title": dict_content["title"]
             })
             if self.debug:
-                print(f"Successfully wrote data to CSV for URL: {url}")
+                print(f"✅ Successfully wrote data to CSV for URL: {url}")
         except Exception as e:
             if self.debug:
-                print(f"Error writing to CSV for url: {url} | Error: {e}")
+                print(f"❌ Error writing to CSV for URL: {url} | Error: {e}")
