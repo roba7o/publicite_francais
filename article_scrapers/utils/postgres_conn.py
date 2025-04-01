@@ -53,16 +53,17 @@ def load_slate_csv_to_db(csv_file, conn):
                 if count == 0:
                     insert_query = sql.SQL("""
                         INSERT INTO francais_word_frequency.word_data 
-                        (word, source, date, title, frequency) 
-                        VALUES (%s, %s, %s, %s, %s)
+                        (word, source, article_date, scraped_date, title, frequency) 
+                        VALUES (%s, %s, %s, %s, %s, %s)
                     """)
                     
                     cursor.execute(insert_query, (
                         row['word'], 
                         row['source'], 
-                        row['date'], 
+                        row['article_date'], 
+                        row['scraped_date'], 
                         row['title'], 
-                        int(row['frequency']) if row['frequency'].isdigit() else row['frequency']
+                        int(row['frequency'])
                     ))
                     rows_inserted += 1
                 else:

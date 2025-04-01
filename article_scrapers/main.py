@@ -55,7 +55,6 @@ def main():
             parsed_content = slate_parser.parse_article_content(soup)
             if parsed_content:
                 # Write the data to CSV
-                #print(f"parsed_content: {parsed_content}")
                 slate_parser.to_csv(parsed_content, url)
                 processed_count += 1
             else:
@@ -63,21 +62,21 @@ def main():
         else:
             print("❌ Error fetching article")
 
-    # if processed_count > 0:
-    #     print(f"✅ Processed {processed_count} articles. uploading to database...")
-    #     # Connect to the database
-    #     today_csv = os.path.join("output", f"{datetime.today().strftime('%Y-%m-%d')}.csv")
+    if processed_count > 0:
+        print(f"✅ Processed {processed_count} articles. uploading to database...")
+        # Connect to the database
+        today_csv = os.path.join("output", f"{datetime.today().strftime('%Y-%m-%d')}.csv")
 
-    #     conn = connect_to_db()
-    #     if conn:
-    #         try:
-    #             load_slate_csv_to_db(today_csv, conn)
-    #             print("✅ Successfully uploaded data to database")
-    #         except Exception as e:
-    #             print(f"❌ Error uploading data to database: {e}")
-    #         finally:
-    #             conn.close()
-    #             print("🔌 Database connection closed")
+        conn = connect_to_db()
+        if conn:
+            try:
+                load_slate_csv_to_db(today_csv, conn)
+                print("✅ Successfully uploaded data to database")
+            except Exception as e:
+                print(f"❌ Error uploading data to database: {e}")
+            finally:
+                conn.close()
+                print("🔌 Database connection closed")
 
 
 if __name__ == '__main__':

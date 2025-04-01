@@ -25,7 +25,7 @@ class SlateFrArticleParser(BaseParser):
                     'num_paragraphs': len(paragraphs) if paragraphs else 0,
                     'title': self.extract_title(soup) or "Unknown title",
                     'article_date': self.extract_date(soup) or "Unknown date",
-                    'date_scraped': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    'date_scraped': datetime.now().strftime("%Y-%m-%d"),
                 }
             
             except Exception as e:
