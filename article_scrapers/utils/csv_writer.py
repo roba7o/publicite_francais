@@ -34,7 +34,7 @@ def write_to_csv(data, output_dir="output"):
     # Open file in append mode if it exists, or write mode if it doesn't
     file_exists = os.path.isfile(filename)
     with open(filename, mode='a', newline='', encoding='utf-8') as file:
-        writer = csv.DictWriter(file, fieldnames=["word", "source", "date", "title", "frequency"])
+        writer = csv.DictWriter(file, fieldnames=["word", "source", "article_date", "scraped_date", "title", "frequency"])
         
         # Write header only if file doesn't exist yet
         if not file_exists:
@@ -45,7 +45,8 @@ def write_to_csv(data, output_dir="output"):
             writer.writerow({
                 "word": word,
                 "source": data["source"],
-                "date": data["date"],
+                "article_date": data["article_date"],
+                "scraped_date": data["date_scraped"],
                 "title": data["title"],
                 "frequency": frequency
             })

@@ -27,7 +27,7 @@ class SlateFrURLScraper:
             cards = soup.select(".card--story")
 
             urls = []
-            for card in cards[:8]:
+            for card in cards[:2]:
                 a_tag = card.find('a', href=True) #first <a> tag with href
                 if a_tag:
                     url = a_tag["href"]

@@ -1,4 +1,5 @@
 from parsers.base_parser import BaseParser
+from datetime import datetime
 
 class SlateFrArticleParser(BaseParser):
         def __init__(self):
@@ -23,7 +24,8 @@ class SlateFrArticleParser(BaseParser):
                     'full_text': '\n\n'.join(paragraphs) if paragraphs else "No content",
                     'num_paragraphs': len(paragraphs) if paragraphs else 0,
                     'title': self.extract_title(soup) or "Unknown title",
-                    'date': self.extract_date(soup) or "Unknown date",
+                    'article_date': self.extract_date(soup) or "Unknown date",
+                    'date_scraped': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 }
             
             except Exception as e:

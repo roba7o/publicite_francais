@@ -58,7 +58,8 @@ class BaseParser:
             write_to_csv({
                 "word_frequencies": self.count_word_frequency(dict_content["full_text"]),
                 "source": url,
-                "date": dict_content["date"],
+                "article_date": dict_content["article_date"],
+                "date_scraped": dict_content["date_scraped"],
                 "title": dict_content["title"]
             })
             if self.debug:
