@@ -14,10 +14,12 @@ saves to csv for local storage, but streams to postgresql for long term
 
 import os
 import psycopg2
+from datetime import datetime
 
 from parsers.slate_fr_parser import SlateFrArticleParser
 from scrapers.slate_fr_scraper import SlateFrURLScraper
-from utils.csv_writer import write_to_csv
+from utils.csv_loader import load_slate_csv_to_db
+
 
 import psycopg2
 
@@ -52,8 +54,9 @@ def main():
     print("🚀 Starting the scraping and parsing process...")
 
     # Initialize the Slate.fr parser and scraper
-    slate_parser = SlateFrArticleParser()
     slate_scraper = SlateFrURLScraper()
+    slate_parser = SlateFrArticleParser()
+    
 
 
     live_parser = True  # TODO change for live version
@@ -80,7 +83,16 @@ def main():
             print(f"📄 Successfully fetched article from {url}")
             parsed_content = slate_parser.parse_article_content(soup)
             if parsed_content:
+                # Write the data to CSV
                 slate_parser.to_csv(parsed_content, url)
+
+                # After writing to CSV, load the data into PostgreSQL
+                conn = connect_to_db()
+                if conn:
+                    # Use the CSV filename (same as today's date)
+                    today = os.path.join("output", f"{datetime.today().strftime('%Y-%m-%d')}.csv")
+                    load_slate_csv_to_db(today, conn)  # Load the CSV to the database
+                    conn.close()
             else:
                 print("❌ Error parsing article")
         else:

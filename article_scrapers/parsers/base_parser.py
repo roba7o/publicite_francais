@@ -47,7 +47,7 @@ class BaseParser:
             return BeautifulSoup(f.read(), 'html.parser')
 
     def count_word_frequency(self, text):
-        """Counts word frequencies from the article text"""
+        """Counts word frequencies from the article text as dictionary"""
         words = text.split()
         word_frequencies = Counter(words)
         return word_frequencies
