@@ -28,7 +28,7 @@ def main():
     slate_scraper = SlateFrURLScraper()
     slate_parser = SlateFrArticleParser()
 
-    live_parser = True  # TODO change for live version
+    live_parser = False  # TODO change for live version
     if live_parser:
         # Grabbing files from slate homepage (creates new connection everytime)
         print("🔍 Fetching article URLs...")
@@ -38,12 +38,12 @@ def main():
         soups_url_pairs = [(slate_parser.get_soup_from_url(url), url) for url in slate_urls]
 
     else:
-        pass
+        
         print("🛠 Parsing local test files...")
          # Test files for local testing (hard coded HTML files)
         test_local_files = [
-            "test_slate_article.html",
-            "test_slate_article2.html"
+            "canada-quelque-chose-mysterieux-tue-grands-requins-blancs-cerveau-inflammation-maladie-autopsie-deces-mort-scientifiques.html",
+            "regle-baillon-mondial-trump-entraver-acces-avortement-mexico-city-policy-anti-ivg-dangers-mort-femmes-deces-grossesse.html"
         ]
         soups_url_pairs = [(slate_parser.get_soup_from_localfile(file), file) for file in test_local_files]
 
