@@ -15,9 +15,9 @@ saves to csv for local storage, but streams to postgresql for long term
 import os
 from datetime import datetime
 
-from parsers.slate_fr_parser import SlateFrArticleParser
-from scrapers.slate_fr_scraper import SlateFrURLScraper
-from utils.postgres_conn import connect_to_db, load_slate_csv_to_db
+from article_scrapers.parsers.slate_fr_parser import SlateFrArticleParser
+from article_scrapers.scrapers.slate_fr_scraper import SlateFrURLScraper
+from article_scrapers.utils.postgres_conn import connect_to_db, load_slate_csv_to_db
 
 
 
@@ -28,7 +28,7 @@ def main():
     slate_scraper = SlateFrURLScraper()
     slate_parser = SlateFrArticleParser()
 
-    live_parser = False  # TODO change for live version
+    live_parser = True  # TODO change for live version
     if live_parser:
         # Grabbing files from slate homepage (creates new connection everytime)
         print("🔍 Fetching article URLs...")
