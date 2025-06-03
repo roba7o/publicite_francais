@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup
 import requests, os, time
-from article_scrapers.utils.csv_writer import write_to_csv
+from article_scrapers.utils.csv_writer import DailyCSVWriter
 from collections import Counter
 
 class BaseParser:
@@ -11,7 +11,7 @@ class BaseParser:
             }
         self.debug = debug
         self.delay = delay
-        
+        self.csv_writer = DailyCSVWriter(debug=debug)
 
     def get_soup_from_url(self, url):
         """
@@ -36,7 +36,7 @@ class BaseParser:
     
     def get_soup_from_localfile(self, file_name):
         """
-        Get a BeautifulSoup object from a local html file
+        Get a BeautifulSoup object from a local html file -> can be used for testing purposes.
         """
 
         # Get the absolute path to the test file
@@ -47,21 +47,33 @@ class BaseParser:
             return BeautifulSoup(f.read(), 'html.parser')
 
     def count_word_frequency(self, text):
-        """Counts word frequencies from the article text as dictionary"""
+        """
+        Count the frequency of each word in the input text.
+
+        Splits the input string by whitespace and uses a Counter to count the
+        number of occurrences of each word. The counting is case-sensitive
+        and does not remove punctuation.
+
+        Parameters:
+            text (str): The input string to analyze.
+
+        Returns:
+            collections.Counter: A dictionary-like object where keys are words
+            and values are their respective frequencies in the text.
+        """
         words = text.split()
         word_frequencies = Counter(words)
         return word_frequencies
     
 
     def to_csv(self, dict_content, url):
-        try:    
-            write_to_csv({
-                "word_frequencies": self.count_word_frequency(dict_content["full_text"]),
-                "source": url,
-                "article_date": dict_content["article_date"],
-                "date_scraped": dict_content["date_scraped"],
-                "title": dict_content["title"]
-            })
+        try:
+            word_freqs = self.count_word_frequency(dict_content["full_text"])
+            self.csv_writer.write_article(
+                parsed_data=dict_content,
+                url=url,
+                word_freqs=word_freqs
+            )
             if self.debug:
                 print(f"✅ Successfully wrote data to CSV for URL: {url}")
         except Exception as e:

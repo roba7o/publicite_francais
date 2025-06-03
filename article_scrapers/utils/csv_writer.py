@@ -1,54 +1,54 @@
+# csv_writer.py
 import csv
 import os
 from datetime import datetime
 
-def write_to_csv(data, output_dir="output"):
-    """Writes parsed article data to a timestamped CSV file in the output directory.
-    Skips writing if the article already exists in the file."""
-    
-    # Ensure output directory exists
-    os.makedirs(output_dir, exist_ok=True)
-    
-    # Generate filename with today's date
-    today = datetime.today().strftime('%Y-%m-%d')
-    filename = os.path.join(output_dir, f"{today}.csv")
-    
-    # Check if the file exists and if the article is already in it
-    existing_articles = set()
-    if os.path.isfile(filename):
-        with open(filename, mode='r', newline='', encoding='utf-8') as file:
-            reader = csv.DictReader(file)
-            for row in reader:
-                # Create a unique identifier for each article (title + source)
-                article_key = f"{row['title']}:{row['source']}"
-                existing_articles.add(article_key)
-        
-    # Create a unique identifier for the current article
-    current_article_key = f"{data['title']}:{data['source']}"
-    
-    # Skip if this article is already in the file
-    if current_article_key in existing_articles:
-        print(f"❌ Article '{data['title']}' from {data['source']} already exists in today's CSV. Skipping.")
-        return
-    
-    # Open file in append mode if it exists, or write mode if it doesn't
-    file_exists = os.path.isfile(filename)
-    with open(filename, mode='a', newline='', encoding='utf-8') as file:
-        writer = csv.DictWriter(file, fieldnames=["word", "source", "article_date", "scraped_date", "title", "frequency"])
-        
-        # Write header only if file doesn't exist yet
-        if not file_exists:
-            writer.writeheader()
-        
-        # Write the parsed data
-        for word, frequency in data["word_frequencies"].items():
-            writer.writerow({
-                "word": word,
-                "source": data["source"],
-                "article_date": data["article_date"],
-                "scraped_date": data["date_scraped"],
-                "title": data["title"],
-                "frequency": frequency
-            })
-    
-    print(f"✅ Data for article '{data['title']}' written to {filename}")
+CSV_FIELDS = ["word", "source", "article_date", "scraped_date", "title", "frequency"]
+
+class DailyCSVWriter:
+    def __init__(self, output_dir="output", debug=False):
+        self.output_dir = output_dir
+        os.makedirs(self.output_dir, exist_ok=True)
+        self.filename = self._get_filename()
+        self.existing_keys = self._load_existing_keys()
+        self.debug = debug
+
+    def _get_filename(self):
+        today = datetime.today().strftime('%Y-%m-%d')
+        return os.path.join(self.output_dir, f"{today}.csv")
+
+    def _load_existing_keys(self):
+        existing = set()
+        if os.path.isfile(self.filename):
+            with open(self.filename, mode='r', newline='', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    key = f"{row['title']}:{row['source']}"
+                    existing.add(key)
+        return existing
+
+    def write_article(self, parsed_data, url, word_freqs):
+        key = f"{parsed_data['title']}:{url}"
+        if key in self.existing_keys:
+            if self.debug:
+                print(f"⚠️ Skipping duplicate: {parsed_data['title']} from {url}")
+            return
+
+        file_exists = os.path.isfile(self.filename)
+        with open(self.filename, mode='a', newline='', encoding='utf-8') as f:
+            writer = csv.DictWriter(f, fieldnames=CSV_FIELDS)
+            if not file_exists:
+                writer.writeheader()
+            for word, freq in word_freqs.items():
+                writer.writerow({
+                    "word": word,
+                    "source": url,
+                    "article_date": parsed_data["article_date"],
+                    "scraped_date": parsed_data["date_scraped"],
+                    "title": parsed_data["title"],
+                    "frequency": freq
+                })
+
+        if self.debug:
+            print(f"✅ Article '{parsed_data['title']}' written to {self.filename}")
+        self.existing_keys.add(key)

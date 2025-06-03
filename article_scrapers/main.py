@@ -37,15 +37,15 @@ def main():
         print("🛠 Parsing live URLs...")
         soups_url_pairs = [(slate_parser.get_soup_from_url(url), url) for url in slate_urls]
 
-    else:
+    # else:
         
-        print("🛠 Parsing local test files...")
-         # Test files for local testing (hard coded HTML files)
-        test_local_files = [
-            "canada-quelque-chose-mysterieux-tue-grands-requins-blancs-cerveau-inflammation-maladie-autopsie-deces-mort-scientifiques.html",
-            "regle-baillon-mondial-trump-entraver-acces-avortement-mexico-city-policy-anti-ivg-dangers-mort-femmes-deces-grossesse.html"
-        ]
-        soups_url_pairs = [(slate_parser.get_soup_from_localfile(file), file) for file in test_local_files]
+    #     print("🛠 Parsing local test files...")
+    #      # Test files for local testing (hard coded HTML files)
+    #     test_local_files = [
+    #         "canada-quelque-chose-mysterieux-tue-grands-requins-blancs-cerveau-inflammation-maladie-autopsie-deces-mort-scientifiques.html",
+    #         "regle-baillon-mondial-trump-entraver-acces-avortement-mexico-city-policy-anti-ivg-dangers-mort-femmes-deces-grossesse.html"
+    #     ]
+    #     soups_url_pairs = [(slate_parser.get_soup_from_localfile(file), file) for file in test_local_files]
 
     # Process the parsed content
     processed_count = 0
