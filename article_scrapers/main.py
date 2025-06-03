@@ -47,37 +47,34 @@ def main():
     #     ]
     #     soups_url_pairs = [(slate_parser.get_soup_from_localfile(file), file) for file in test_local_files]
 
-    # Process the parsed content
+    if not soups_url_pairs:
+        print("⚠️ No articles to process.")
+        return
+    
+    # Prepare output directory
+    os.makedirs("output", exist_ok=True)
+    today_str = datetime.today().strftime('%Y-%m-%d')
+    output_csv_path = os.path.join("output", f"{today_str}.csv")
+    
+    # Process the parsed content (count for number of articles processed)
     processed_count = 0
     for soup, url in soups_url_pairs:
         if soup:
-            print(f"📄 Successfully fetched article from {url}")
+            print(f"📄 Processing article: {url}")
             parsed_content = slate_parser.parse_article_content(soup)
             if parsed_content:
-                # Write the data to CSV
-                slate_parser.to_csv(parsed_content, url)
+                slate_parser.to_csv(parsed_content, url, output_csv_path)
                 processed_count += 1
             else:
-                print("❌ Error parsing article")
+                print(f"❌ Failed parsing article: {url}")
         else:
-            print("❌ Error fetching article")
+            print(f"❌ Failed fetching article: {url}")
 
-    if processed_count > 0:
-        print(f"✅ Processed {processed_count} articles. uploading to database...")
-        # Connect to the database
-        today_csv = os.path.join("output", f"{datetime.today().strftime('%Y-%m-%d')}.csv")
+    if processed_count == 0:
+        print("⚠️ No articles processed successfully; skipping DB upload.")
+        return
 
-        conn = connect_to_db()
-        if conn:
-            try:
-                load_slate_csv_to_db(today_csv, conn)
-                print("✅ Successfully uploaded data to database")
-            except Exception as e:
-                print(f"❌ Error uploading data to database: {e}")
-            finally:
-                conn.close()
-                print("🔌 Database connection closed")
-
+    print(f"✅ Processed {processed_count} articles; starting DB upload...")
 
 if __name__ == '__main__':
     main()
