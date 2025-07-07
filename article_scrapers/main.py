@@ -12,11 +12,10 @@ saves to csv for local storage, but streams to postgresql for long term
 
 """
 
-import os
 from datetime import datetime
 
-from parsers.slate_fr_parser import SlateFrArticleParser
-from scrapers.slate_fr_scraper import SlateFrURLScraper
+from .parsers.slate_fr_parser import SlateFrArticleParser
+from .scrapers.slate_fr_scraper import SlateFrURLScraper
 
 
 
