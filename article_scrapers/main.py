@@ -17,7 +17,6 @@ from datetime import datetime
 
 from article_scrapers.parsers.slate_fr_parser import SlateFrArticleParser
 from article_scrapers.scrapers.slate_fr_scraper import SlateFrURLScraper
-from article_scrapers.utils.postgres_conn import connect_to_db, load_slate_csv_to_db
 
 
 

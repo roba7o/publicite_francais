@@ -37,8 +37,6 @@ class SlateFrURLScraper:
                     else:
                         full_url = urljoin(self.base_url, url)  # Join with the base URL for relative URLs
                     urls.append(full_url)
-                
-
             
             urls = list(set(urls))  #remove duplicates
 
