@@ -3,18 +3,23 @@ FROM python:3.12-slim
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-ENV PYTHONPATH=/app
 
+# Set working directory
 WORKDIR /app
 
+# Copy requirements first to leverage cache
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+# Copy the source code
+COPY src /app
 
-# Add article_scrapers to Python path
-ENV PYTHONPATH="${PYTHONPATH}:/app/article_scrapers"
+# Set Python to look in /app for imports
+ENV PYTHONPATH=/app
 
+# Create output directory
 RUN mkdir -p /app/output
 
-CMD ["python", "-m", "article_scrapers.main"]
+# Run from the article_scrapers directory
+WORKDIR /app/article_scrapers
+CMD ["python", "main.py"]
