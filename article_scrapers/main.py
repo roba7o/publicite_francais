@@ -15,8 +15,8 @@ saves to csv for local storage, but streams to postgresql for long term
 import os
 from datetime import datetime
 
-from article_scrapers.parsers.slate_fr_parser import SlateFrArticleParser
-from article_scrapers.scrapers.slate_fr_scraper import SlateFrURLScraper
+from parsers.slate_fr_parser import SlateFrArticleParser
+from scrapers.slate_fr_scraper import SlateFrURLScraper
 
 
 
@@ -50,11 +50,6 @@ def main():
         print("⚠️ No articles to process.")
         return
     
-    # Prepare output directory
-    os.makedirs("output", exist_ok=True)
-    today_str = datetime.today().strftime('%Y-%m-%d')
-    output_csv_path = os.path.join("output", f"{today_str}.csv")
-    
     # Process the parsed content (count for number of articles processed)
     processed_count = 0
     for soup, url in soups_url_pairs:
@@ -62,7 +57,7 @@ def main():
             print(f"📄 Processing article: {url}")
             parsed_content = slate_parser.parse_article_content(soup)
             if parsed_content:
-                slate_parser.to_csv(parsed_content, url, output_csv_path)
+                slate_parser.to_csv(parsed_content, url)
                 processed_count += 1
             else:
                 print(f"❌ Failed parsing article: {url}")
@@ -73,7 +68,7 @@ def main():
         print("⚠️ No articles processed successfully; skipping DB upload.")
         return
 
-    print(f"✅ Processed {processed_count} articles; starting DB upload...")
+    print(f"✅ Processed {processed_count} articles; TODO! starting DB upload...")
 
 if __name__ == '__main__':
     main()

@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup
 import requests, os, time
-from article_scrapers.utils.csv_writer import DailyCSVWriter
+from utils.csv_writer import DailyCSVWriter
 from collections import Counter
 
 class BaseParser:
