@@ -3,15 +3,17 @@ import csv
 import os
 from datetime import datetime
 
+from ..settings import DEBUG
+
 CSV_FIELDS = ["word", "source", "article_date", "scraped_date", "title", "frequency"]
 
 class DailyCSVWriter:
-    def __init__(self, output_dir="output", debug=False):
+    def __init__(self, output_dir="output", debug=None):
         self.output_dir = output_dir
         os.makedirs(self.output_dir, exist_ok=True)
         self.filename = self._get_filename()
         self.existing_keys = self._load_existing_keys()
-        self.debug = debug
+        self.debug = DEBUG if debug is None else debug
 
     def _get_filename(self):
         """Generate the filename based on current date (YYYY-MM-DD.csv)"""

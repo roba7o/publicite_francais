@@ -1,25 +1,25 @@
-FROM python:3.12-slim
+FROM python:3.12-slim-bullseye
 
-# Set environment variables
+# Upgrade OS packages (optional in dev, but fine here)
+RUN apt-get update && apt-get upgrade -y && apt-get clean
+
+# Prevent .pyc files and enable unbuffered output
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Set working directory
-WORKDIR /app
+# Set working dir to src
+WORKDIR /app/src
 
-# Copy requirements first to leverage cache
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy only requirements first (leverage layer cache)
+COPY requirements.txt /app/
 
-# Copy the source code
-COPY src /app
+# Install dependencies
+RUN pip install --no-cache-dir -r /app/requirements.txt
 
-# Set Python to look in /app for imports
-ENV PYTHONPATH=/app
+# Tell Python to treat /app/src as a root for imports
+ENV PYTHONPATH=/app/src
 
-# Create output directory
-RUN mkdir -p /app/output
+# In dev, the code is volume-mounted, so we don't COPY src/
 
-# Run from the article_scrapers directory
-WORKDIR /app/article_scrapers
-CMD ["python", "main.py"]
+# Run your package as a module
+CMD ["python", "-m", "article_scrapers.main"]

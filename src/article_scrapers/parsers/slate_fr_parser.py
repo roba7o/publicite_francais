@@ -1,4 +1,4 @@
-from parsers.base_parser import BaseParser
+from article_scrapers.parsers.base_parser import BaseParser
 from datetime import datetime
 
 class SlateFrArticleParser(BaseParser):

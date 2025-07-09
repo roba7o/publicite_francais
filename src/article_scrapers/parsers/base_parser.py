@@ -1,17 +1,18 @@
 from bs4 import BeautifulSoup
 import requests, os, time
-from utils.csv_writer import DailyCSVWriter
+from article_scrapers.utils.csv_writer import DailyCSVWriter
 from collections import Counter
+from ..settings import DEBUG
 
 class BaseParser:
-    def __init__(self, debug=False, delay=1):
+    def __init__(self, debug=None, delay=1):
         # This user-agent header is used to mimic a browser visit
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
             }
-        self.debug = debug
+        self.debug = debug if debug is not None else DEBUG
         self.delay = delay
-        self.csv_writer = DailyCSVWriter(debug=debug)
+        self.csv_writer = DailyCSVWriter(debug=True)
 
     def get_soup_from_url(self, url):
         """

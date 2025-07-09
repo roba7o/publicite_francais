@@ -14,8 +14,8 @@ saves to csv for local storage, but streams to postgresql for long term
 
 from datetime import datetime
 
-from parsers.slate_fr_parser import SlateFrArticleParser
-from scrapers.slate_fr_scraper import SlateFrURLScraper
+from article_scrapers.parsers.slate_fr_parser import SlateFrArticleParser
+from article_scrapers.scrapers.slate_fr_scraper import SlateFrURLScraper
 
 
 
