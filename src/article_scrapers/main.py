@@ -12,10 +12,20 @@ saves to csv for local storage, but streams to postgresql for long term
 
 """
 
-from datetime import datetime
 
+# Custom classes for scraping and parsing Slate.fr articles
 from article_scrapers.parsers.slate_fr_parser import SlateFrArticleParser
 from article_scrapers.scrapers.slate_fr_scraper import SlateFrURLScraper
+
+
+# logging setup
+# This is a global logging setup for the entire project, ensuring consistent logging across all modules.
+# It initializes the logging configuration and provides a logger instance for use in other modules.
+from article_scrapers.utils.logging_config import setup_logging
+from article_scrapers.utils.logger import get_logger
+
+setup_logging() # Initialize global logging
+logger = get_logger(__name__) # Get a logger instance for this module
 
 
 
