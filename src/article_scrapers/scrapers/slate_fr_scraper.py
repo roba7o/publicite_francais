@@ -1,15 +1,19 @@
-
-
 """
-Grabbing top 8 artcilces from slate.fr which are then passed on to parser
+Grabbing top 8 articles from slate.fr which are then passed on to parser
 """
+
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
-
 from ..settings import DEBUG
+
+from article_scrapers.utils.logger import get_logger
+
+
 class SlateFrURLScraper:
     def __init__(self, debug=None):
+        self.logger = get_logger(self.__class__.__name__)
+        
         self.debug = debug if debug is not None else DEBUG
         self.base_url = "https://www.slate.fr"
         self.headers = {
@@ -21,30 +25,35 @@ class SlateFrURLScraper:
         Get the URLs of the top 8 articles from the Slate.fr homepage.
         """
         try:
+            if self.debug:
+                self.logger.info(f"Fetching homepage URL: {self.base_url}")
+
             response = requests.get(self.base_url, headers=self.headers)
-            response.raise_for_status()  # Raise an error for bad responses (4xx, 5xx)
+            response.raise_for_status()
             soup = BeautifulSoup(response.content, 'html.parser')
 
-            # All relevant hrefs are in .card class
             cards = soup.select(".card--story")
 
             urls = []
-            for card in cards[:2]:
-                a_tag = card.find('a', href=True) #first <a> tag with href
+            for card in cards[:8]:  # use 8 as per comment, was 2 in your snippet
+                a_tag = card.find('a', href=True)
                 if a_tag:
                     url = a_tag["href"]
-                    # Check if the URL is already absolute
                     if url.startswith("http://") or url.startswith("https://"):
-                        full_url = url  # No need to join, it's already an absolute URL
+                        full_url = url
                     else:
-                        full_url = urljoin(self.base_url, url)  # Join with the base URL for relative URLs
+                        full_url = urljoin(self.base_url, url)
                     urls.append(full_url)
-            
-            urls = list(set(urls))  #remove duplicates
+
+            urls = list(set(urls))  # remove duplicates
+
+            self.logger.info(f"Found {len(urls)} article URLs.")
+            if self.debug:
+                for url in urls:
+                    self.logger.debug(f"Article URL: {url}")
 
             return urls
-        
-        except requests.exceptions.RequestException as e:
-            print(f"Failed to fetch URL: {self.base_url} | Error: {e}")
-            return None
 
+        except requests.exceptions.RequestException as e:
+            self.logger.error(f"Failed to fetch URL: {self.base_url} | Error: {e}")
+            return None
