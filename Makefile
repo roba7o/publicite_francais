@@ -52,7 +52,11 @@ help:  ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-18s\033[0m %s\n", $$1, $$2}'
 
 
+# ========== Random commands ==========
 
+tree:  ## Show directory tree
+	tree -L 4 -I venv    
+	
 
 # make run              # run script locally
 # make docker-build     # build docker image
