@@ -1,15 +1,10 @@
-# Example of how to use the enhanced parser in your slate_fr_parser.py
-
 from article_scrapers.parsers.base_parser import BaseParser
 from datetime import datetime
 
 class SlateFrArticleParser(BaseParser):
     def __init__(self):
-        # Initializing with custom settings
-        super().__init__(
-            min_word_frequency=2,  # Only keep words that appear at least twice
-            debug=True
-        )
+        # Just pass the site domain - all config is handled by BaseParser
+        super().__init__(site_domain='slate.fr')
         
         # Add site-specific stopwords if needed
         slate_stopwords = {
@@ -68,28 +63,3 @@ class SlateFrArticleParser(BaseParser):
         """Extract the article's date."""
         date_tag = soup.find('time')
         return date_tag.get_text(strip=True) if date_tag else "Unknown date"
-
-
-# Optional: Create a configuration file for different sites
-# config/text_processing_config.py
-
-SITE_CONFIGS = {
-    'slate.fr': {
-        'additional_stopwords': {'slate', 'article', 'lire', 'aussi', 'voir', 'copyright'},
-        'min_word_frequency': 2,
-        'min_word_length': 4,
-        'max_word_length': 30
-    },
-    'lemonde.fr': {
-        'additional_stopwords': {'monde', 'article', 'abonnés', 'premium'},
-        'min_word_frequency': 1,
-        'min_word_length': 3,
-        'max_word_length': 25
-    },
-    'default': {
-        'additional_stopwords': set(),
-        'min_word_frequency': 2,
-        'min_word_length': 3,
-        'max_word_length': 50
-    }
-}

@@ -3,12 +3,13 @@ import requests
 import os
 import time
 from article_scrapers.utils.csv_writer import DailyCSVWriter
-from article_scrapers.utils.french_text_processor import FrenchTextProcessor
+from article_scrapers.utils.french_text_processor import FrenchTextProcessor  # Add this import
+from ..config.text_processing_config import SITE_CONFIGS
 from ..config.settings import DEBUG
 from article_scrapers.utils.logger import get_logger
 
 class BaseParser:
-    def __init__(self, debug=None, delay=1, min_word_frequency=2):
+    def __init__(self, site_domain=None, debug=None, delay=1):
         self.logger = get_logger(self.__class__.__name__)
         
         self.headers = {
@@ -18,9 +19,38 @@ class BaseParser:
         self.delay = delay
         self.csv_writer = DailyCSVWriter(debug=True)
         
-        # Add French text processor
+        # Configure based on site
+        self.site_domain = site_domain
+        self.config = self._get_site_config(site_domain)
+        
+        # Add French text processor with site-specific config
         self.text_processor = FrenchTextProcessor()
-        self.min_word_frequency = min_word_frequency
+        self.min_word_frequency = self.config['min_word_frequency']
+        self._apply_config()
+
+    def _get_site_config(self, site_domain):
+        """Get configuration for the specific site."""
+        if not site_domain:
+            return SITE_CONFIGS['default']
+        return SITE_CONFIGS.get(site_domain, SITE_CONFIGS['default'])
+    
+    def _apply_config(self):
+        """Apply site-specific configuration."""
+        # Add site-specific stopwords
+        if self.config['additional_stopwords']:
+            self.text_processor.expand_stopwords(self.config['additional_stopwords'])
+            
+        # Set word length limits
+        self.text_processor.set_word_length_limits(
+            min_length=self.config['min_word_length'],
+            max_length=self.config['max_word_length']
+        )
+        
+        if self.debug:
+            self.logger.info(f"Applied config for {self.site_domain or 'default'}: "
+                           f"min_freq={self.config['min_word_frequency']}, "
+                           f"word_length={self.config['min_word_length']}-{self.config['max_word_length']}, "
+                           f"custom_stopwords={len(self.config['additional_stopwords'])}")
 
     def get_soup_from_url(self, url):
         """
