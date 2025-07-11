@@ -5,7 +5,7 @@ Grabbing top 8 articles from slate.fr which are then passed on to parser
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
-from ..settings import DEBUG
+from ..config.settings import DEBUG
 
 from article_scrapers.utils.logger import get_logger
 
