@@ -3,7 +3,17 @@ from datetime import datetime
 
 class SlateFrArticleParser(BaseParser):
     def __init__(self):
-        super().__init__()
+        # Just pass the site domain - all config is handled by BaseParser
+        super().__init__(site_domain='slate.fr')
+        
+        # Add site-specific stopwords if needed
+        slate_stopwords = {
+            'slate', 'article', 'lire', 'aussi', 'voir', 'copyright', 'droits', 'réservés'
+        }
+        self.add_custom_stopwords(slate_stopwords)
+        
+        # Set word length limits (optional)
+        self.set_word_length_limits(min_length=4, max_length=30)
 
     def parse_article_content(self, soup):
         """Parses article content and extracts metadata."""
@@ -18,8 +28,17 @@ class SlateFrArticleParser(BaseParser):
                 self.logger.warning("No content extracted from paragraphs")
                 return None
 
+            full_text = '\n\n'.join(paragraphs) if paragraphs else "No content"
+            
+            # Get text statistics for debugging
+            if self.debug:
+                stats = self.get_text_statistics(full_text)
+                self.logger.info(f"Text stats: {stats['total_unique_words']} unique words, "
+                               f"{stats['total_word_count']} total words")
+                self.logger.debug(f"Top words: {stats['top_10_words']}")
+
             return {
-                'full_text': '\n\n'.join(paragraphs) if paragraphs else "No content",
+                'full_text': full_text,
                 'num_paragraphs': len(paragraphs) if paragraphs else 0,
                 'title': self.extract_title(soup) or "Unknown title",
                 'article_date': self.extract_date(soup) or "Unknown date",

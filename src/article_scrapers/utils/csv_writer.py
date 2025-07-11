@@ -2,7 +2,7 @@ import csv
 import os
 from datetime import datetime
 
-from ..settings import DEBUG
+from ..config.settings import DEBUG
 from article_scrapers.utils.logger import get_logger
 
 CSV_FIELDS = ["word", "source", "article_date", "scraped_date", "title", "frequency"]

@@ -3,12 +3,13 @@ import requests
 import os
 import time
 from article_scrapers.utils.csv_writer import DailyCSVWriter
-from collections import Counter
-from ..settings import DEBUG
+from article_scrapers.utils.french_text_processor import FrenchTextProcessor  # Add this import
+from ..config.text_processing_config import SITE_CONFIGS
+from ..config.settings import DEBUG
 from article_scrapers.utils.logger import get_logger
 
 class BaseParser:
-    def __init__(self, debug=None, delay=1):
+    def __init__(self, site_domain=None, debug=None, delay=1):
         self.logger = get_logger(self.__class__.__name__)
         
         self.headers = {
@@ -17,6 +18,39 @@ class BaseParser:
         self.debug = debug if debug is not None else DEBUG
         self.delay = delay
         self.csv_writer = DailyCSVWriter(debug=True)
+        
+        # Configure based on site
+        self.site_domain = site_domain
+        self.config = self._get_site_config(site_domain)
+        
+        # Add French text processor with site-specific config
+        self.text_processor = FrenchTextProcessor()
+        self.min_word_frequency = self.config['min_word_frequency']
+        self._apply_config()
+
+    def _get_site_config(self, site_domain):
+        """Get configuration for the specific site."""
+        if not site_domain:
+            return SITE_CONFIGS['default']
+        return SITE_CONFIGS.get(site_domain, SITE_CONFIGS['default'])
+    
+    def _apply_config(self):
+        """Apply site-specific configuration."""
+        # Add site-specific stopwords
+        if self.config['additional_stopwords']:
+            self.text_processor.expand_stopwords(self.config['additional_stopwords'])
+            
+        # Set word length limits
+        self.text_processor.set_word_length_limits(
+            min_length=self.config['min_word_length'],
+            max_length=self.config['max_word_length']
+        )
+        
+        if self.debug:
+            self.logger.info(f"Applied config for {self.site_domain or 'default'}: "
+                           f"min_freq={self.config['min_word_frequency']}, "
+                           f"word_length={self.config['min_word_length']}-{self.config['max_word_length']}, "
+                           f"custom_stopwords={len(self.config['additional_stopwords'])}")
 
     def get_soup_from_url(self, url):
         """
@@ -55,22 +89,74 @@ class BaseParser:
 
     def count_word_frequency(self, text):
         """
-        Count word frequencies in text.
+        Count word frequencies in text using enhanced French text processing.
         """
-        words = text.split()
-        word_frequencies = Counter(words)
+        # Use the enhanced text processor instead of basic split
+        word_frequencies = self.text_processor.count_word_frequency(text)
+        
+        # Filter by minimum frequency if specified
+        if self.min_word_frequency > 1:
+            word_frequencies = self.text_processor.filter_by_frequency(
+                word_frequencies, self.min_word_frequency
+            )
+        
         if self.debug:
-            self.logger.debug(f"Counted {len(word_frequencies)} unique words")
+            self.logger.debug(f"Counted {len(word_frequencies)} unique words (after filtering)")
+            
         return word_frequencies
 
     def to_csv(self, dict_content, url):
         try:
             word_freqs = self.count_word_frequency(dict_content["full_text"])
+            
+            if not word_freqs:
+                self.logger.warning(f"No words found after processing for URL: {url}")
+                return
+                
             self.csv_writer.write_article(
                 parsed_data=dict_content,
                 url=url,
                 word_freqs=word_freqs
             )
-            self.logger.info(f"Successfully wrote data to CSV for URL: {url}")
+            self.logger.info(f"Successfully wrote {len(word_freqs)} words to CSV for URL: {url}")
         except Exception as e:
             self.logger.error(f"Error writing to CSV for URL: {url} | Error: {e}")
+
+    def add_custom_stopwords(self, stopwords):
+        """
+        Add custom stopwords to the text processor.
+        
+        Args:
+            stopwords: Set or list of additional stopwords
+        """
+        self.text_processor.expand_stopwords(set(stopwords))
+        
+    def set_word_length_limits(self, min_length=3, max_length=50):
+        """
+        Set minimum and maximum word length limits.
+        
+        Args:
+            min_length: Minimum word length
+            max_length: Maximum word length
+        """
+        self.text_processor.set_word_length_limits(min_length, max_length)
+        
+    def get_text_statistics(self, text):
+        """
+        Get statistics about the processed text.
+        
+        Args:
+            text: Text to analyze
+            
+        Returns:
+            Dictionary with text statistics
+        """
+        word_freqs = self.count_word_frequency(text)
+        top_words = self.text_processor.get_top_words(text, 10)
+        
+        return {
+            'total_unique_words': len(word_freqs),
+            'total_word_count': sum(word_freqs.values()),
+            'top_10_words': top_words,
+            'average_word_length': sum(len(word) for word in word_freqs.keys()) / len(word_freqs) if word_freqs else 0
+        }
