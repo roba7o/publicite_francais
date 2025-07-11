@@ -5,8 +5,8 @@ SITE_CONFIGS = {
         'min_word_length': 4,
         'max_word_length': 30
     },
-    'lemonde.fr': {
-        'additional_stopwords': {'monde', 'article', 'abonnés', 'premium'},
+    'franceinfo.fr': {
+        'additional_stopwords': {'franceinfo', 'article', 'abonnés', 'premium'},
         'min_word_frequency': 1,
         'min_word_length': 3,
         'max_word_length': 25
