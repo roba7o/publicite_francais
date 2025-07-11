@@ -1,4 +1,22 @@
-__pycache__/
-*.pyc
-todo.md
 output/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Venv
+venv/
+.venv/
+env/
+.env/
+
+# Data files
+output/
+
+# Environment
+.env
+*.env
+
+# OS
+.DS_Store
