@@ -1,6 +1,6 @@
 import importlib
 from typing import Tuple
-from ..config.scrapers_config import ScraperConfig
+from ..config.website_parser_scrapers_config import ScraperConfig
 from article_scrapers.utils.logger import get_logger
 
 logger = get_logger(__name__)
