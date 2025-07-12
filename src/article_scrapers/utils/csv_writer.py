@@ -11,7 +11,6 @@ CSV_FIELDS = ["word", "source", "article_date", "scraped_date", "title", "freque
 class DailyCSVWriter:
     def __init__(self, output_dir="output", debug=None):
         self.logger = get_logger(self.__class__.__name__)
-
         self.output_dir = output_dir
         os.makedirs(self.output_dir, exist_ok=True)
         self.filename = self._get_filename()
@@ -19,16 +18,10 @@ class DailyCSVWriter:
         self.debug = DEBUG if debug is None else debug
 
     def _get_filename(self):
-        """Generate the filename based on current date (YYYY-MM-DD.csv)"""
         today = datetime.today().strftime("%Y-%m-%d")
         return os.path.join(self.output_dir, f"{today}.csv")
 
     def _load_existing_keys(self):
-        """
-        Load a set of unique keys (title + source) from the existing CSV.
-
-        This is used to skip writing duplicate articles within the same day.
-        """
         existing = set()
         if os.path.isfile(self.filename):
             with open(self.filename, mode="r", newline="", encoding="utf-8") as f:
@@ -39,10 +32,6 @@ class DailyCSVWriter:
         return existing
 
     def write_article(self, parsed_data, url, word_freqs):
-        """
-        Write the parsed article data to a daily CSV file.
-        If the article is already present (based on title and source), it will skip writing it.
-        """
         key = f"{parsed_data['title']}:{url}"
 
         if key in self.existing_keys:

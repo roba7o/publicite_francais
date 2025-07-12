@@ -1,7 +1,3 @@
-"""
-Main entry point for article scraping system
-"""
-
 from article_scrapers.config.website_parser_scrapers_config import SCRAPER_CONFIGS
 from article_scrapers.core.processor import ArticleProcessor
 from article_scrapers.utils.logging_config import setup_logging
