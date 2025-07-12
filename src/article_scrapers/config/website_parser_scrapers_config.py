@@ -31,6 +31,7 @@ class ScraperConfig:
         parser_kwargs (Optional[Dict]): Additional keyword arguments to pass to
                                         the parser's constructor. Defaults to None.
     """
+
     name: str
     enabled: bool
     scraper_class: str
@@ -51,7 +52,7 @@ SCRAPER_CONFIGS: List[ScraperConfig] = [
         live_mode=True,
         test_files=["test1.html", "test2.html"],
         scraper_kwargs={"debug": True},
-        parser_kwargs={}
+        parser_kwargs={},
     ),
     ScraperConfig(
         name="FranceInfo.fr",
@@ -60,7 +61,7 @@ SCRAPER_CONFIGS: List[ScraperConfig] = [
         parser_class="article_scrapers.parsers.france_info_parser.FranceInfoArticleParser",
         live_mode=True,
         scraper_kwargs={"debug": True},
-        parser_kwargs={}
+        parser_kwargs={},
     ),
     ScraperConfig(
         name="TF1 Info",
@@ -69,7 +70,7 @@ SCRAPER_CONFIGS: List[ScraperConfig] = [
         parser_class="article_scrapers.parsers.tf1_info_parser.TF1InfoArticleParser",
         live_mode=True,
         scraper_kwargs={"debug": True},
-        parser_kwargs={}
+        parser_kwargs={},
     ),
     ScraperConfig(
         name="Depeche.fr",
@@ -78,6 +79,6 @@ SCRAPER_CONFIGS: List[ScraperConfig] = [
         parser_class="article_scrapers.parsers.ladepeche_fr_parser.LadepecheFrArticleParser",
         live_mode=True,
         scraper_kwargs={"debug": True},
-        parser_kwargs={}
-    )
+        parser_kwargs={},
+    ),
 ]

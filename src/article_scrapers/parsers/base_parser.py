@@ -27,10 +27,10 @@ from article_scrapers.utils.logger import get_logger
 
 # Define a default configuration for sites not explicitly listed
 DEFAULT_SITE_CONFIG = {
-    'min_word_frequency': 1,
-    'min_word_length': 3,
-    'max_word_length': 50,
-    'additional_stopwords': []
+    "min_word_frequency": 1,
+    "min_word_length": 3,
+    "max_word_length": 50,
+    "additional_stopwords": [],
 }
 
 
@@ -44,12 +44,16 @@ class BaseParser(ABC):
     """
 
     HEADERS = {
-        'User-Agent': ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
-                       'AppleWebKit/537.36 (KHTML, like Gecko) '
-                       'Chrome/58.0.3029.110 Safari/537.3')
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/58.0.3029.110 Safari/537.3"
+        )
     }
 
-    def __init__(self, site_domain: str, debug: Optional[bool] = None, delay: float = 1.0):
+    def __init__(
+        self, site_domain: str, debug: Optional[bool] = None, delay: float = 1.0
+    ):
         """
         Initializes the BaseParser.
 
@@ -61,25 +65,30 @@ class BaseParser(ABC):
         self.logger = get_logger(self.__class__.__name__)
 
         if not site_domain:
-            self.logger.warning("No site_domain provided, falling back to default configuration.")
+            self.logger.warning(
+                "No site_domain provided, falling back to default configuration."
+            )
 
         self.site_domain = site_domain
         self.debug = debug if debug is not None else DEBUG
         self.delay = delay
-        self.csv_writer = DailyCSVWriter(debug=self.debug) # Pass debug flag to CSVWriter
+        self.csv_writer = DailyCSVWriter(
+            debug=self.debug
+        )  # Pass debug flag to CSVWriter
 
         # Load site-specific configuration or default
         self.config = self._load_site_config(site_domain)
 
         # Initialize French text processor with initial configuration
         self.text_processor = FrenchTextProcessor()
-        self.min_word_frequency = self.config['min_word_frequency']
+        self.min_word_frequency = self.config["min_word_frequency"]
         self._apply_text_processor_config()
 
         self.logger.info(f"Initialized parser for domain: {self.site_domain}")
         if self.debug:
-            self.logger.debug(f"Parser debug mode: {self.debug}, Request delay: {self.delay}s")
-
+            self.logger.debug(
+                f"Parser debug mode: {self.debug}, Request delay: {self.delay}s"
+            )
 
     def _load_site_config(self, site_domain: str) -> Dict[str, Any]:
         """
@@ -101,21 +110,29 @@ class BaseParser(ABC):
         This includes stopwords and word length limits.
         """
         # Add site-specific stopwords
-        additional_stopwords = self.config.get('additional_stopwords')
+        additional_stopwords = self.config.get("additional_stopwords")
         if additional_stopwords:
             self.text_processor.expand_stopwords(set(additional_stopwords))
             self.logger.debug(f"Added {len(additional_stopwords)} custom stopwords.")
 
         # Set word length limits
-        min_length = self.config.get('min_word_length', DEFAULT_SITE_CONFIG['min_word_length'])
-        max_length = self.config.get('max_word_length', DEFAULT_SITE_CONFIG['max_word_length'])
-        self.text_processor.set_word_length_limits(min_length=min_length, max_length=max_length)
+        min_length = self.config.get(
+            "min_word_length", DEFAULT_SITE_CONFIG["min_word_length"]
+        )
+        max_length = self.config.get(
+            "max_word_length", DEFAULT_SITE_CONFIG["max_word_length"]
+        )
+        self.text_processor.set_word_length_limits(
+            min_length=min_length, max_length=max_length
+        )
 
         if self.debug:
-            self.logger.info(f"Text processor config for {self.site_domain or 'default'}: "
-                           f"min_freq={self.config['min_word_frequency']}, "
-                           f"word_length={min_length}-{max_length}, "
-                           f"custom_stopwords={len(additional_stopwords) if additional_stopwords else 0}")
+            self.logger.info(
+                f"Text processor config for {self.site_domain or 'default'}: "
+                f"min_freq={self.config['min_word_frequency']}, "
+                f"word_length={min_length}-{max_length}, "
+                f"custom_stopwords={len(additional_stopwords) if additional_stopwords else 0}"
+            )
 
     def get_soup_from_url(self, url: str) -> Optional[BeautifulSoup]:
         """
@@ -129,27 +146,38 @@ class BaseParser(ABC):
         """
         self.logger.info(f"Fetching URL: {url}...")
         try:
-            response = requests.get(url, headers=self.HEADERS, timeout=10) # Added timeout
+            response = requests.get(
+                url, headers=self.HEADERS, timeout=10
+            )  # Added timeout
             time.sleep(self.delay)  # Politeness delay
             response.raise_for_status()  # Raises HTTPError for bad responses (4xx or 5xx)
 
-            self.logger.info(f"Successfully fetched URL: {url} (Status: {response.status_code})")
-            return BeautifulSoup(response.content, 'html.parser')
+            self.logger.info(
+                f"Successfully fetched URL: {url} (Status: {response.status_code})"
+            )
+            return BeautifulSoup(response.content, "html.parser")
 
         except requests.exceptions.Timeout as e:
             self.logger.error(f"Timeout fetching URL: {url} | Error: {e}")
             return None
         except requests.exceptions.HTTPError as e:
-            self.logger.error(f"HTTP error fetching URL: {url} | Status Code: {e.response.status_code} | Error: {e}")
+            self.logger.error(
+                f"HTTP error fetching URL: {url} | Status Code: {e.response.status_code} | Error: {e}"
+            )
             return None
         except requests.exceptions.ConnectionError as e:
             self.logger.error(f"Connection error fetching URL: {url} | Error: {e}")
             return None
         except requests.exceptions.RequestException as e:
-            self.logger.error(f"An unexpected request error occurred for URL: {url} | Error: {e}")
+            self.logger.error(
+                f"An unexpected request error occurred for URL: {url} | Error: {e}"
+            )
             return None
         except Exception as e:
-            self.logger.error(f"An unexpected error occurred while getting soup from URL: {url} | Error: {e}", exc_info=True)
+            self.logger.error(
+                f"An unexpected error occurred while getting soup from URL: {url} | Error: {e}",
+                exc_info=True,
+            )
             return None
 
     def get_soup_from_localfile(self, file_name: str) -> Optional[BeautifulSoup]:
@@ -166,7 +194,7 @@ class BaseParser(ABC):
         # Assumes test_data is parallel to article_scrapers (or in its parent)
         # Adjust base_dir calculation if your project structure differs
         current_file_dir = os.path.dirname(os.path.abspath(__file__))
-        project_root_dir = os.path.abspath(os.path.join(current_file_dir, '..', '..'))
+        project_root_dir = os.path.abspath(os.path.join(current_file_dir, "..", ".."))
         test_file_path = os.path.join(project_root_dir, "test_data", file_name)
 
         if not os.path.exists(test_file_path):
@@ -176,15 +204,22 @@ class BaseParser(ABC):
         try:
             with open(test_file_path, "r", encoding="utf-8") as f:
                 self.logger.debug(f"Loading local file for parsing: {test_file_path}")
-                return BeautifulSoup(f.read(), 'html.parser')
+                return BeautifulSoup(f.read(), "html.parser")
         except FileNotFoundError:
-            self.logger.error(f"File not found during local file read: {test_file_path}")
+            self.logger.error(
+                f"File not found during local file read: {test_file_path}"
+            )
             return None
         except IOError as e:
-            self.logger.error(f"I/O error reading local file: {test_file_path} | Error: {e}")
+            self.logger.error(
+                f"I/O error reading local file: {test_file_path} | Error: {e}"
+            )
             return None
         except Exception as e:
-            self.logger.error(f"Failed to read local file: {test_file_path} | Error: {e}", exc_info=True)
+            self.logger.error(
+                f"Failed to read local file: {test_file_path} | Error: {e}",
+                exc_info=True,
+            )
             return None
 
     def count_word_frequency(self, text: str) -> Dict[str, int]:
@@ -209,7 +244,9 @@ class BaseParser(ABC):
             )
 
         if self.debug:
-            self.logger.debug(f"Counted {len(word_frequencies)} unique words (after filtering).")
+            self.logger.debug(
+                f"Counted {len(word_frequencies)} unique words (after filtering)."
+            )
 
         return word_frequencies
 
@@ -222,7 +259,9 @@ class BaseParser(ABC):
             url (str): The URL of the article.
         """
         if not parsed_data or not parsed_data.get("full_text"):
-            self.logger.warning(f"No parsed data or full_text provided for CSV export for URL: {url}")
+            self.logger.warning(
+                f"No parsed data or full_text provided for CSV export for URL: {url}"
+            )
             return
 
         try:
@@ -230,17 +269,21 @@ class BaseParser(ABC):
             word_freqs = self.count_word_frequency(full_text)
 
             if not word_freqs:
-                self.logger.warning(f"No significant words found after processing for URL: {url}. Not writing to CSV.")
+                self.logger.warning(
+                    f"No significant words found after processing for URL: {url}. Not writing to CSV."
+                )
                 return
 
             self.csv_writer.write_article(
-                parsed_data=parsed_data,
-                url=url,
-                word_freqs=word_freqs
+                parsed_data=parsed_data, url=url, word_freqs=word_freqs
             )
-            self.logger.info(f"Successfully wrote {len(word_freqs)} unique words to CSV for URL: {url}")
+            self.logger.info(
+                f"Successfully wrote {len(word_freqs)} unique words to CSV for URL: {url}"
+            )
         except Exception as e:
-            self.logger.error(f"Error writing to CSV for URL: {url} | Error: {e}", exc_info=True)
+            self.logger.error(
+                f"Error writing to CSV for URL: {url} | Error: {e}", exc_info=True
+            )
 
     def add_custom_stopwords(self, stopwords: List[str]) -> None:
         """
@@ -261,7 +304,9 @@ class BaseParser(ABC):
             max_length (int): Maximum word length. Defaults to 50.
         """
         self.text_processor.set_word_length_limits(min_length, max_length)
-        self.logger.debug(f"Set word length limits: min={min_length}, max={max_length}.")
+        self.logger.debug(
+            f"Set word length limits: min={min_length}, max={max_length}."
+        )
 
     def get_text_statistics(self, text: str) -> Dict[str, Any]:
         """
@@ -275,22 +320,26 @@ class BaseParser(ABC):
         """
         if not text:
             return {
-                'total_unique_words': 0,
-                'total_word_count': 0,
-                'top_10_words': [],
-                'average_word_length': 0
+                "total_unique_words": 0,
+                "total_word_count": 0,
+                "top_10_words": [],
+                "average_word_length": 0,
             }
 
         word_freqs = self.count_word_frequency(text)
         top_words = self.text_processor.get_top_words(text, 10)
         total_word_count = sum(word_freqs.values())
-        average_word_length = sum(len(word) for word in word_freqs.keys()) / len(word_freqs) if word_freqs else 0
+        average_word_length = (
+            sum(len(word) for word in word_freqs.keys()) / len(word_freqs)
+            if word_freqs
+            else 0
+        )
 
         return {
-            'total_unique_words': len(word_freqs),
-            'total_word_count': total_word_count,
-            'top_10_words': top_words,
-            'average_word_length': average_word_length
+            "total_unique_words": len(word_freqs),
+            "total_word_count": total_word_count,
+            "top_10_words": top_words,
+            "average_word_length": average_word_length,
         }
 
     @abstractmethod

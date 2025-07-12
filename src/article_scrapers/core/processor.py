@@ -15,12 +15,14 @@ from typing import Tuple, Optional, List, Any, Dict
 # Assuming these imports are correct relative to your project structure
 from ..config.website_parser_scrapers_config import ScraperConfig
 from article_scrapers.utils.logger import get_logger
+
 # Assuming BaseParser and BeautifulSoup are not directly used here but are for parser classes
 # from article_scrapers.parsers.base_parser import BaseParser
 from bs4 import BeautifulSoup
 
 
 logger = get_logger(__name__)
+
 
 class ArticleProcessor:
     """
@@ -43,7 +45,7 @@ class ArticleProcessor:
         Raises:
             ImportError: If the module or class cannot be found.
         """
-        module_path, class_name = class_path.rsplit('.', 1)
+        module_path, class_name = class_path.rsplit(".", 1)
         module = importlib.import_module(module_path)
         return getattr(module, class_name)
 
@@ -67,17 +69,26 @@ class ArticleProcessor:
         try:
             # Dynamically load scraper and parser classes
             ScraperClass = cls.import_class(config.scraper_class)
-            ParserClass = cls.import_class(config.parser_class) # This is where the BaseParser subclasses are loaded
+            ParserClass = cls.import_class(
+                config.parser_class
+            )  # This is where the BaseParser subclasses are loaded
 
             # Instantiate scraper and parser with their respective kwargs
             # Ensure parser is correctly instantiated as a BaseParser subclass
             scraper = ScraperClass(**(config.scraper_kwargs or {}))
-            parser = ParserClass(**(config.parser_kwargs or {})) # This will call BaseParser's __init__
+            parser = ParserClass(
+                **(config.parser_kwargs or {})
+            )  # This will call BaseParser's __init__
         except (ImportError, AttributeError) as e:
-            logger.error(f"Failed to initialize components for {config.name}: {e}", exc_info=True)
+            logger.error(
+                f"Failed to initialize components for {config.name}: {e}", exc_info=True
+            )
             return 0, 0
         except Exception as e:
-            logger.error(f"An unexpected error occurred during component initialization for {config.name}: {e}", exc_info=True)
+            logger.error(
+                f"An unexpected error occurred during component initialization for {config.name}: {e}",
+                exc_info=True,
+            )
             return 0, 0
 
         # Determine content sources (live URLs or local test files)
@@ -90,7 +101,9 @@ class ArticleProcessor:
             sources = cls._get_test_sources(parser, config.test_files)
 
         if not sources:
-            logger.warning(f"No content sources (URLs or test files) found for {config.name}. Nothing to process.")
+            logger.warning(
+                f"No content sources (URLs or test files) found for {config.name}. Nothing to process."
+            )
             return 0, 0
 
         # Process each article
@@ -99,7 +112,9 @@ class ArticleProcessor:
 
         for soup, source_identifier in sources:
             if not soup:
-                logger.error(f"Failed to obtain BeautifulSoup object for source: {source_identifier}. Skipping.")
+                logger.error(
+                    f"Failed to obtain BeautifulSoup object for source: {source_identifier}. Skipping."
+                )
                 continue
 
             if cls._process_article(parser, soup, source_identifier):
@@ -107,11 +122,15 @@ class ArticleProcessor:
             else:
                 logger.warning(f"Article processing failed for: {source_identifier}")
 
-        logger.info(f"Finished processing {config.name}: {processed_count}/{total_attempted} articles successfully processed.")
+        logger.info(
+            f"Finished processing {config.name}: {processed_count}/{total_attempted} articles successfully processed."
+        )
         return processed_count, total_attempted
 
     @staticmethod
-    def _get_live_sources(scraper: Any, parser: Any) -> List[Tuple[Optional[BeautifulSoup], str]]:
+    def _get_live_sources(
+        scraper: Any, parser: Any
+    ) -> List[Tuple[Optional[BeautifulSoup], str]]:
         """
         Retrieves live article URLs using the scraper and fetches their BeautifulSoup objects.
 
@@ -127,10 +146,15 @@ class ArticleProcessor:
         try:
             urls = scraper.get_article_urls()
             if not urls:
-                logger.warning(f"No URLs were fetched by the scraper: {scraper.__class__.__name__}")
+                logger.warning(
+                    f"No URLs were fetched by the scraper: {scraper.__class__.__name__}"
+                )
                 return []
         except Exception as e:
-            logger.error(f"Error getting live article URLs from scraper {scraper.__class__.__name__}: {e}", exc_info=True)
+            logger.error(
+                f"Error getting live article URLs from scraper {scraper.__class__.__name__}: {e}",
+                exc_info=True,
+            )
             return []
 
         # Fetch soup for each URL
@@ -141,7 +165,9 @@ class ArticleProcessor:
         return soup_sources
 
     @staticmethod
-    def _get_test_sources(parser: Any, test_files: Optional[List[str]]) -> List[Tuple[Optional[BeautifulSoup], str]]:
+    def _get_test_sources(
+        parser: Any, test_files: Optional[List[str]]
+    ) -> List[Tuple[Optional[BeautifulSoup], str]]:
         """
         Loads content from local test files and returns their BeautifulSoup objects.
 
@@ -164,7 +190,9 @@ class ArticleProcessor:
         return soup_sources
 
     @staticmethod
-    def _process_article(parser: Any, soup: BeautifulSoup, source_identifier: str) -> bool:
+    def _process_article(
+        parser: Any, soup: BeautifulSoup, source_identifier: str
+    ) -> bool:
         """
         Processes a single article by parsing its content and saving it to CSV.
 
@@ -183,11 +211,18 @@ class ArticleProcessor:
 
             if parsed_content:
                 parser.to_csv(parsed_content, source_identifier)
-                logger.debug(f"Article successfully parsed and saved: {source_identifier}")
+                logger.debug(
+                    f"Article successfully parsed and saved: {source_identifier}"
+                )
                 return True
             else:
-                logger.error(f"Parser returned None for article content from: {source_identifier}")
+                logger.error(
+                    f"Parser returned None for article content from: {source_identifier}"
+                )
                 return False
         except Exception as e:
-            logger.error(f"An error occurred during parsing or CSV writing for {source_identifier}: {e}", exc_info=True)
+            logger.error(
+                f"An error occurred during parsing or CSV writing for {source_identifier}: {e}",
+                exc_info=True,
+            )
             return False

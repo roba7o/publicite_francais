@@ -13,11 +13,11 @@ from article_scrapers.utils.logger import get_logger
 class SlateFrURLScraper:
     def __init__(self, debug=None):
         self.logger = get_logger(self.__class__.__name__)
-        
+
         self.debug = debug if debug is not None else DEBUG
         self.base_url = "https://www.slate.fr"
         self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
         }
 
     def get_article_urls(self):
@@ -30,13 +30,13 @@ class SlateFrURLScraper:
 
             response = requests.get(self.base_url, headers=self.headers)
             response.raise_for_status()
-            soup = BeautifulSoup(response.content, 'html.parser')
+            soup = BeautifulSoup(response.content, "html.parser")
 
             cards = soup.select(".card--story")
 
             urls = []
             for card in cards[:8]:  # use 8 as per comment, was 2 in your snippet
-                a_tag = card.find('a', href=True)
+                a_tag = card.find("a", href=True)
                 if a_tag:
                     url = a_tag["href"]
                     if url.startswith("http://") or url.startswith("https://"):

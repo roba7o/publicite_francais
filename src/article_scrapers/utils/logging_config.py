@@ -1,10 +1,11 @@
 import logging
 import sys
 
+
 def setup_logging(level=logging.INFO):
     """Sets up global logging config for the whole project."""
     formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
 
     handler = logging.StreamHandler(sys.stdout)
