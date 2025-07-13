@@ -68,14 +68,10 @@ class LadepecheFrArticleParser(BaseParser):
                 )
                 return None
 
-            # Get text statistics for debugging
+            # Log basic text info for debugging
             if self.debug:
-                stats = self.get_text_statistics(full_text)
-                self.logger.info(
-                    f"Ladepeche.fr text stats: unique_words={stats['total_unique_words']}, "
-                    f"total_words={stats['total_word_count']}"
-                )
-                self.logger.debug(f"Ladepeche.fr top words: {stats['top_10_words']}")
+                word_count = len(full_text.split())
+                self.logger.info(f"Ladepeche.fr text stats: total_words={word_count}")
 
             return {
                 "full_text": full_text,
@@ -83,15 +79,7 @@ class LadepecheFrArticleParser(BaseParser):
                 "title": self._extract_title(soup),
                 "article_date": self._extract_date(soup),
                 "date_scraped": datetime.now().strftime("%Y-%m-%d"),
-                "author": self._extract_author(
-                    soup
-                ),  # Assuming you'd want to add this later for Depeche
-                "tags": self._extract_tags(
-                    soup
-                ),  # Assuming you'd want to add this later for Depeche
-                "image_caption": self._extract_image_caption(
-                    soup
-                ),  # Assuming you'd want to add this later for Depeche
+                "author": self._extract_author(soup),
             }
 
         except Exception as e:
@@ -296,31 +284,3 @@ class LadepecheFrArticleParser(BaseParser):
             return author_tag.get_text(strip=True)
         self.logger.debug("Author information not found for Ladepeche.fr.")
         return "Unknown author"
-
-    def _extract_tags(self, soup: BeautifulSoup) -> List[str]:
-        """
-        Extracts article tags. (Placeholder - implement specific logic for Ladepeche if needed)
-        """
-        tags: List[str] = []
-        # Example for Ladepeche: tags might be in a div with a specific class, e.g., 'article-tags'
-        tags_container = soup.find("div", class_="article-tags")
-        if tags_container:
-            for tag_link in tags_container.find_all("a"):
-                tag_text = tag_link.get_text(strip=True)
-                if tag_text:
-                    tags.append(tag_text)
-        self.logger.debug("Tags not found for Ladepeche.fr.")
-        return tags
-
-    def _extract_image_caption(self, soup: BeautifulSoup) -> Optional[str]:
-        """
-        Extracts the main image caption. (Placeholder - implement specific logic for Ladepeche if needed)
-        """
-        # Example for Ladepeche: captions might be in a figcaption or div after an image
-        caption_tag = soup.find("figure", class_="main-image-figure")
-        if caption_tag:
-            caption_text = caption_tag.find("figcaption")
-            if caption_text:
-                return caption_text.get_text(strip=True)
-        self.logger.debug("Image caption not found for Ladepeche.fr.")
-        return None

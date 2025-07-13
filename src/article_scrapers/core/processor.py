@@ -359,15 +359,6 @@ class ArticleProcessor:
         return soup_sources
 
     @staticmethod
-    def _get_live_sources(
-        scraper: Any, parser: Any
-    ) -> List[Tuple[Optional[BeautifulSoup], str]]:
-        # Legacy method for backward compatibility
-        return ArticleProcessor._get_live_sources_with_recovery(
-            scraper, parser, "unknown"
-        )
-
-    @staticmethod
     def _get_test_sources(
         parser: Any, source_name: str
     ) -> List[Tuple[Optional[BeautifulSoup], str]]:

@@ -237,48 +237,6 @@ class BaseParser(ABC):
         })
         return None
 
-    def get_soup_from_localfile(self, file_name: str) -> Optional[BeautifulSoup]:
-        """
-        Load HTML content from a local test file.
-        
-        This method supports offline testing by loading pre-saved HTML files
-        from the test_data directory. Useful for development and testing
-        without making live HTTP requests.
-        
-        Args:
-            file_name: Name of the HTML file in the test_data directory
-            
-        Returns:
-            BeautifulSoup object of the parsed HTML, or None if file not found
-            
-        Example:
-            >>> parser = SomeParser("example.com")
-            >>> soup = parser.get_soup_from_localfile("sample_article.html")
-            >>> if soup:
-            ...     content = parser.parse_article(soup)
-        """
-        current_file_dir = os.path.dirname(os.path.abspath(__file__))
-        project_root_dir = os.path.abspath(os.path.join(current_file_dir, ".."))
-        test_file_path = os.path.join(project_root_dir, "test_data", file_name)
-
-        if not os.path.exists(test_file_path):
-            self.logger.error("Test file not found", extra_data={
-                "file_path": test_file_path,
-                "file_name": file_name,
-                "mode": "offline"
-            })
-            return None
-
-        try:
-            with open(test_file_path, "r", encoding="utf-8") as f:
-                return BeautifulSoup(f.read(), "html.parser")
-        except Exception as e:
-            self.logger.error("Error reading test file", extra_data={
-                "file_path": test_file_path,
-                "error": str(e)
-            }, exc_info=True)
-            return None
-
     def get_test_sources_from_directory(
         self, source_name: str
     ) -> List[Tuple[Optional[BeautifulSoup], str]]:
