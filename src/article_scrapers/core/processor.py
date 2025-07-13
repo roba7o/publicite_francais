@@ -213,5 +213,14 @@ class ArticleProcessor:
     def _process_article(
         parser: Any, soup: BeautifulSoup, source_identifier: str
     ) -> bool:
-        # Legacy method for backward compatibility
-        return ArticleProcessor._process_article_with_recovery(parser, soup, source_identifier, "unknown")
+        """Parse a single article and save results to CSV."""
+        try:
+            parsed_content = parser.parse_article(soup)
+            if parsed_content:
+                # source_identifier is now the mapped URL (from base_parser)
+                parser.to_csv(parsed_content, source_identifier)
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"Error processing {source_identifier}: {e}")
+            return False
