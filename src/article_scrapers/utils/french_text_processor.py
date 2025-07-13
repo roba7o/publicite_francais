@@ -1,10 +1,3 @@
-"""
-French text processing utilities for article analysis.
-
-This module provides text cleaning, normalization, and word frequency analysis
-specifically optimized for French news articles.
-"""
-
 import re
 import unicodedata
 from collections import Counter
@@ -12,54 +5,29 @@ from typing import Dict, List, Set
 
 
 class FrenchTextProcessor:
-    """Enhanced text processor for French articles with optimized stopword filtering."""
-
     def __init__(self):
-        # Essential French stopwords - reduced from massive list for better performance
         self.french_stopwords = {
-            # Articles
             "le", "la", "les", "un", "une", "des", "du", "de", "au", "aux",
-            # Pronouns
             "je", "tu", "il", "elle", "nous", "vous", "ils", "elles", "ce", "cette", "ces",
-            # Prepositions
             "à", "dans", "sur", "avec", "sans", "pour", "par", "vers", "chez", "entre",
-            # Conjunctions
             "et", "ou", "mais", "donc", "car", "ni", "or",
-            # Common verbs (conjugated forms)
             "est", "sont", "était", "étaient", "être", "avoir", "a", "ont", "avait",
-            # Common words
             "comme", "aussi", "bien", "très", "plus", "moins", "tout", "tous", "toute",
             "toutes", "peu", "beaucoup", "encore", "déjà", "maintenant", "alors",
-            # Numbers
             "un", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf", "dix",
-            # Time words
             "aujourd'hui", "hier", "demain", "semaine", "mois", "année", "jour",
-            # Common adverbs
             "ici", "là", "où", "quand", "comment", "pourquoi", "si", "non", "oui",
-            # Site-specific words (will be expanded by config)
         }
-        
         self.min_word_length = 3
         self.max_word_length = 50
 
     def clean_text(self, text: str) -> str:
-        """
-        Clean and normalize French text.
-        
-        Args:
-            text: Raw text to clean
-            
-        Returns:
-            Cleaned text ready for analysis
-        """
         if not text:
             return ""
 
-        # Convert to lowercase and normalize unicode
         text = text.lower()
         text = unicodedata.normalize('NFD', text)
         
-        # Remove accents from vowels (keep cedilla)
         text = re.sub(r'[àâä]', 'a', text)
         text = re.sub(r'[éèêë]', 'e', text)
         text = re.sub(r'[îï]', 'i', text)
@@ -67,50 +35,23 @@ class FrenchTextProcessor:
         text = re.sub(r'[ûüù]', 'u', text)
         text = re.sub(r'[ÿ]', 'y', text)
         
-        # Remove special characters but keep apostrophes and hyphens
         text = re.sub(r'[^a-z0-9\s\'-]', ' ', text)
-        
-        # Normalize whitespace
         text = re.sub(r'\s+', ' ', text).strip()
         
         return text
 
     def tokenize_french_text(self, text: str) -> List[str]:
-        """
-        Tokenize French text into words, handling contractions.
-        
-        Args:
-            text: Cleaned text to tokenize
-            
-        Returns:
-            List of individual words
-        """
         if not text:
             return []
 
-        # Split on whitespace
-        words = text.split()
+        words = []
+        for word in text.split():
+            if (word.strip() and 
+                self.min_word_length <= len(word) <= self.max_word_length and 
+                word not in self.french_stopwords):
+                words.append(word)
         
-        # Handle French contractions (l'eau -> l'eau, d'accord -> d'accord)
-        # Keep contractions as single tokens for better analysis
-        processed_words = []
-        
-        for word in words:
-            # Skip empty words
-            if not word.strip():
-                continue
-                
-            # Apply length filters
-            if len(word) < self.min_word_length or len(word) > self.max_word_length:
-                continue
-                
-            # Skip stopwords
-            if word in self.french_stopwords:
-                continue
-                
-            processed_words.append(word)
-        
-        return processed_words
+        return words
 
     def count_word_frequency(self, text: str) -> Dict[str, int]:
         """

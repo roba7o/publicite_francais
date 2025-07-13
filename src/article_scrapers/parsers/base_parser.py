@@ -1,13 +1,3 @@
-"""
-Base parser module providing common functionality for all article parsers.
-
-This module contains the abstract BaseParser class that handles:
-- HTML fetching (live and offline modes)
-- Text processing and word frequency analysis
-- CSV output generation
-- Common configuration management
-"""
-
 import os
 import time
 from abc import ABC, abstractmethod
@@ -22,8 +12,6 @@ from article_scrapers.config.text_processing_config import SITE_CONFIGS
 from article_scrapers.config.settings import DEBUG, OFFLINE
 from article_scrapers.utils.logger import get_logger
 
-
-# Default configuration for sites not in SITE_CONFIGS
 DEFAULT_SITE_CONFIG = {
     "min_word_frequency": 1,
     "min_word_length": 3,
@@ -40,23 +28,12 @@ class BaseParser(ABC):
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
     }
 
-    def __init__(
-        self, site_domain: str, debug: Optional[bool] = None, delay: float = 1.0
-    ):
-        """
-        Initialize the base parser with site-specific configuration.
-        
-        Args:
-            site_domain: Domain name for configuration lookup
-            debug: Override debug setting
-            delay: Delay between requests (seconds)
-        """
+    def __init__(self, site_domain: str, debug: Optional[bool] = None, delay: float = 1.0):
         self.logger = get_logger(self.__class__.__name__)
         self.site_domain = site_domain
         self.debug = debug if debug is not None else DEBUG
         self.delay = delay
 
-        # Set up output directory based on mode
         if OFFLINE:
             current_file_dir = os.path.dirname(os.path.abspath(__file__))
             project_root_dir = os.path.abspath(os.path.join(current_file_dir, ".."))
@@ -65,35 +42,52 @@ class BaseParser(ABC):
             output_dir = "output"
         self.csv_writer = DailyCSVWriter(debug=self.debug, output_dir=output_dir)
 
-        # Load and apply site-specific configuration
         self.config = SITE_CONFIGS.get(site_domain, DEFAULT_SITE_CONFIG)
         self.text_processor = FrenchTextProcessor()
         self.min_word_frequency = self.config["min_word_frequency"]
 
-        # Apply configuration to text processor
         if self.config.get("additional_stopwords"):
-            self.text_processor.expand_stopwords(
-                set(self.config["additional_stopwords"])
-            )
+            self.text_processor.expand_stopwords(set(self.config["additional_stopwords"]))
 
         min_length = self.config.get("min_word_length", 3)
         max_length = self.config.get("max_word_length", 50)
         self.text_processor.set_word_length_limits(min_length, max_length)
 
-    def get_soup_from_url(self, url: str) -> Optional[BeautifulSoup]:
-        """Fetch HTML content from a URL and return BeautifulSoup object."""
+    def get_soup_from_url(self, url: str, max_retries: int = 3) -> Optional[BeautifulSoup]:
         if OFFLINE:
             self.logger.warning(f"Attempted to fetch URL in offline mode: {url}")
             return None
 
-        try:
-            response = requests.get(url, headers=self.HEADERS, timeout=10)
-            time.sleep(self.delay)  # Rate limiting
-            response.raise_for_status()
-            return BeautifulSoup(response.content, "html.parser")
-        except Exception as e:
-            self.logger.error(f"Error fetching {url}: {e}")
-            return None
+        for attempt in range(max_retries):
+            try:
+                response = requests.get(url, headers=self.HEADERS, timeout=15)
+                time.sleep(self.delay)
+                response.raise_for_status()
+                
+                if len(response.content) < 100:
+                    raise ValueError("Response too short, likely blocked or empty")
+                
+                return BeautifulSoup(response.content, "html.parser")
+                
+            except requests.exceptions.Timeout:
+                self.logger.warning(f"Timeout fetching {url}, attempt {attempt + 1}/{max_retries}")
+            except requests.exceptions.ConnectionError:
+                self.logger.warning(f"Connection error for {url}, attempt {attempt + 1}/{max_retries}")
+            except requests.exceptions.HTTPError as e:
+                if e.response.status_code in [429, 503, 502]:
+                    self.logger.warning(f"Server error {e.response.status_code} for {url}, attempt {attempt + 1}/{max_retries}")
+                    time.sleep(2 ** attempt)  # Exponential backoff
+                else:
+                    self.logger.error(f"HTTP error {e.response.status_code} for {url}")
+                    return None
+            except Exception as e:
+                self.logger.warning(f"Unexpected error fetching {url}: {e}, attempt {attempt + 1}/{max_retries}")
+            
+            if attempt < max_retries - 1:
+                time.sleep(1 + attempt)
+        
+        self.logger.error(f"Failed to fetch {url} after {max_retries} attempts")
+        return None
 
     def get_soup_from_localfile(self, file_name: str) -> Optional[BeautifulSoup]:
         """Load HTML content from a local test file."""
