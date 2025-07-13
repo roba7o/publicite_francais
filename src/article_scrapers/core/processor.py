@@ -34,7 +34,7 @@ class ArticleProcessor:
             logger.error(f"Failed to initialize components for {config.name}: {e}")
             return 0, 0
 
-        sources: List[Tuple[Optional[BeautifulSoup], str]] = []
+        sources = []
         if config.live_mode:
             sources = cls._get_live_sources(scraper, parser)
         else:
@@ -48,22 +48,14 @@ class ArticleProcessor:
         total_attempted = len(sources)
 
         for soup, source_identifier in sources:
-            if not soup:
-                continue
-
-            if cls._process_article(parser, soup, source_identifier):
+            if soup and cls._process_article(parser, soup, source_identifier):
                 processed_count += 1
 
-        logger.info(
-            f"Finished {config.name}: {processed_count}/{total_attempted} articles processed"
-        )
+        logger.info(f"Finished {config.name}: {processed_count}/{total_attempted} articles processed")
         return processed_count, total_attempted
 
     @staticmethod
-    def _get_live_sources(
-        scraper: Any, parser: Any
-    ) -> List[Tuple[Optional[BeautifulSoup], str]]:
-        urls: List[str] = []
+    def _get_live_sources(scraper: Any, parser: Any) -> List[Tuple[Optional[BeautifulSoup], str]]:
         try:
             urls = scraper.get_article_urls()
             if not urls:
@@ -72,37 +64,31 @@ class ArticleProcessor:
             logger.error(f"Error getting URLs from {scraper.__class__.__name__}: {e}")
             return []
 
-        soup_sources: List[Tuple[Optional[BeautifulSoup], str]] = []
+        soup_sources = []
         for url in urls:
             soup = parser.get_soup_from_url(url)
             soup_sources.append((soup, url))
         return soup_sources
 
     @staticmethod
-    def _get_test_sources(
-        parser: Any, test_files: Optional[List[str]]
-    ) -> List[Tuple[Optional[BeautifulSoup], str]]:
+    def _get_test_sources(parser: Any, test_files: Optional[List[str]]) -> List[Tuple[Optional[BeautifulSoup], str]]:
         if not test_files:
             return []
 
-        soup_sources: List[Tuple[Optional[BeautifulSoup], str]] = []
+        soup_sources = []
         for file_name in test_files:
             soup = parser.get_soup_from_localfile(file_name)
             soup_sources.append((soup, file_name))
         return soup_sources
 
     @staticmethod
-    def _process_article(
-        parser: Any, soup: BeautifulSoup, source_identifier: str
-    ) -> bool:
+    def _process_article(parser: Any, soup: BeautifulSoup, source_identifier: str) -> bool:
         try:
-            parsed_content: Optional[Dict[str, Any]] = parser.parse_article(soup)
-
+            parsed_content = parser.parse_article(soup)
             if parsed_content:
                 parser.to_csv(parsed_content, source_identifier)
                 return True
-            else:
-                return False
+            return False
         except Exception as e:
             logger.error(f"Error processing {source_identifier}: {e}")
             return False

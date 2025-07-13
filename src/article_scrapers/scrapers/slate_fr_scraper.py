@@ -2,7 +2,6 @@ import requests
 from bs4 import BeautifulSoup, Tag
 from urllib.parse import urljoin
 from ..config.settings import DEBUG
-
 from article_scrapers.utils.logger import get_logger
 
 
@@ -27,16 +26,14 @@ class SlateFrURLScraper:
                 a_tag = card.find("a", href=True)
                 if a_tag and isinstance(a_tag, Tag):
                     url = str(a_tag["href"])
-                    if url.startswith("http://") or url.startswith("https://"):
-                        full_url = url
-                    else:
-                        full_url = urljoin(self.base_url, url)
-                    urls.append(full_url)
+                    if not url.startswith("http"):
+                        url = urljoin(self.base_url, url)
+                    urls.append(url)
 
             urls = list(set(urls))
             self.logger.info(f"Found {len(urls)} article URLs.")
             return urls
 
-        except requests.exceptions.RequestException as e:
+        except Exception as e:
             self.logger.error(f"Failed to fetch URL: {self.base_url} | Error: {e}")
             return None

@@ -36,9 +36,7 @@ class DailyCSVWriter:
 
         if key in self.existing_keys:
             if self.debug:
-                self.logger.warning(
-                    f"Skipping duplicate article: '{parsed_data['title']}' from {url}"
-                )
+                self.logger.warning(f"Skipping duplicate article: '{parsed_data['title']}' from {url}")
             return
 
         file_exists = os.path.isfile(self.filename)
@@ -49,22 +47,16 @@ class DailyCSVWriter:
                 if not file_exists:
                     writer.writeheader()
                 for word, freq in word_freqs.items():
-                    writer.writerow(
-                        {
-                            "word": word,
-                            "source": url,
-                            "article_date": parsed_data["article_date"],
-                            "scraped_date": parsed_data["date_scraped"],
-                            "title": parsed_data["title"],
-                            "frequency": freq,
-                        }
-                    )
+                    writer.writerow({
+                        "word": word,
+                        "source": url,
+                        "article_date": parsed_data["article_date"],
+                        "scraped_date": parsed_data["date_scraped"],
+                        "title": parsed_data["title"],
+                        "frequency": freq,
+                    })
             if self.debug:
-                self.logger.info(
-                    f"Article '{parsed_data['title']}' written to {self.filename}"
-                )
+                self.logger.info(f"Article '{parsed_data['title']}' written to {self.filename}")
             self.existing_keys.add(key)
         except Exception as e:
-            self.logger.error(
-                f"Error writing article '{parsed_data['title']}' to CSV: {e}"
-            )
+            self.logger.error(f"Error writing article '{parsed_data['title']}' to CSV: {e}")

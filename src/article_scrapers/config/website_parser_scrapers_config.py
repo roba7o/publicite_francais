@@ -14,16 +14,14 @@ class ScraperConfig:
     parser_kwargs: Optional[Dict] = None
 
 
-SCRAPER_CONFIGS: List[ScraperConfig] = [
+SCRAPER_CONFIGS = [
     ScraperConfig(
         name="Slate.fr",
         enabled=True,
         scraper_class="article_scrapers.scrapers.slate_fr_scraper.SlateFrURLScraper",
         parser_class="article_scrapers.parsers.slate_fr_parser.SlateFrArticleParser",
         live_mode=True,
-        test_files=["test1.html", "test2.html"],
         scraper_kwargs={"debug": True},
-        parser_kwargs={},
     ),
     ScraperConfig(
         name="FranceInfo.fr",
@@ -32,7 +30,6 @@ SCRAPER_CONFIGS: List[ScraperConfig] = [
         parser_class="article_scrapers.parsers.france_info_parser.FranceInfoArticleParser",
         live_mode=True,
         scraper_kwargs={"debug": True},
-        parser_kwargs={},
     ),
     ScraperConfig(
         name="TF1 Info",
@@ -41,7 +38,6 @@ SCRAPER_CONFIGS: List[ScraperConfig] = [
         parser_class="article_scrapers.parsers.tf1_info_parser.TF1InfoArticleParser",
         live_mode=True,
         scraper_kwargs={"debug": True},
-        parser_kwargs={},
     ),
     ScraperConfig(
         name="Depeche.fr",
@@ -50,6 +46,5 @@ SCRAPER_CONFIGS: List[ScraperConfig] = [
         parser_class="article_scrapers.parsers.ladepeche_fr_parser.LadepecheFrArticleParser",
         live_mode=True,
         scraper_kwargs={"debug": True},
-        parser_kwargs={},
     ),
 ]
