@@ -4,6 +4,7 @@
 PYTHON := python
 SRC := src
 MAIN_MODULE := article_scrapers.main
+SETTINGS_FILE := $(SRC)/article_scrapers/config/settings.py
 
 # Docker image name
 IMAGE := my-scraper
@@ -15,6 +16,20 @@ IMAGE := my-scraper
 
 run:  ## Run main script locally (must be inside venv)
 	cd $(SRC) && $(PYTHON) -m $(MAIN_MODULE)
+
+run-live:  ## Run script in live mode (OFFLINE = False)
+	@echo "Setting OFFLINE = False and running in live mode..."
+	@sed -i.bak 's/OFFLINE = True/OFFLINE = False/' $(SETTINGS_FILE)
+	cd $(SRC) && $(PYTHON) -m $(MAIN_MODULE)
+	@sed -i.bak 's/OFFLINE = False/OFFLINE = True/' $(SETTINGS_FILE)
+	@rm -f $(SETTINGS_FILE).bak
+
+run-offline:  ## Run script in offline mode (OFFLINE = True)
+	@echo "Setting OFFLINE = True and running in offline mode..."
+	@sed -i.bak 's/OFFLINE = False/OFFLINE = True/' $(SETTINGS_FILE)
+	cd $(SRC) && $(PYTHON) -m $(MAIN_MODULE)
+	@sed -i.bak 's/OFFLINE = True/OFFLINE = False/' $(SETTINGS_FILE)
+	@rm -f $(SETTINGS_FILE).bak
 
 test:  ## Run all tests
 	PYTHONPATH=$(SRC) pytest -v
@@ -59,6 +74,8 @@ tree:  ## Show directory tree
 	
 
 # make run              # run script locally
+# make run-live         # run script in live mode (OFFLINE = False)
+# make run-offline      # run script in offline mode (OFFLINE = True)
 # make docker-build     # build docker image
 # make docker-run       # run script inside docker
 # make test             # run tests

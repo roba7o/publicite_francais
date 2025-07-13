@@ -11,4 +11,4 @@ DEBUG = False
 # Switch between live scraping and offline test mode
 # True: Use local test files from test_data/ directory
 # False: Scrape live websites
-OFFLINE = True
+OFFLINE = False
