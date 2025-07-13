@@ -22,11 +22,15 @@ class TF1InfoArticleParser(BaseParser):
 
     def parse_article(self, soup: BeautifulSoup) -> Optional[Dict[str, Any]]:
         try:
-            content_div = soup.find("div", class_=re.compile(r"article-body|content-body|main-content"))
+            content_div = soup.find(
+                "div", class_=re.compile(r"article-body|content-body|main-content")
+            )
             if not content_div:
                 content_div = soup.find("article")
             if not content_div or not isinstance(content_div, Tag):
-                self.logger.warning("No main content div or article tag found for TF1 Info article.")
+                self.logger.warning(
+                    "No main content div or article tag found for TF1 Info article."
+                )
                 return None
 
             paragraphs = self._extract_paragraphs(content_div)
@@ -74,7 +78,9 @@ class TF1InfoArticleParser(BaseParser):
 
         for selector in title_selectors:
             if selector.startswith("meta"):
-                tag = soup.find(lambda t: t.name == "meta" and t.get("property") == "og:title")
+                tag = soup.find(
+                    lambda t: t.name == "meta" and t.get("property") == "og:title"
+                )
                 if tag and isinstance(tag, Tag) and tag.has_attr("content"):
                     return str(tag["content"]).strip()
             else:

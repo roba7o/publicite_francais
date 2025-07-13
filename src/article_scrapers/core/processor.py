@@ -51,11 +51,15 @@ class ArticleProcessor:
             if soup and cls._process_article(parser, soup, source_identifier):
                 processed_count += 1
 
-        logger.info(f"Finished {config.name}: {processed_count}/{total_attempted} articles processed")
+        logger.info(
+            f"Finished {config.name}: {processed_count}/{total_attempted} articles processed"
+        )
         return processed_count, total_attempted
 
     @staticmethod
-    def _get_live_sources(scraper: Any, parser: Any) -> List[Tuple[Optional[BeautifulSoup], str]]:
+    def _get_live_sources(
+        scraper: Any, parser: Any
+    ) -> List[Tuple[Optional[BeautifulSoup], str]]:
         try:
             urls = scraper.get_article_urls()
             if not urls:
@@ -71,12 +75,16 @@ class ArticleProcessor:
         return soup_sources
 
     @staticmethod
-    def _get_test_sources(parser: Any, source_name: str) -> List[Tuple[Optional[BeautifulSoup], str]]:
+    def _get_test_sources(
+        parser: Any, source_name: str
+    ) -> List[Tuple[Optional[BeautifulSoup], str]]:
         # Auto-discover test files based on source name
         return parser.get_test_sources_from_directory(source_name)
 
     @staticmethod
-    def _process_article(parser: Any, soup: BeautifulSoup, source_identifier: str) -> bool:
+    def _process_article(
+        parser: Any, soup: BeautifulSoup, source_identifier: str
+    ) -> bool:
         try:
             parsed_content = parser.parse_article(soup)
             if parsed_content:

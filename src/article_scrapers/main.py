@@ -21,7 +21,7 @@ def main():
         total_attempted += attempted
 
     logger.info(f"Completed processing. Success: {total_processed}/{total_attempted}")
-    
+
     if OFFLINE:
         logger.info("Results saved to test_data/test_output/ directory")
 
