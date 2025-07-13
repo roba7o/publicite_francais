@@ -5,14 +5,14 @@ TF1 Info Scraper - Extracts article URLs from TF1 Info homepage
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
-from article_scrapers.utils.logger import get_logger
+from article_scrapers.utils.structured_logger import get_structured_logger
 import json
 from ..config.settings import DEBUG
 
 
 class TF1InfoURLScraper:
     def __init__(self, debug=False):
-        self.logger = get_logger(self.__class__.__name__)
+        self.logger = get_structured_logger(self.__class__.__name__)
         self.debug = debug if debug is not None else DEBUG
         self.base_url = "https://www.tf1info.fr/"
         self.headers = {

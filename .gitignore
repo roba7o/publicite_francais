@@ -14,6 +14,7 @@ env/
 # Data files
 output/
 test_data/output/
+logs/
 
 #rubbish
 bin/

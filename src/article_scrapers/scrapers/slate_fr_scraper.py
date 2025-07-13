@@ -2,12 +2,12 @@ import requests
 from bs4 import BeautifulSoup, Tag
 from urllib.parse import urljoin
 from ..config.settings import DEBUG
-from article_scrapers.utils.logger import get_logger
+from article_scrapers.utils.structured_logger import get_structured_logger
 
 
 class SlateFrURLScraper:
     def __init__(self, debug=None):
-        self.logger = get_logger(self.__class__.__name__)
+        self.logger = get_structured_logger(self.__class__.__name__)
         self.debug = debug if debug is not None else DEBUG
         self.base_url = "https://www.slate.fr"
         self.headers = {
