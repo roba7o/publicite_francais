@@ -1,17 +1,26 @@
+"""
+Configuration for news source scrapers and parsers.
+
+This module defines which news sources to process and how to process them,
+including the scraper and parser classes to use for each source.
+"""
+
 from dataclasses import dataclass
 from typing import List, Dict, Optional
 
 
 @dataclass
 class ScraperConfig:
-    name: str
-    enabled: bool
-    scraper_class: str
-    parser_class: str
-    scraper_kwargs: Optional[Dict] = None
-    parser_kwargs: Optional[Dict] = None
+    """Configuration for a single news source."""
+    name: str                    # Display name of the news source
+    enabled: bool                # Whether to process this source
+    scraper_class: str           # Full path to scraper class
+    parser_class: str            # Full path to parser class
+    scraper_kwargs: Optional[Dict] = None  # Arguments to pass to scraper
+    parser_kwargs: Optional[Dict] = None   # Arguments to pass to parser
 
 
+# List of all configured news sources
 SCRAPER_CONFIGS = [
     ScraperConfig(
         name="Slate.fr",
