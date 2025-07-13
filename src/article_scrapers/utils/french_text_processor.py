@@ -73,21 +73,85 @@ class FrenchTextProcessor:
         if not text:
             return []
 
+        # Enhanced junk word patterns
+        junk_patterns = {
+            # Truncated words (common in French)
+            'tre', 'ses', 'comple', 'apre', 'franc', 'cision', 'sente', 'core', 'bre',
+            'tait', 'ment', 'leurs', 'dont', 'quipe', 'dote', 'serait', 'avance',
+            'toiles', 'tecter', 'ramiro', 'caisse', 'saide', 'rentes', 'messages',
+            'involontaires', 'monde', 'ducatif', 'suspecte', 'd\'avoir', 'mis',
+            'examen', 'meurtre', 'personne', 'charge', 'd\'une', 'mission', 'public',
+            'place', 'tention', 'provisoire', 'soupc', 'onne', 'lors', 'd\'un',
+            'empreinte', 'repe', 'peut-e', 'contro', 'sacs', 'devant', 'franc',
+            'oise-dolto', 'nucle', 'aires', 'bombe', 'europe', 'd\'un', 'ricain',
+            'fense', 'l\'otan', 'certains', 'dissuasion', 'aire', 'continent',
+            'l\'europe', 'l\'arsenal', 'face', 'enne', 'pourrait', 'pays',
+            'l\'uranium', 'missiles', 'londres', 'l\'allemagne', 'politique',
+            'france', 'royaume-uni', 'dote', 'ration', 'leur', 'renforcement',
+            'reste', 'votre', 'argent', 'commenc', 'ait', 'travailler', 'premier',
+            'certains', 'placements', 'offrent', 'potentiellement', 'jusqu',
+            'rendement', 'cashback', 'imme', 'diat', 'investissement', 'payer',
+            'cher', 'investir', 'suivez',
+            
+            # Common French words (too frequent for flashcards)
+            'selon', 'qui', 'que', 'pas', 'monde', 'fait', 'peuvent', 'leur',
+            'prix', 'offre', 'mode', 'impose', 'euros', 'dont', 'couverture',
+            'simple', 'peut', 'ses', 'sente', 'ment', 'leurs', 'comple',
+            
+            # Short words (likely incomplete)
+            'tre', 'ses', 'pre', 'qui', 'que', 'pas', 'fait', 'dont', 'peut',
+            
+            # Common verb forms
+            'tait', 'serait', 'peuvent', 'offrent', 'commenc', 'ait', 'dote',
+            
+            # Common adjectives/adverbs
+            'simple', 'comple', 'certains', 'potentiellement', 'imme', 'diat',
+            
+            # Common nouns (too generic)
+            'monde', 'prix', 'offre', 'mode', 'euros', 'couverture', 'placements',
+            'rendement', 'investissement', 'argent', 'votre', 'leur', 'leurs',
+        }
+
         words = []
         for word in text.split():
-            word_clean = word.strip()
-            # Exclude words that are only numbers
+            word_clean = word.strip().lower()
+            
+            # Skip if word is too short (less than 4 characters)
+            if len(word_clean) < 4:
+                continue
+                
+            # Skip if word is only numbers
             if word_clean.isdigit():
                 continue
-            # Optionally, exclude words that are mostly numbers (e.g., 12e, 1er)
+                
+            # Skip if word is mostly numbers
             if sum(c.isdigit() for c in word_clean) / max(1, len(word_clean)) > 0.6:
                 continue
-            if (
-                word_clean
-                and self.min_word_length <= len(word_clean) <= self.max_word_length
-                and word_clean not in self.french_stopwords
-            ):
+                
+            # Skip junk words
+            if word_clean in junk_patterns:
+                continue
+                
+            # Skip if word contains only punctuation
+            if not any(c.isalpha() for c in word_clean):
+                continue
+                
+            # Clean the word
+            word_clean = re.sub(r'[^\w\s]', '', word_clean)
+            word_clean = unicodedata.normalize('NFD', word_clean)
+            word_clean = ''.join(c for c in word_clean if not unicodedata.combining(c))
+            
+            # Skip stopwords
+            if word_clean in self.french_stopwords:
+                continue
+                
+            # Skip if word is too short after cleaning
+            if len(word_clean) < 4:
+                continue
+                
+            if word_clean:
                 words.append(word_clean)
+                
         return words
 
     def extract_sentences_with_words(self, original_text: str, words: List[str]) -> Dict[str, str]:
