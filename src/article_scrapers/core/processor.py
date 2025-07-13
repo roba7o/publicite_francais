@@ -4,6 +4,7 @@ from typing import Tuple, Optional, List, Any
 from ..config.website_parser_scrapers_config import ScraperConfig
 from ..config.settings import OFFLINE
 from article_scrapers.utils.logger import get_logger
+from article_scrapers.utils.validators import DataValidator
 from bs4 import BeautifulSoup
 
 logger = get_logger(__name__)
@@ -71,8 +72,14 @@ class ArticleProcessor:
         
         for url in urls:
             try:
-                soup = parser.get_soup_from_url(url)
-                soup_sources.append((soup, url))
+                validated_url = DataValidator.validate_url(url)
+                if not validated_url:
+                    logger.warning(f"Invalid URL skipped: {url}")
+                    failed_count += 1
+                    continue
+                
+                soup = parser.get_soup_from_url(validated_url)
+                soup_sources.append((soup, validated_url))
                 if soup is None:
                     failed_count += 1
             except Exception as e:
@@ -102,13 +109,13 @@ class ArticleProcessor:
                 logger.warning(f"No content extracted from {source_identifier}")
                 return False
             
-            required_fields = ['title', 'full_text']
-            missing_fields = [field for field in required_fields if not parsed_content.get(field)]
-            if missing_fields:
-                logger.warning(f"Missing fields {missing_fields} in {source_identifier}")
+            # Validate article data
+            validated_content = DataValidator.validate_article_data(parsed_content)
+            if not validated_content:
+                logger.warning(f"Article validation failed for {source_identifier}")
                 return False
             
-            parser.to_csv(parsed_content, source_identifier)
+            parser.to_csv(validated_content, source_identifier)
             return True
             
         except AttributeError as e:

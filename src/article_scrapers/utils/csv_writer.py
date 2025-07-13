@@ -39,8 +39,21 @@ class DailyCSVWriter:
         return existing
 
     def write_article(self, parsed_data: dict, url: str, word_freqs: dict) -> None:
-        if not word_freqs:
-            self.logger.warning(f"No word frequencies to write for {parsed_data.get('title', 'Unknown')}")
+        if not word_freqs or not isinstance(word_freqs, dict):
+            self.logger.warning(f"No valid word frequencies for {parsed_data.get('title', 'Unknown')}")
+            return
+        
+        # Validate word frequencies
+        valid_freqs = {}
+        for word, freq in word_freqs.items():
+            if (isinstance(word, str) and 
+                isinstance(freq, (int, float)) and 
+                freq > 0 and 
+                len(word.strip()) >= 2):
+                valid_freqs[word.strip()] = int(freq)
+        
+        if not valid_freqs:
+            self.logger.warning(f"No valid word frequencies after validation for {parsed_data.get('title', 'Unknown')}")
             return
         
         key = f"{parsed_data['title']}:{url}"
@@ -64,7 +77,7 @@ class DailyCSVWriter:
                     writer.writeheader()
                 
                 rows_written = 0
-                for word, freq in word_freqs.items():
+                for word, freq in valid_freqs.items():
                     try:
                         writer.writerow({
                             "word": str(word)[:100],  # Truncate long words

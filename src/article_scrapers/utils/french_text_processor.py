@@ -1,7 +1,7 @@
 import re
 import unicodedata
 from collections import Counter
-from typing import Dict, List, Set
+from typing import Dict, List, Set, Optional
 
 
 class FrenchTextProcessor:
@@ -20,6 +20,33 @@ class FrenchTextProcessor:
         }
         self.min_word_length = 3
         self.max_word_length = 50
+
+    def validate_text(self, text: str) -> Optional[str]:
+        if not text or not isinstance(text, str):
+            return None
+        
+        text = text.strip()
+        if len(text) < 10:
+            return None
+        
+        if len(text) > 1000000:  # 1MB limit
+            return None
+        
+        word_count = len(text.split())
+        if word_count < 5:
+            return None
+        
+        # Check for excessive repetition (spam detection)
+        words = text.lower().split()
+        if len(set(words)) / len(words) < 0.3:  # Less than 30% unique words
+            return None
+        
+        # Check for excessive non-alphabetic content
+        alpha_chars = sum(1 for c in text if c.isalpha())
+        if alpha_chars / len(text) < 0.5:  # Less than 50% alphabetic
+            return None
+        
+        return text
 
     def clean_text(self, text: str) -> str:
         if not text:
@@ -54,24 +81,24 @@ class FrenchTextProcessor:
         return words
 
     def count_word_frequency(self, text: str) -> Dict[str, int]:
-        """
-        Count word frequencies in French text.
-        
-        Args:
-            text: Text to analyze
-            
-        Returns:
-            Dictionary of word frequencies
-        """
-        if not text:
+        validated_text = self.validate_text(text)
+        if not validated_text:
             return {}
 
-        # Clean and tokenize text
-        cleaned_text = self.clean_text(text)
+        cleaned_text = self.clean_text(validated_text)
         words = self.tokenize_french_text(cleaned_text)
         
-        # Count frequencies
-        return dict(Counter(words))
+        if not words:
+            return {}
+        
+        word_counts = dict(Counter(words))
+        
+        # Remove words that appear suspiciously often (likely parsing errors)
+        total_words = sum(word_counts.values())
+        max_frequency = max(total_words * 0.1, 10)  # Max 10% of total or 10 occurrences
+        
+        return {word: count for word, count in word_counts.items() 
+                if count <= max_frequency}
 
     def get_top_words(self, text: str, n: int = 50) -> List[tuple]:
         """
