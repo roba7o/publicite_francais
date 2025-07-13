@@ -15,6 +15,9 @@ env/
 output/
 test_data/
 
+#rubbish
+bin/
+
 # Environment
 .env
 *.env
