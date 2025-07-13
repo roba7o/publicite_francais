@@ -18,10 +18,6 @@ output/
 test_data/output/
 logs/
 
-#rubbish
-bin/
-junk/
-
 # Environment
 .env
 *.env
