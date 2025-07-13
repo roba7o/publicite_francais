@@ -12,12 +12,13 @@ from typing import List, Dict, Optional
 @dataclass
 class ScraperConfig:
     """Configuration for a single news source."""
-    name: str                    # Display name of the news source
-    enabled: bool                # Whether to process this source
-    scraper_class: str           # Full path to scraper class
-    parser_class: str            # Full path to parser class
+
+    name: str  # Display name of the news source
+    enabled: bool  # Whether to process this source
+    scraper_class: str  # Full path to scraper class
+    parser_class: str  # Full path to parser class
     scraper_kwargs: Optional[Dict] = None  # Arguments to pass to scraper
-    parser_kwargs: Optional[Dict] = None   # Arguments to pass to parser
+    parser_kwargs: Optional[Dict] = None  # Arguments to pass to parser
 
 
 # List of all configured news sources
