@@ -36,8 +36,14 @@ CSV_FIELDS = [
 class DailyCSVWriter:
     """Handles writing article word frequency data to daily CSV files."""
 
-    def __init__(self, output_dir="output", debug=None):
+    def __init__(self, output_dir=None, debug=None):
         self.logger = get_structured_logger(self.__class__.__name__)
+        
+        # Set default output directory to src/article_scrapers/output
+        if output_dir is None:
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            output_dir = os.path.join(current_dir, "..", "output")
+        
         self.output_dir = output_dir
         os.makedirs(self.output_dir, exist_ok=True)
         self.filename = self._get_filename()
@@ -167,3 +173,7 @@ class DailyCSVWriter:
                 import shutil
 
                 shutil.move(backup_filename, self.filename)
+
+
+# Alias for backward compatibility with tests
+CSVWriter = DailyCSVWriter

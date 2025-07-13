@@ -112,13 +112,8 @@ class BaseParser(ABC):
         self.debug = debug if debug is not None else DEBUG
         self.delay = delay
 
-        if OFFLINE:
-            current_file_dir = os.path.dirname(os.path.abspath(__file__))
-            project_root_dir = os.path.abspath(os.path.join(current_file_dir, ".."))
-            output_dir = os.path.join(project_root_dir, "test_data", "test_output")
-        else:
-            output_dir = "output"
-        self.csv_writer = DailyCSVWriter(debug=self.debug, output_dir=output_dir)
+        # CSV writer now handles output directory automatically
+        self.csv_writer = DailyCSVWriter(debug=self.debug)
 
         self.config = SITE_CONFIGS.get(site_domain, DEFAULT_SITE_CONFIG)
         self.text_processor = FrenchTextProcessor()

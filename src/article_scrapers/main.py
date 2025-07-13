@@ -120,9 +120,8 @@ def main():
             "total_sources": len(SCRAPER_CONFIGS)
         })
 
-    output_dir = "test_data/test_output/" if OFFLINE else "output/"
     logger.info("Results saved", extra_data={
-        "output_directory": output_dir,
+        "output_directory": "src/article_scrapers/output",
         "mode": mode,
         "offline": OFFLINE
     })

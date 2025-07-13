@@ -299,7 +299,7 @@ class LogConfig:
     def setup_logging(
         log_level: Union[str, int] = None,
         enable_file_logging: bool = True,
-        log_directory: str = "logs",
+        log_directory: str = None,
         enable_structured_logging: bool = True,
         console_format: str = "human"  # "human" or "structured"
     ) -> None:
@@ -337,6 +337,14 @@ class LogConfig:
         
         # Setup file handlers if enabled
         if enable_file_logging:
+            # Determine default log directory if not provided
+            if log_directory is None:
+                import os
+                # Get the project root directory from this file's location
+                current_dir = os.path.dirname(os.path.abspath(__file__))
+                project_root = os.path.abspath(os.path.join(current_dir, "..", "..", ".."))
+                log_directory = os.path.join(project_root, "src", "article_scrapers", "logs")
+            
             LogConfig._setup_file_handlers(root_logger, log_directory, 
                                          enable_structured_logging, log_level)
             

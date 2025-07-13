@@ -68,10 +68,8 @@ def setup_logging(
         current_dir = os.path.dirname(os.path.abspath(__file__))
         project_root = os.path.abspath(os.path.join(current_dir, "..", "..", ".."))
         
-        if OFFLINE:
-            log_directory = os.path.join(project_root, "src", "article_scrapers", "test_data", "logs")
-        else:
-            log_directory = os.path.join(project_root, "logs")
+        # Always use the logs directory inside src/article_scrapers
+        log_directory = os.path.join(project_root, "src", "article_scrapers", "logs")
     
     # Use the structured logging system
     LogConfig.setup_logging(

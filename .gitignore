@@ -20,6 +20,7 @@ logs/
 
 #rubbish
 bin/
+junk/
 
 # Environment
 .env
