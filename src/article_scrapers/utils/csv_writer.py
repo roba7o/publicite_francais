@@ -20,7 +20,7 @@ from datetime import datetime
 from typing import Optional
 
 from ..config.settings import DEBUG
-from article_scrapers.utils.logger import get_logger
+from article_scrapers.utils.structured_logger import get_structured_logger
 
 CSV_FIELDS = [
     "word",
@@ -37,7 +37,7 @@ class DailyCSVWriter:
     """Handles writing article word frequency data to daily CSV files."""
 
     def __init__(self, output_dir="output", debug=None):
-        self.logger = get_logger(self.__class__.__name__)
+        self.logger = get_structured_logger(self.__class__.__name__)
         self.output_dir = output_dir
         os.makedirs(self.output_dir, exist_ok=True)
         self.filename = self._get_filename()

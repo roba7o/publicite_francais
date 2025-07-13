@@ -4,6 +4,7 @@ from collections import Counter
 from typing import Dict, List, Set, Optional
 
 from article_scrapers.config.junk_words_config import get_junk_patterns
+from article_scrapers.utils.structured_logger import get_structured_logger
 
 
 class FrenchTextProcessor:
@@ -136,6 +137,9 @@ class FrenchTextProcessor:
         
         # Load junk patterns from external configuration
         self.junk_patterns = get_junk_patterns()
+        
+        # Initialize logger
+        self.logger = get_structured_logger(self.__class__.__name__)
 
     def validate_text(self, text: str) -> Optional[str]:
         """
@@ -179,12 +183,28 @@ class FrenchTextProcessor:
 
         # Check for excessive repetition (spam detection)
         words = text.lower().split()
-        if len(set(words)) / len(words) < 0.3:  # Less than 30% unique words
+        unique_ratio = len(set(words)) / len(words)
+        if unique_ratio < 0.3:  # Less than 30% unique words
+            self.logger.debug("Text validation failed: low uniqueness", extra_data={
+                "text_length": len(text),
+                "word_count": len(words),
+                "unique_ratio": round(unique_ratio, 3),
+                "threshold": 0.3,
+                "reason": "spam_detection"
+            })
             return None
 
         # Check for excessive non-alphabetic content
         alpha_chars = sum(1 for c in text if c.isalpha())
-        if alpha_chars / len(text) < 0.5:  # Less than 50% alphabetic
+        alpha_ratio = alpha_chars / len(text)
+        if alpha_ratio < 0.5:  # Less than 50% alphabetic
+            self.logger.debug("Text validation failed: low alphabetic content", extra_data={
+                "text_length": len(text),
+                "alpha_chars": alpha_chars,
+                "alpha_ratio": round(alpha_ratio, 3),
+                "threshold": 0.5,
+                "reason": "non_alphabetic_content"
+            })
             return None
 
         return text
@@ -406,25 +426,46 @@ class FrenchTextProcessor:
             >>> freq = processor.count_word_frequency("Le chat mange. Le chat dort.")
             >>> # Returns {"chat": 2, "mange": 1, "dort": 1}
         """
-        validated_text = self.validate_text(text)
-        if not validated_text:
-            return {}
+        with self.logger.performance.timer("text_validation", {"text_length": len(text) if text else 0}):
+            validated_text = self.validate_text(text)
+            if not validated_text:
+                return {}
 
-        cleaned_text = self.clean_text(validated_text)
-        words = self.tokenize_french_text(cleaned_text)
+        with self.logger.performance.timer("text_cleaning", {"text_length": len(validated_text)}):
+            cleaned_text = self.clean_text(validated_text)
+            
+        with self.logger.performance.timer("text_tokenization", {"cleaned_length": len(cleaned_text)}):
+            words = self.tokenize_french_text(cleaned_text)
 
         if not words:
+            self.logger.debug("Word frequency analysis returned empty", extra_data={
+                "text_length": len(validated_text) if validated_text else 0,
+                "reason": "no_valid_words_after_tokenization"
+            })
             return {}
 
-        word_counts = dict(Counter(words))
+        with self.logger.performance.timer("word_counting", {"word_count": len(words)}):
+            word_counts = dict(Counter(words))
 
         # Remove words that appear suspiciously often (likely parsing errors)
-        total_words = sum(word_counts.values())
-        max_frequency = max(total_words * 0.1, 10)  # Max 10% of total or 10 occurrences
+        with self.logger.performance.timer("frequency_filtering", {"unique_words": len(word_counts)}):
+            total_words = sum(word_counts.values())
+            max_frequency = max(total_words * 0.1, 10)  # Max 10% of total or 10 occurrences
 
-        return {
+        filtered_words = {
             word: count for word, count in word_counts.items() if count <= max_frequency
         }
+        
+        filtered_count = len(word_counts) - len(filtered_words)
+        if filtered_count > 0:
+            self.logger.debug("Filtered suspicious high-frequency words", extra_data={
+                "original_word_count": len(word_counts),
+                "filtered_word_count": len(filtered_words),
+                "removed_count": filtered_count,
+                "max_frequency_threshold": max_frequency
+            })
+            
+        return filtered_words
 
     def get_top_words(self, text: str, n: int = 50) -> List[tuple]:
         """

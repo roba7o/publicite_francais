@@ -1,0 +1,1 @@
+{"timestamp": "2025-07-13T15:42:34.085004Z", "level": "ERROR", "logger": "DailyCSVWriter", "message": "File system error writing CSV: [Errno 2] No such file or directory", "module": "structured_logger", "function": "_log_with_context", "line": 261}

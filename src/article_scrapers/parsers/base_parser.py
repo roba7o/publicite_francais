@@ -12,7 +12,7 @@ from article_scrapers.utils.csv_writer import DailyCSVWriter
 from article_scrapers.utils.french_text_processor import FrenchTextProcessor
 from article_scrapers.config.text_processing_config import SITE_CONFIGS
 from article_scrapers.config.settings import DEBUG, OFFLINE
-from article_scrapers.utils.logger import get_logger
+from article_scrapers.utils.structured_logger import get_structured_logger
 
 DEFAULT_SITE_CONFIG = {
     "min_word_frequency": 1,
@@ -107,7 +107,7 @@ class BaseParser(ABC):
     def __init__(
         self, site_domain: str, debug: Optional[bool] = None, delay: float = 1.0
     ):
-        self.logger = get_logger(self.__class__.__name__)
+        self.logger = get_structured_logger(self.__class__.__name__)
         self.site_domain = site_domain
         self.debug = debug if debug is not None else DEBUG
         self.delay = delay
@@ -166,7 +166,11 @@ class BaseParser(ABC):
             ...     title = soup.find("title").text
         """
         if OFFLINE:
-            self.logger.warning(f"Attempted to fetch URL in offline mode: {url}")
+            self.logger.warning("URL fetch attempted in offline mode", extra_data={
+                "url": url,
+                "mode": "offline",
+                "action": "skipped"
+            })
             return None
 
         for attempt in range(max_retries):
@@ -176,37 +180,66 @@ class BaseParser(ABC):
                 time.sleep(self.delay)
                 response.raise_for_status()
 
-                if len(response.content) < 100:
+                content_length = len(response.content)
+                if content_length < 100:
+                    self.logger.warning("Response content too short", extra_data={
+                        "url": url,
+                        "content_length": content_length,
+                        "threshold": 100,
+                        "status_code": response.status_code
+                    })
                     raise ValueError("Response too short, likely blocked or empty")
 
                 return BeautifulSoup(response.content, "html.parser")
 
             except requests.exceptions.Timeout:
-                self.logger.warning(
-                    f"Timeout fetching {url}, attempt {attempt + 1}/{max_retries}"
-                )
+                self.logger.warning("URL fetch timeout", extra_data={
+                    "url": url,
+                    "attempt": attempt + 1,
+                    "max_retries": max_retries,
+                    "error_type": "timeout"
+                })
             except requests.exceptions.ConnectionError:
-                self.logger.warning(
-                    f"Connection error for {url}, attempt {attempt + 1}/{max_retries}"
-                )
+                self.logger.warning("URL fetch connection error", extra_data={
+                    "url": url,
+                    "attempt": attempt + 1,
+                    "max_retries": max_retries,
+                    "error_type": "connection"
+                })
             except requests.exceptions.HTTPError as e:
                 if e.response.status_code in [429, 503, 502]:
-                    self.logger.warning(
-                        f"Server error {e.response.status_code} for {url}, attempt {attempt + 1}/{max_retries}"
-                    )
+                    self.logger.warning("Server error during URL fetch", extra_data={
+                        "url": url,
+                        "status_code": e.response.status_code,
+                        "attempt": attempt + 1,
+                        "max_retries": max_retries,
+                        "error_type": "server_error"
+                    })
                     time.sleep(2**attempt)  # Exponential backoff
                 else:
-                    self.logger.error(f"HTTP error {e.response.status_code} for {url}")
+                    self.logger.error("HTTP error during URL fetch", extra_data={
+                        "url": url,
+                        "status_code": e.response.status_code,
+                        "error_type": "http_error"
+                    })
                     return None
             except Exception as e:
-                self.logger.warning(
-                    f"Unexpected error fetching {url}: {e}, attempt {attempt + 1}/{max_retries}"
-                )
+                self.logger.warning("Unexpected error during URL fetch", extra_data={
+                    "url": url,
+                    "error": str(e),
+                    "attempt": attempt + 1,
+                    "max_retries": max_retries,
+                    "error_type": "unexpected"
+                }, exc_info=True)
 
             if attempt < max_retries - 1:
                 time.sleep(1 + attempt)
 
-        self.logger.error(f"Failed to fetch {url} after {max_retries} attempts")
+        self.logger.error("URL fetch failed after all retries", extra_data={
+            "url": url,
+            "max_retries": max_retries,
+            "final_result": "failed"
+        })
         return None
 
     def get_soup_from_localfile(self, file_name: str) -> Optional[BeautifulSoup]:
@@ -234,14 +267,21 @@ class BaseParser(ABC):
         test_file_path = os.path.join(project_root_dir, "test_data", file_name)
 
         if not os.path.exists(test_file_path):
-            self.logger.error(f"Test file not found: {test_file_path}")
+            self.logger.error("Test file not found", extra_data={
+                "file_path": test_file_path,
+                "file_name": file_name,
+                "mode": "offline"
+            })
             return None
 
         try:
             with open(test_file_path, "r", encoding="utf-8") as f:
                 return BeautifulSoup(f.read(), "html.parser")
         except Exception as e:
-            self.logger.error(f"Error reading {test_file_path}: {e}")
+            self.logger.error("Error reading test file", extra_data={
+                "file_path": test_file_path,
+                "error": str(e)
+            }, exc_info=True)
             return None
 
     def get_test_sources_from_directory(
@@ -273,16 +313,22 @@ class BaseParser(ABC):
         source_dir = os.path.join(test_data_dir, dir_name)
 
         if not os.path.exists(source_dir):
-            self.logger.warning(f"Test directory not found: {source_dir}")
+            self.logger.warning("Test directory not found", extra_data={
+                "source_name": source_name,
+                "directory_path": source_dir,
+                "mapped_dir_name": dir_name
+            })
             return []
 
         # Import URL mapping
         try:
             from article_scrapers.test_data.url_mapping import URL_MAPPING
         except ImportError:
-            self.logger.error(
-                "Could not import URL_MAPPING from test_data/url_mapping.py"
-            )
+            self.logger.error("URL mapping import failed", extra_data={
+                "module": "test_data/url_mapping.py",
+                "required_variable": "URL_MAPPING",
+                "impact": "test_mode_disabled"
+            })
             return []
 
         soup_sources = []
@@ -297,11 +343,17 @@ class BaseParser(ABC):
                     with open(file_path, "r", encoding="utf-8") as f:
                         soup = BeautifulSoup(f.read(), "html.parser")
                         soup_sources.append((soup, original_url))
-                        self.logger.info(
-                            f"Loaded test file: {filename} -> {original_url}"
-                        )
+                        self.logger.debug("Test file loaded", extra_data={
+                            "filename": filename,
+                            "original_url": original_url,
+                            "source": source_name
+                        })
         except Exception as e:
-            self.logger.error(f"Error reading test files from {source_dir}: {e}")
+            self.logger.error("Error reading test files", extra_data={
+                "source_directory": source_dir,
+                "source_name": source_name,
+                "error": str(e)
+            }, exc_info=True)
 
         return soup_sources
 
@@ -388,7 +440,11 @@ class BaseParser(ABC):
                 word_contexts=word_contexts,
             )
         except Exception as e:
-            self.logger.error(f"Error writing to CSV for {url}: {e}")
+            self.logger.error("CSV writing error", extra_data={
+                "url": url,
+                "error": str(e),
+                "has_word_frequencies": bool(word_freqs)
+            }, exc_info=True)
 
     @abstractmethod
     def parse_article(self, soup: BeautifulSoup) -> Optional[Dict[str, Any]]:

@@ -1,13 +1,18 @@
 from article_scrapers.config.website_parser_scrapers_config import SCRAPER_CONFIGS
 from article_scrapers.config.settings import OFFLINE
 from article_scrapers.core.processor import ArticleProcessor
-from article_scrapers.utils.logging_config import setup_logging
-from article_scrapers.utils.logger import get_logger
+from article_scrapers.utils.logging_config_enhanced import setup_logging, configure_debug_mode
+from article_scrapers.utils.structured_logger import get_structured_logger
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 
 setup_logging()
-logger = get_logger(__name__)
+logger = get_structured_logger(__name__)
+
+# Configure debug mode based on settings
+from article_scrapers.config.settings import DEBUG
+if DEBUG:
+    configure_debug_mode(enabled=True)
 
 
 def process_source_wrapper(config):
@@ -16,13 +21,15 @@ def process_source_wrapper(config):
         processed, attempted = ArticleProcessor.process_source(config)
         return config.name, processed, attempted, None
     except Exception as e:
-        logger.error(f"Critical failure processing {config.name}: {e}")
+        logger.error("Critical source processing failure", extra_data={
+            "source": config.name,
+            "error": str(e)
+        }, exc_info=True)
         return config.name, 0, 0, str(e)
 
 
 def main():
     mode = "OFFLINE" if OFFLINE else "LIVE"
-    logger.info(f"Starting article scraping system in {mode} mode")
     start_time = time.time()
 
     total_processed = 0
@@ -31,7 +38,22 @@ def main():
 
     # Use ThreadPoolExecutor for concurrent processing
     max_workers = min(len(SCRAPER_CONFIGS), 4)  # Limit to 4 concurrent sources
-    logger.info(f"Processing {len(SCRAPER_CONFIGS)} sources with {max_workers} workers")
+    
+    logger.info("Article scraping system starting", extra_data={
+        "mode": mode,
+        "offline": OFFLINE,
+        "debug": DEBUG,
+        "sources_count": len(SCRAPER_CONFIGS),
+        "max_workers": max_workers
+    })
+    enabled_sources = [config.name for config in SCRAPER_CONFIGS if config.enabled]
+    logger.info("Processing configuration", extra_data={
+        "total_sources": len(SCRAPER_CONFIGS),
+        "enabled_sources": enabled_sources,
+        "disabled_sources": [config.name for config in SCRAPER_CONFIGS if not config.enabled],
+        "max_workers": max_workers,
+        "concurrent_processing": True
+    })
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         # Submit all source processing tasks
@@ -53,16 +75,28 @@ def main():
                     failed_sources.append(source_name)
                 elif attempted > 0 and processed / attempted < 0.3:
                     failed_sources.append(source_name)
-                    logger.warning(
-                        f"Low success rate for {source_name}: {processed}/{attempted}"
-                    )
+                    success_rate = (processed / attempted * 100) if attempted > 0 else 0
+                    logger.warning("Low success rate detected", extra_data={
+                        "source": source_name,
+                        "processed": processed,
+                        "attempted": attempted,
+                        "success_rate_percent": round(success_rate, 1),
+                        "threshold_percent": 30
+                    })
                 else:
-                    logger.info(
-                        f"Completed {source_name}: {processed}/{attempted} articles"
-                    )
+                    success_rate = (processed / attempted * 100) if attempted > 0 else 0
+                    logger.info("Source processing completed successfully", extra_data={
+                        "source": source_name,
+                        "processed": processed,
+                        "attempted": attempted,
+                        "success_rate_percent": round(success_rate, 1)
+                    })
 
             except Exception as e:
-                logger.error(f"Unexpected error processing {config.name}: {e}")
+                logger.error("Unexpected source processing error", extra_data={
+                "source": config.name,
+                "error": str(e)
+            }, exc_info=True)
                 failed_sources.append(config.name)
 
     elapsed_time = time.time() - start_time
@@ -70,21 +104,38 @@ def main():
         (total_processed / total_attempted * 100) if total_attempted > 0 else 0
     )
 
-    logger.info(f"Completed processing in {elapsed_time:.1f}s")
-    logger.info(f"Success: {total_processed}/{total_attempted} ({success_rate:.1f}%)")
+    logger.info("Processing session completed", extra_data={
+        "elapsed_time_seconds": round(elapsed_time, 2),
+        "total_processed": total_processed,
+        "total_attempted": total_attempted,
+        "overall_success_rate_percent": round(success_rate, 1),
+        "articles_per_second": round(total_processed / elapsed_time if elapsed_time > 0 else 0, 2),
+        "failed_sources_count": len(failed_sources)
+    })
 
     if failed_sources:
-        logger.warning(f"Sources with issues: {', '.join(failed_sources)}")
+        logger.warning("Sources encountered issues", extra_data={
+            "failed_sources": failed_sources,
+            "failed_count": len(failed_sources),
+            "total_sources": len(SCRAPER_CONFIGS)
+        })
 
     output_dir = "test_data/test_output/" if OFFLINE else "output/"
-    logger.info(f"Results saved to {output_dir} directory")
+    logger.info("Results saved", extra_data={
+        "output_directory": output_dir,
+        "mode": mode,
+        "offline": OFFLINE
+    })
 
     # Print final health summary
     from article_scrapers.utils.error_recovery import health_monitor
 
     health_summary = health_monitor.get_health_summary()
     if health_summary:
-        logger.info(f"Final health summary: {health_summary}")
+        logger.info("Final health monitoring summary", extra_data={
+            "health_summary": health_summary,
+            "monitoring_enabled": True
+        })
 
 
 if __name__ == "__main__":

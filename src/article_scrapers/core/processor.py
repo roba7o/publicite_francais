@@ -3,7 +3,7 @@ from typing import Tuple, Optional, List, Any
 
 from ..config.website_parser_scrapers_config import ScraperConfig
 from ..config.settings import OFFLINE
-from article_scrapers.utils.logger import get_logger
+from article_scrapers.utils.structured_logger import get_structured_logger
 from article_scrapers.utils.validators import DataValidator
 from article_scrapers.utils.error_recovery import (
     health_monitor,
@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 
-logger = get_logger(__name__)
+logger = get_structured_logger(__name__)
 
 
 class ArticleProcessor:
@@ -131,7 +131,11 @@ class ArticleProcessor:
             >>> success_rate = processed / attempted if attempted > 0 else 0
         """
         if not config.enabled:
-            logger.info(f"Skipping disabled source: {config.name}")
+            logger.info("Source processing skipped", extra_data={
+            "source": config.name,
+            "reason": "disabled",
+            "enabled": config.enabled
+        })
             return 0, 0
 
         # Check if source should be skipped due to poor health
@@ -139,23 +143,34 @@ class ArticleProcessor:
             health_monitor.record_attempt(config.name, False)
             return 0, 0
 
-        logger.info(f"Processing source: {config.name}")
+        logger.info("Starting source processing", extra_data={
+            "source": config.name,
+            "scraper_class": config.scraper_class,
+            "parser_class": config.parser_class
+        })
         start_time = time.time()
 
         try:
             circuit_breaker = cls.get_circuit_breaker(config.name)
 
             def initialize_components():
-                ScraperClass = cls.import_class(config.scraper_class)
-                ParserClass = cls.import_class(config.parser_class)
-                scraper = ScraperClass(**(config.scraper_kwargs or {}))
-                parser = ParserClass(**(config.parser_kwargs or {}))
-                return scraper, parser
+                with logger.performance.timer("component_initialization", 
+                                            {"source": config.name, "scraper": config.scraper_class, "parser": config.parser_class}):
+                    ScraperClass = cls.import_class(config.scraper_class)
+                    ParserClass = cls.import_class(config.parser_class)
+                    scraper = ScraperClass(**(config.scraper_kwargs or {}))
+                    parser = ParserClass(**(config.parser_kwargs or {}))
+                    return scraper, parser
 
             scraper, parser = circuit_breaker.call(initialize_components)
 
         except Exception as e:
-            logger.error(f"Failed to initialize components for {config.name}: {e}")
+            logger.error("Component initialization failed", extra_data={
+            "source": config.name,
+            "scraper_class": config.scraper_class,
+            "parser_class": config.parser_class,
+            "error": str(e)
+        }, exc_info=True)
             health_monitor.record_attempt(config.name, False, time.time() - start_time)
             return 0, 0
 
@@ -166,18 +181,31 @@ class ArticleProcessor:
         )
 
         if not sources:
-            logger.warning(f"No content sources found for {config.name}")
+            logger.warning("No content sources found", extra_data={
+            "source": config.name,
+            "mode": "offline" if OFFLINE else "live",
+            "total_sources": len(sources)
+        })
             health_monitor.record_attempt(config.name, False, time.time() - start_time)
             return 0, 0
 
         processed_count = 0
         total_attempted = len(sources)
 
+        if sources:
+            logger.performance.start_timer("article_processing_batch")
+        
         for soup, source_identifier in sources:
-            if soup and cls._process_article_with_recovery(
-                parser, soup, source_identifier, config.name
-            ):
-                processed_count += 1
+            with logger.performance.timer("single_article_processing", 
+                                        {"source": config.name, "url": source_identifier}):
+                if soup and cls._process_article_with_recovery(
+                    parser, soup, source_identifier, config.name
+                ):
+                    processed_count += 1
+                    
+        if sources:
+            batch_duration = logger.performance.end_timer("article_processing_batch", 
+                                                         {"source": config.name, "processed": processed_count, "attempted": total_attempted})
 
         # Record overall success for this source
         success_rate = processed_count / total_attempted if total_attempted > 0 else 0
@@ -185,9 +213,17 @@ class ArticleProcessor:
             config.name, success_rate > 0.3, time.time() - start_time
         )
 
-        logger.info(
-            f"Finished {config.name}: {processed_count}/{total_attempted} articles processed"
-        )
+        elapsed_time = time.time() - start_time
+        success_rate = (processed_count / total_attempted * 100) if total_attempted > 0 else 0
+        
+        logger.info("Source processing completed", extra_data={
+            "source": config.name,
+            "articles_processed": processed_count,
+            "articles_attempted": total_attempted,
+            "success_rate_percent": round(success_rate, 1),
+            "processing_time_seconds": round(elapsed_time, 2),
+            "articles_per_second": round(processed_count / elapsed_time if elapsed_time > 0 else 0, 2)
+        })
 
         # Log health summary periodically
         if (
@@ -196,7 +232,10 @@ class ArticleProcessor:
             == 0
         ):
             health_summary = health_monitor.get_health_summary()
-            logger.info(f"Health summary: {health_summary}")
+            logger.info("Health monitoring summary", extra_data={
+                "source": config.name,
+                "health_summary": health_summary
+            })
 
         return processed_count, total_attempted
 
@@ -208,16 +247,27 @@ class ArticleProcessor:
         def get_urls():
             return scraper.get_article_urls()
 
-        urls = retry_handler.execute_with_retry(get_urls)
+        with logger.performance.timer("url_discovery", {"source": source_name}):
+            urls = retry_handler.execute_with_retry(get_urls)
         if not urls:
-            logger.warning(f"No URLs found by {scraper.__class__.__name__}")
+            logger.warning("URL discovery returned no results", extra_data={
+                "source": source_name,
+                "scraper_class": scraper.__class__.__name__
+            })
             return []
 
         # Apply graceful degradation to reduce load on struggling sources
         original_count = len(urls)
-        urls = urls[
-            : graceful_degradation.get_reduced_url_count(source_name, original_count)
-        ]
+        reduced_count = graceful_degradation.get_reduced_url_count(source_name, original_count)
+        urls = urls[:reduced_count]
+        
+        if reduced_count < original_count:
+            logger.info("URL count reduced due to source health", extra_data={
+                "source": source_name,
+                "original_count": original_count,
+                "reduced_count": reduced_count,
+                "reduction_percent": round((1 - reduced_count/original_count) * 100, 1)
+            })
 
         # Process URLs concurrently for better performance
         max_concurrent_urls = min(len(urls), 3)  # Limit concurrent requests per source
@@ -230,7 +280,11 @@ class ArticleProcessor:
             try:
                 validated_url = DataValidator.validate_url(url)
                 if not validated_url:
-                    logger.warning(f"Invalid URL skipped: {url}")
+                    logger.warning("Invalid URL skipped", extra_data={
+                    "url": url,
+                    "source": source_name,
+                    "validation_error": "invalid_format"
+                })
                     return None, url, "invalid"
 
                 # Stagger requests to avoid overwhelming servers
@@ -244,7 +298,11 @@ class ArticleProcessor:
                 return soup, validated_url, "success" if soup else "failed"
 
             except Exception as e:
-                logger.warning(f"Error processing URL {url}: {e}")
+                logger.warning("URL processing error", extra_data={
+                    "url": url,
+                    "source": source_name,
+                    "error": str(e)
+                }, exc_info=True)
                 return None, url, str(e)
 
         soup_sources = []
@@ -267,9 +325,14 @@ class ArticleProcessor:
 
                         # Early termination if too many failures
                         if failed_count >= 5 and failed_count / len(soup_sources) > 0.8:
-                            logger.warning(
-                                f"Breaking early due to high failure rate for {source_name}"
-                            )
+                            current_failure_rate = (failed_count / len(soup_sources) * 100)
+                            logger.warning("Early termination due to high failure rate", extra_data={
+                                "source": source_name,
+                                "failed_count": failed_count,
+                                "processed_count": len(soup_sources),
+                                "failure_rate_percent": round(current_failure_rate, 1),
+                                "threshold_percent": 80
+                            })
                             # Cancel remaining futures
                             for remaining_future in future_to_url:
                                 if not remaining_future.done():
@@ -277,13 +340,21 @@ class ArticleProcessor:
                             break
 
                 except Exception as e:
-                    logger.error(f"Error in concurrent URL processing: {e}")
+                    logger.error("Concurrent URL processing error", extra_data={
+                    "source": source_name,
+                    "error": str(e)
+                }, exc_info=True)
                     failed_count += 1
 
         if failed_count > 0:
-            logger.warning(
-                f"Failed to fetch {failed_count}/{len(urls)} URLs for {source_name}"
-            )
+            failure_rate = (failed_count / len(urls) * 100) if len(urls) > 0 else 0
+            logger.warning("URL fetching completed with failures", extra_data={
+                "source": source_name,
+                "failed_count": failed_count,
+                "total_urls": len(urls),
+                "failure_rate_percent": round(failure_rate, 1),
+                "successful_fetches": len(urls) - failed_count
+            })
 
         return soup_sources
 
@@ -324,9 +395,11 @@ class ArticleProcessor:
             return retry_handler.execute_with_retry(process_article) is not None
 
         except Exception as e:
-            logger.error(
-                f"Failed to process article {source_identifier} for {source_name}: {e}"
-            )
+            logger.error("Article processing failed", extra_data={
+                "source": source_name,
+                "article_url": source_identifier,
+                "error": str(e)
+            }, exc_info=True)
             return False
 
     @staticmethod
@@ -342,5 +415,8 @@ class ArticleProcessor:
                 return True
             return False
         except Exception as e:
-            logger.error(f"Error processing {source_identifier}: {e}")
+            logger.error("Legacy article processing error", extra_data={
+                "article_url": source_identifier,
+                "error": str(e)
+            }, exc_info=True)
             return False

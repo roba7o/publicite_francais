@@ -25,9 +25,9 @@ Example:
 import time
 from typing import Dict, Any, Optional, Callable
 from datetime import datetime, timedelta
-from article_scrapers.utils.logger import get_logger
+from article_scrapers.utils.structured_logger import get_structured_logger
 
-logger = get_logger(__name__)
+logger = get_structured_logger(__name__)
 
 
 class CircuitBreaker:
@@ -95,9 +95,11 @@ class CircuitBreaker:
 
         if self.failure_count >= self.failure_threshold:
             self.state = "OPEN"
-            logger.warning(
-                f"Circuit breaker opened after {self.failure_count} failures"
-            )
+            logger.warning("Circuit breaker opened", extra_data={
+                "failure_count": self.failure_count,
+                "failure_threshold": self.failure_threshold,
+                "state": "OPEN"
+            })
 
 
 class RetryHandler:
@@ -143,14 +145,18 @@ class RetryHandler:
 
                 if attempt < self.max_retries:
                     delay = min(self.base_delay * (2**attempt), self.max_delay)
-                    logger.warning(
-                        f"Attempt {attempt + 1} failed: {e}. Retrying in {delay}s"
-                    )
+                    logger.warning("Retry attempt failed", extra_data={
+                        "attempt": attempt + 1,
+                        "max_retries": self.max_retries,
+                        "delay_seconds": delay,
+                        "error": str(e)
+                    })
                     time.sleep(delay)
                 else:
-                    logger.error(
-                        f"All {self.max_retries + 1} attempts failed. Last error: {e}"
-                    )
+                    logger.error("All retry attempts exhausted", extra_data={
+                        "total_attempts": self.max_retries + 1,
+                        "final_error": str(e)
+                    })
 
         return None
 
@@ -288,7 +294,13 @@ class GracefulDegradation:
         by success rates and consecutive failure counts.
         """
         if not self.health_monitor.is_source_healthy(source_name):
-            logger.warning(f"Skipping unhealthy source: {source_name}")
+            stats = self.health_monitor.source_stats.get(source_name, {})
+            logger.warning("Skipping unhealthy source", extra_data={
+                "source": source_name,
+                "success_rate": self.health_monitor.get_success_rate(source_name),
+                "consecutive_failures": stats.get("consecutive_failures", 0),
+                "total_attempts": stats.get("total_attempts", 0)
+            })
             return True
         return False
 
@@ -313,9 +325,14 @@ class GracefulDegradation:
 
         if success_rate < 0.7:
             reduced_count = max(1, int(original_count * success_rate))
-            logger.info(
-                f"Reducing URL count for {source_name} from {original_count} to {reduced_count}"
-            )
+            reduction_percent = (1 - reduced_count/original_count) * 100
+            logger.info("URL count reduced for struggling source", extra_data={
+                "source": source_name,
+                "original_count": original_count,
+                "reduced_count": reduced_count,
+                "reduction_percent": round(reduction_percent, 1),
+                "success_rate": success_rate
+            })
             return reduced_count
 
         return original_count
@@ -341,7 +358,13 @@ class GracefulDegradation:
 
         if consecutive_failures > 0:
             adaptive_delay = base_delay * (1 + consecutive_failures * 0.5)
-            logger.debug(f"Adaptive delay for {source_name}: {adaptive_delay}s")
+            logger.debug("Adaptive delay applied", extra_data={
+                "source": source_name,
+                "base_delay": base_delay,
+                "adaptive_delay": adaptive_delay,
+                "consecutive_failures": consecutive_failures,
+                "delay_multiplier": round(adaptive_delay / base_delay, 2)
+            })
             return adaptive_delay
 
         return base_delay
