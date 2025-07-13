@@ -3,9 +3,43 @@ import unicodedata
 from collections import Counter
 from typing import Dict, List, Set, Optional
 
+from article_scrapers.config.junk_words_config import get_junk_patterns
+
 
 class FrenchTextProcessor:
+    """
+    Advanced French text processor for news article analysis.
+    
+    This class provides comprehensive French text processing capabilities
+    specifically designed for news article analysis and vocabulary extraction.
+    It handles French language specifics including accents, stopwords,
+    and common parsing artifacts.
+    
+    Features:
+    - French-specific accent normalization
+    - Comprehensive stopword filtering
+    - Junk word pattern detection
+    - Word frequency analysis
+    - Sentence context extraction
+    - Text validation and spam detection
+    - Configurable word length limits
+    
+    The processor is optimized for extracting meaningful vocabulary
+    from French news articles while filtering out common words,
+    parsing artifacts, and other noise.
+    
+    Example:
+        >>> processor = FrenchTextProcessor()
+        >>> frequencies = processor.count_word_frequency("Le chat mange.")
+        >>> # Returns {"chat": 1, "mange": 1} (stopwords filtered)
+    """
     def __init__(self):
+        """
+        Initialize the French text processor with default settings.
+        
+        Sets up French stopwords, word length limits, and loads
+        junk word patterns from external configuration.
+        """
         self.french_stopwords = {
             "le",
             "la",
@@ -99,8 +133,36 @@ class FrenchTextProcessor:
         }
         self.min_word_length = 3
         self.max_word_length = 50
+        
+        # Load junk patterns from external configuration
+        self.junk_patterns = get_junk_patterns()
 
     def validate_text(self, text: str) -> Optional[str]:
+        """
+        Validate input text for processing suitability.
+        
+        Performs comprehensive validation to ensure the text is suitable
+        for meaningful analysis. Checks for minimum content requirements,
+        spam detection, and content quality metrics.
+        
+        Args:
+            text: Raw input text to validate
+            
+        Returns:
+            Validated and cleaned text, or None if validation fails
+            
+        Validation criteria:
+        - Minimum 10 characters and 5 words
+        - Maximum 1MB size limit
+        - At least 30% unique words (spam detection)
+        - At least 50% alphabetic characters
+        
+        Example:
+            >>> processor = FrenchTextProcessor()
+            >>> valid = processor.validate_text("Voici un texte valide.")
+            >>> if valid:
+            ...     # Process the text
+        """
         if not text or not isinstance(text, str):
             return None
 
@@ -128,6 +190,31 @@ class FrenchTextProcessor:
         return text
 
     def clean_text(self, text: str) -> str:
+        """
+        Clean and normalize French text for processing.
+        
+        Performs comprehensive text cleaning including case normalization,
+        accent removal, character filtering, and whitespace cleanup.
+        Optimized for French language characteristics.
+        
+        Args:
+            text: Raw text to clean
+            
+        Returns:
+            Cleaned and normalized text
+            
+        Processing steps:
+        1. Convert to lowercase
+        2. Unicode normalization (NFD)
+        3. French accent replacement (à→a, é→e, etc.)
+        4. Character filtering (keep only alphanumeric, spaces, apostrophes)
+        5. Whitespace normalization
+        
+        Example:
+            >>> processor = FrenchTextProcessor()
+            >>> clean = processor.clean_text("C'est très intéressant!")
+            >>> # Returns "c'est tres interessant"
+        """
         if not text:
             return ""
 
@@ -149,177 +236,36 @@ class FrenchTextProcessor:
         return text
 
     def tokenize_french_text(self, text: str) -> List[str]:
+        """
+        Tokenize French text into meaningful words for analysis.
+        
+        Performs sophisticated tokenization that filters out junk words,
+        truncated terms, stopwords, and other noise common in scraped
+        French news content.
+        
+        Args:
+            text: Cleaned text to tokenize
+            
+        Returns:
+            List of meaningful French words suitable for analysis
+            
+        Filtering criteria:
+        - Minimum 4 characters after cleaning
+        - Not purely numeric or mostly numeric
+        - Not in junk word patterns
+        - Not a French stopword
+        - Contains alphabetic characters
+        - Passes length requirements
+        
+        Example:
+            >>> processor = FrenchTextProcessor()
+            >>> words = processor.tokenize_french_text("le chat mange très bien")
+            >>> # Returns ["chat", "mange", "bien"] (filtered stopwords)
+        """
         if not text:
             return []
 
-        # Enhanced junk word patterns
-        junk_patterns = {
-            # Truncated words (common in French)
-            "tre",
-            "ses",
-            "comple",
-            "apre",
-            "franc",
-            "cision",
-            "sente",
-            "core",
-            "bre",
-            "tait",
-            "ment",
-            "leurs",
-            "dont",
-            "quipe",
-            "dote",
-            "serait",
-            "avance",
-            "toiles",
-            "tecter",
-            "ramiro",
-            "caisse",
-            "saide",
-            "rentes",
-            "messages",
-            "involontaires",
-            "monde",
-            "ducatif",
-            "suspecte",
-            "d'avoir",
-            "mis",
-            "examen",
-            "meurtre",
-            "personne",
-            "charge",
-            "d'une",
-            "mission",
-            "public",
-            "place",
-            "tention",
-            "provisoire",
-            "soupc",
-            "onne",
-            "lors",
-            "d'un",
-            "empreinte",
-            "repe",
-            "peut-e",
-            "contro",
-            "sacs",
-            "devant",
-            "franc",
-            "oise-dolto",
-            "nucle",
-            "aires",
-            "bombe",
-            "europe",
-            "d'un",
-            "ricain",
-            "fense",
-            "l'otan",
-            "certains",
-            "dissuasion",
-            "aire",
-            "continent",
-            "l'europe",
-            "l'arsenal",
-            "face",
-            "enne",
-            "pourrait",
-            "pays",
-            "l'uranium",
-            "missiles",
-            "londres",
-            "l'allemagne",
-            "politique",
-            "france",
-            "royaume-uni",
-            "dote",
-            "ration",
-            "leur",
-            "renforcement",
-            "reste",
-            "votre",
-            "argent",
-            "commenc",
-            "ait",
-            "travailler",
-            "premier",
-            "certains",
-            "placements",
-            "offrent",
-            "potentiellement",
-            "jusqu",
-            "rendement",
-            "cashback",
-            "imme",
-            "diat",
-            "investissement",
-            "payer",
-            "cher",
-            "investir",
-            "suivez",
-            # Common French words (too frequent for flashcards)
-            "selon",
-            "qui",
-            "que",
-            "pas",
-            "monde",
-            "fait",
-            "peuvent",
-            "leur",
-            "prix",
-            "offre",
-            "mode",
-            "impose",
-            "euros",
-            "dont",
-            "couverture",
-            "simple",
-            "peut",
-            "ses",
-            "sente",
-            "ment",
-            "leurs",
-            "comple",
-            # Short words (likely incomplete)
-            "tre",
-            "ses",
-            "pre",
-            "qui",
-            "que",
-            "pas",
-            "fait",
-            "dont",
-            "peut",
-            # Common verb forms
-            "tait",
-            "serait",
-            "peuvent",
-            "offrent",
-            "commenc",
-            "ait",
-            "dote",
-            # Common adjectives/adverbs
-            "simple",
-            "comple",
-            "certains",
-            "potentiellement",
-            "imme",
-            "diat",
-            # Common nouns (too generic)
-            "monde",
-            "prix",
-            "offre",
-            "mode",
-            "euros",
-            "couverture",
-            "placements",
-            "rendement",
-            "investissement",
-            "argent",
-            "votre",
-            "leur",
-            "leurs",
-        }
+        # Use junk patterns from external configuration
 
         words = []
         for word in text.split():
@@ -337,8 +283,8 @@ class FrenchTextProcessor:
             if sum(c.isdigit() for c in word_clean) / max(1, len(word_clean)) > 0.6:
                 continue
 
-            # Skip junk words
-            if word_clean in junk_patterns:
+            # Skip junk words using external configuration
+            if word_clean in self.junk_patterns:
                 continue
 
             # Skip if word contains only punctuation
@@ -366,6 +312,32 @@ class FrenchTextProcessor:
     def extract_sentences_with_words(
         self, original_text: str, words: List[str]
     ) -> Dict[str, str]:
+        """
+        Extract sentence contexts for specific words from the original text.
+        
+        Finds sentences containing each word and returns them as context
+        for vocabulary learning. Cleans and formats contexts appropriately.
+        
+        Args:
+            original_text: The original article text (before cleaning)
+            words: List of words to find contexts for
+            
+        Returns:
+            Dictionary mapping words to their containing sentences
+            
+        Context processing:
+        - Splits text on French sentence boundaries (. ! ?)
+        - Removes newlines, hashtags, and extra whitespace
+        - Limits context length to 200 characters
+        - Excludes numeric-heavy words from context extraction
+        - Returns first found context for each word
+        
+        Example:
+            >>> processor = FrenchTextProcessor()
+            >>> text = "Le chat mange. Il est content."
+            >>> contexts = processor.extract_sentences_with_words(text, ["chat", "content"])
+            >>> # Returns {"chat": "Le chat mange", "content": "Il est content"}
+        """
         """
         Extract sentences containing specific words from the original text.
         Ensures each context is a single sentence, with no newlines or extra whitespace.
@@ -409,6 +381,31 @@ class FrenchTextProcessor:
         return word_contexts
 
     def count_word_frequency(self, text: str) -> Dict[str, int]:
+        """
+        Analyze text and return meaningful word frequency counts.
+        
+        Main entry point for text analysis. Validates, cleans, tokenizes,
+        and counts word frequencies while filtering out suspicious patterns
+        that likely indicate parsing errors.
+        
+        Args:
+            text: Raw text content to analyze
+            
+        Returns:
+            Dictionary of word frequencies, filtered for quality
+            
+        Processing pipeline:
+        1. Text validation (spam detection, size limits)
+        2. Text cleaning (normalization, accent removal)
+        3. Tokenization (filtering junk words, stopwords)
+        4. Frequency counting with outlier detection
+        5. Suspicious frequency filtering (max 10% of total)
+        
+        Example:
+            >>> processor = FrenchTextProcessor()
+            >>> freq = processor.count_word_frequency("Le chat mange. Le chat dort.")
+            >>> # Returns {"chat": 2, "mange": 1, "dort": 1}
+        """
         validated_text = self.validate_text(text)
         if not validated_text:
             return {}
@@ -432,13 +429,23 @@ class FrenchTextProcessor:
     def get_top_words(self, text: str, n: int = 50) -> List[tuple]:
         """
         Get top N most frequent words from text.
-
+        
+        Analyzes text and returns the most frequently occurring words,
+        useful for getting an overview of article content or identifying
+        key vocabulary.
+        
         Args:
             text: Text to analyze
-            n: Number of top words to return
-
+            n: Number of top words to return (default: 50)
+            
         Returns:
-            List of (word, frequency) tuples, sorted by frequency
+            List of (word, frequency) tuples, sorted by frequency descending
+            
+        Example:
+            >>> processor = FrenchTextProcessor()
+            >>> top_words = processor.get_top_words("text content", n=10)
+            >>> for word, freq in top_words:
+            ...     print(f"{word}: {freq}")
         """
         word_freq = self.count_word_frequency(text)
         return sorted(word_freq.items(), key=lambda x: x[1], reverse=True)[:n]
@@ -447,33 +454,56 @@ class FrenchTextProcessor:
         self, word_freq: Dict[str, int], min_freq: int = 2
     ) -> Dict[str, int]:
         """
-        Filter words by minimum frequency.
-
+        Filter words by minimum frequency threshold.
+        
+        Removes words that appear less than the specified minimum
+        frequency, useful for focusing on more significant vocabulary.
+        
         Args:
-            word_freq: Word frequency dictionary
-            min_freq: Minimum frequency threshold
-
+            word_freq: Word frequency dictionary to filter
+            min_freq: Minimum frequency threshold (default: 2)
+            
         Returns:
             Filtered word frequency dictionary
+            
+        Example:
+            >>> frequencies = {"word1": 5, "word2": 1, "word3": 3}
+            >>> filtered = processor.filter_by_frequency(frequencies, min_freq=2)
+            >>> # Returns {"word1": 5, "word3": 3}
         """
         return {word: freq for word, freq in word_freq.items() if freq >= min_freq}
 
     def expand_stopwords(self, additional_stopwords: Set[str]) -> None:
         """
         Add site-specific stopwords to the filter.
-
+        
+        Allows customization of stopword filtering for specific news sources
+        that may have unique vocabulary patterns or site-specific terms.
+        
         Args:
             additional_stopwords: Set of additional words to filter out
+            
+        Example:
+            >>> processor = FrenchTextProcessor()
+            >>> processor.expand_stopwords({"blog", "article", "site"})
         """
         self.french_stopwords.update(additional_stopwords)
 
     def set_word_length_limits(self, min_length: int = 3, max_length: int = 50) -> None:
         """
         Set minimum and maximum word length filters.
-
+        
+        Configures word length boundaries for filtering. Very short words
+        are often articles/prepositions, while very long words are often
+        URLs, technical terms, or parsing errors.
+        
         Args:
-            min_length: Minimum word length to include
-            max_length: Maximum word length to include
+            min_length: Minimum word length to include (default: 3)
+            max_length: Maximum word length to include (default: 50)
+            
+        Example:
+            >>> processor = FrenchTextProcessor()
+            >>> processor.set_word_length_limits(min_length=4, max_length=20)
         """
         self.min_word_length = min_length
         self.max_word_length = max_length

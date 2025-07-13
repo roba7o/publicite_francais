@@ -19,27 +19,117 @@ logger = get_logger(__name__)
 
 
 class ArticleProcessor:
-    """Main processor class that coordinates scraping and parsing operations."""
+    """
+    Main processor class that coordinates scraping and parsing operations.
+    
+    This class serves as the central orchestrator for the article scraping system.
+    It manages the entire pipeline from URL discovery to article parsing and CSV output,
+    with built-in resilience patterns including circuit breakers, health monitoring,
+    and graceful degradation.
+    
+    Features:
+    - Concurrent processing of multiple news sources
+    - Circuit breaker pattern for failing sources
+    - Health monitoring and adaptive degradation
+    - Retry mechanisms with exponential backoff
+    - Duplicate detection and prevention
+    - Both live and offline testing modes
+    
+    Attributes:
+        circuit_breakers (Dict[str, CircuitBreaker]): Per-source circuit breakers
+        
+    Example:
+        >>> config = ScraperConfig(name="test", enabled=True, ...)
+        >>> processed, attempted = ArticleProcessor.process_source(config)
+        >>> print(f"Processed {processed}/{attempted} articles")
+    """
 
     # Circuit breakers for each source
     circuit_breakers = {}
 
     @staticmethod
     def import_class(class_path: str) -> type:
-        """Dynamically import a class from a string path."""
+        """
+        Dynamically import a class from a string path.
+        
+        This method enables configuration-driven class loading, allowing
+        the system to instantiate scrapers and parsers based on string
+        configurations rather than hardcoded imports.
+        
+        Args:
+            class_path: Fully qualified class path (e.g., 'module.submodule.ClassName')
+            
+        Returns:
+            The imported class object ready for instantiation
+            
+        Raises:
+            ImportError: If the module cannot be imported
+            AttributeError: If the class doesn't exist in the module
+            
+        Example:
+            >>> cls = ArticleProcessor.import_class('scrapers.slate_fr_scraper.SlateFrURLScraper')
+            >>> scraper = cls(debug=True)
+        """
         module_path, class_name = class_path.rsplit(".", 1)
         module = importlib.import_module(module_path)
         return getattr(module, class_name)
 
     @classmethod
     def get_circuit_breaker(cls, source_name: str) -> CircuitBreaker:
-        """Get or create circuit breaker for a source"""
+        """
+        Get or create a circuit breaker for a specific news source.
+        
+        Circuit breakers prevent cascading failures by temporarily stopping
+        requests to sources that are experiencing repeated failures. This
+        implements the Circuit Breaker pattern for improved system resilience.
+        
+        Args:
+            source_name: Name of the news source (e.g., 'Slate.fr')
+            
+        Returns:
+            CircuitBreaker instance for the specified source
+            
+        Note:
+            Circuit breakers are shared across all processing operations
+            for the same source to maintain consistent state.
+        """
         if source_name not in cls.circuit_breakers:
             cls.circuit_breakers[source_name] = CircuitBreaker()
         return cls.circuit_breakers[source_name]
 
     @classmethod
     def process_source(cls, config: ScraperConfig) -> Tuple[int, int]:
+        """
+        Process a single news source from URL discovery to CSV output.
+        
+        This is the main entry point for processing a news source. It handles
+        the complete pipeline: initializing components, discovering/loading content,
+        parsing articles, and writing results to CSV.
+        
+        The method includes comprehensive error handling, health monitoring,
+        and performance tracking. It supports both live web scraping and
+        offline testing modes.
+        
+        Args:
+            config: ScraperConfig object containing source configuration
+                   including scraper/parser classes and parameters
+        
+        Returns:
+            Tuple of (processed_count, total_attempted) where:
+            - processed_count: Number of articles successfully processed
+            - total_attempted: Total number of articles attempted
+            
+        Note:
+            - Updates global health monitoring statistics
+            - Respects circuit breaker states for resilience
+            - Supports graceful degradation under load
+            - Logs comprehensive processing statistics
+            
+        Example:
+            >>> config = ScraperConfig(name="Slate.fr", enabled=True, ...)
+            >>> processed, attempted = ArticleProcessor.process_source(config)
+            >>> success_rate = processed / attempted if attempted > 0 else 0
+        """
         if not config.enabled:
             logger.info(f"Skipping disabled source: {config.name}")
             return 0, 0

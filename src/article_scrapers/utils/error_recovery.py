@@ -1,3 +1,27 @@
+"""
+Advanced error recovery and resilience patterns for web scraping.
+
+This module implements sophisticated error handling patterns to make
+the scraping system robust against failures and performance issues.
+Includes circuit breakers, retry logic, health monitoring, and
+graceful degradation strategies.
+
+Key Components:
+- CircuitBreaker: Prevents cascading failures by temporarily stopping requests
+- RetryHandler: Implements exponential backoff retry logic
+- SourceHealthMonitor: Tracks success rates and performance metrics
+- GracefulDegradation: Adapts behavior based on source health
+
+These patterns work together to create a resilient system that can
+handle network issues, server problems, and varying load conditions
+while maintaining overall system stability.
+
+Example:
+    >>> health_monitor.record_attempt('source1', success=True, response_time=1.2)
+    >>> if not graceful_degradation.should_skip_source('source1'):
+    ...     result = retry_handler.execute_with_retry(some_function)
+"""
+
 import time
 from typing import Dict, Any, Optional, Callable
 from datetime import datetime, timedelta
@@ -7,6 +31,31 @@ logger = get_logger(__name__)
 
 
 class CircuitBreaker:
+    """
+    Circuit breaker pattern implementation for preventing cascading failures.
+    
+    A circuit breaker monitors failures and stops making requests to failing
+    services for a specified timeout period. This prevents system overload
+    and allows failing services time to recover.
+    
+    States:
+    - CLOSED: Normal operation, requests pass through
+    - OPEN: Circuit is open, requests are blocked
+    - HALF_OPEN: Testing if service has recovered
+    
+    Attributes:
+        failure_threshold: Number of failures before opening circuit
+        recovery_timeout: Seconds to wait before testing recovery
+        failure_count: Current count of consecutive failures
+        state: Current circuit state (CLOSED, OPEN, HALF_OPEN)
+    
+    Example:
+        >>> cb = CircuitBreaker(failure_threshold=3, recovery_timeout=60)
+        >>> try:
+        ...     result = cb.call(risky_function, arg1, arg2)
+        ... except Exception:
+        ...     print("Circuit breaker prevented call or function failed")
+    """
     def __init__(self, failure_threshold: int = 5, recovery_timeout: int = 300):
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
@@ -52,6 +101,30 @@ class CircuitBreaker:
 
 
 class RetryHandler:
+    """
+    Retry mechanism with exponential backoff for transient failures.
+    
+    Automatically retries failed operations with increasing delays between
+    attempts. Useful for handling temporary network issues, server overload,
+    or other transient problems.
+    
+    Features:
+    - Configurable maximum retry attempts
+    - Exponential backoff with jitter
+    - Maximum delay cap to prevent excessive waits
+    - Comprehensive error logging
+    
+    Attributes:
+        max_retries: Maximum number of retry attempts
+        base_delay: Initial delay between retries in seconds
+        max_delay: Maximum delay cap in seconds
+    
+    Example:
+        >>> handler = RetryHandler(max_retries=3, base_delay=1.0)
+        >>> result = handler.execute_with_retry(unstable_function, arg1, arg2)
+        >>> if result is None:
+        ...     print("All retry attempts failed")
+    """
     def __init__(
         self, max_retries: int = 3, base_delay: float = 1.0, max_delay: float = 60.0
     ):
@@ -83,6 +156,35 @@ class RetryHandler:
 
 
 class SourceHealthMonitor:
+    """
+    Health monitoring system for tracking source performance and reliability.
+    
+    Continuously monitors the health of different news sources by tracking
+    success rates, response times, and failure patterns. This data drives
+    adaptive behavior in other system components.
+    
+    Tracked Metrics:
+    - Success/failure rates
+    - Average response times
+    - Consecutive failure counts
+    - Last success/failure timestamps
+    - Total attempt counts
+    
+    Health Criteria:
+    - Success rate >= 50%
+    - Consecutive failures < 3
+    
+    Usage:
+        The monitor is used by other components to make decisions about
+        request routing, load balancing, and graceful degradation.
+    
+    Example:
+        >>> monitor = SourceHealthMonitor()
+        >>> monitor.record_attempt('slate.fr', success=True, response_time=1.5)
+        >>> if monitor.is_source_healthy('slate.fr'):
+        ...     # Proceed with normal processing
+        >>> health_summary = monitor.get_health_summary()
+    """
     def __init__(self):
         self.source_stats: Dict[str, Dict[str, Any]] = {}
 
@@ -147,18 +249,66 @@ class SourceHealthMonitor:
 
 
 class GracefulDegradation:
+    """
+    Graceful degradation strategies based on source health monitoring.
+    
+    Implements adaptive behavior that reduces load on struggling sources
+    while maintaining overall system functionality. Uses health metrics
+    to make intelligent decisions about request patterns and resource allocation.
+    
+    Strategies:
+    - Skip unhealthy sources temporarily
+    - Reduce URL count for struggling sources
+    - Increase delays for sources with performance issues
+    - Early termination on high failure rates
+    
+    This approach ensures the system remains functional even when some
+    sources are experiencing problems, rather than failing completely.
+    
+    Example:
+        >>> degradation = GracefulDegradation(health_monitor)
+        >>> if not degradation.should_skip_source('problematic-source'):
+        ...     url_count = degradation.get_reduced_url_count('source', 100)
+        ...     delay = degradation.get_adaptive_delay('source', 1.0)
+    """
     def __init__(self, health_monitor: SourceHealthMonitor):
         self.health_monitor = health_monitor
 
     def should_skip_source(self, source_name: str) -> bool:
-        """Decide if a source should be skipped based on health"""
+        """
+        Decide if a source should be skipped based on health metrics.
+        
+        Args:
+            source_name: Name of the news source to evaluate
+            
+        Returns:
+            True if the source should be skipped, False otherwise
+            
+        The decision is based on the source's health status as determined
+        by success rates and consecutive failure counts.
+        """
         if not self.health_monitor.is_source_healthy(source_name):
             logger.warning(f"Skipping unhealthy source: {source_name}")
             return True
         return False
 
     def get_reduced_url_count(self, source_name: str, original_count: int) -> int:
-        """Reduce URL count for struggling sources"""
+        """
+        Calculate reduced URL count for sources with poor performance.
+        
+        Reduces the number of URLs to process based on the source's
+        success rate, helping to reduce load on struggling sources.
+        
+        Args:
+            source_name: Name of the news source
+            original_count: Original number of URLs to process
+            
+        Returns:
+            Adjusted URL count (minimum 1)
+            
+        Formula: reduced_count = max(1, original_count * success_rate)
+        Applied when success_rate < 0.7
+        """
         success_rate = self.health_monitor.get_success_rate(source_name)
 
         if success_rate < 0.7:
@@ -171,7 +321,21 @@ class GracefulDegradation:
         return original_count
 
     def get_adaptive_delay(self, source_name: str, base_delay: float) -> float:
-        """Increase delay for sources with poor performance"""
+        """
+        Calculate adaptive delay based on source performance.
+        
+        Increases request delays for sources experiencing consecutive
+        failures to reduce load and give them time to recover.
+        
+        Args:
+            source_name: Name of the news source
+            base_delay: Base delay in seconds
+            
+        Returns:
+            Adjusted delay in seconds
+            
+        Formula: adaptive_delay = base_delay * (1 + consecutive_failures * 0.5)
+        """
         stats = self.health_monitor.source_stats.get(source_name, {})
         consecutive_failures = stats.get("consecutive_failures", 0)
 
@@ -184,6 +348,18 @@ class GracefulDegradation:
 
 
 # Global instances for the application
+# These are shared across all components to maintain consistent state
 health_monitor = SourceHealthMonitor()
 graceful_degradation = GracefulDegradation(health_monitor)
 retry_handler = RetryHandler()
+
+# Export the main components
+__all__ = [
+    'CircuitBreaker',
+    'RetryHandler', 
+    'SourceHealthMonitor',
+    'GracefulDegradation',
+    'health_monitor',
+    'graceful_degradation',
+    'retry_handler'
+]

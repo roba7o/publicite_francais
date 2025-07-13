@@ -52,3 +52,50 @@ SITE_CONFIGS = {
         "max_word_length": 50,
     },
 }
+
+def get_site_config(domain: str) -> dict:
+    """
+    Get text processing configuration for a specific domain.
+    
+    Args:
+        domain: Domain name (e.g., 'slate.fr')
+        
+    Returns:
+        Configuration dictionary for the domain, or default config if not found
+        
+    Example:
+        >>> config = get_site_config('slate.fr')
+        >>> min_length = config['min_word_length']
+    """
+    return SITE_CONFIGS.get(domain, SITE_CONFIGS['default'])
+
+def get_all_additional_stopwords() -> set:
+    """
+    Get all additional stopwords from all site configurations.
+    
+    Returns:
+        Set containing all site-specific stopwords combined
+        
+    Useful for getting a comprehensive list of domain-specific
+    terms that should be filtered across all sources.
+    """
+    all_stopwords = set()
+    for config in SITE_CONFIGS.values():
+        all_stopwords.update(config.get('additional_stopwords', set()))
+    return all_stopwords
+
+def is_junk_filtering_enabled(domain: str) -> bool:
+    """
+    Check if junk word filtering is enabled for a domain.
+    
+    Args:
+        domain: Domain name to check
+        
+    Returns:
+        True if junk filtering is enabled, False otherwise
+    """
+    config = get_site_config(domain)
+    return config.get('enable_junk_filtering', True)
+
+# Export for backward compatibility
+__all__ = ['SITE_CONFIGS', 'get_site_config', 'get_all_additional_stopwords', 'is_junk_filtering_enabled']

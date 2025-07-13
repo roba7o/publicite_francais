@@ -1,3 +1,19 @@
+"""
+CSV writer utility for French article scraper output.
+
+This module provides functionality to write processed article data
+to daily CSV files with word frequency analysis results. Includes
+duplicate detection, data validation, and error recovery features.
+
+The CSV format is designed for vocabulary learning and text analysis,
+with each row representing a word occurrence with its context and metadata.
+
+Example usage:
+    >>> from article_scrapers.utils.csv_writer import DailyCSVWriter
+    >>> writer = DailyCSVWriter(debug=True)
+    >>> writer.write_article(article_data, url, frequencies, contexts)
+"""
+
 import csv
 import os
 from datetime import datetime

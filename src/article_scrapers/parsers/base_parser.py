@@ -23,7 +23,35 @@ DEFAULT_SITE_CONFIG = {
 
 
 class BaseParser(ABC):
-    """Abstract base class for all article parsers."""
+    """
+    Abstract base class for all article parsers.
+    
+    This class provides the common infrastructure and utilities needed by all
+    news source parsers. It handles HTTP requests, connection pooling, text
+    processing, CSV output, and both live and offline modes.
+    
+    Features:
+    - Shared HTTP session with connection pooling and retry logic
+    - Configurable text processing with site-specific rules
+    - Support for both live web scraping and offline testing
+    - Word frequency analysis with French language support
+    - CSV output with duplicate detection
+    - Comprehensive error handling and logging
+    
+    Attributes:
+        HEADERS (Dict): Standard HTTP headers for web requests
+        _session (requests.Session): Shared session for connection pooling
+        
+    Subclasses must implement:
+        parse_article(soup): Extract content and metadata from article HTML
+        
+    Example:
+        >>> class MyParser(BaseParser):
+        ...     def __init__(self):
+        ...         super().__init__("example.com")
+        ...     def parse_article(self, soup):
+        ...         return {"title": soup.title.text, "full_text": soup.get_text()}
+    """
 
     # Standard headers for web requests
     HEADERS = {
@@ -35,7 +63,23 @@ class BaseParser(ABC):
 
     @classmethod
     def get_session(cls):
-        """Get or create a shared requests session with connection pooling"""
+        """
+        Get or create a shared requests session with connection pooling.
+        
+        This method implements a singleton pattern for HTTP sessions to enable
+        connection reuse across all parser instances. The session includes:
+        - Automatic retry logic with exponential backoff
+        - Connection pooling for improved performance
+        - Standard user agent headers
+        - Proper timeout and error handling
+        
+        Returns:
+            requests.Session: Configured session ready for HTTP requests
+            
+        Note:
+            The session is shared across all parser instances to maximize
+            connection reuse and improve overall scraping performance.
+        """
         if cls._session is None:
             cls._session = requests.Session()
 
@@ -92,6 +136,35 @@ class BaseParser(ABC):
     def get_soup_from_url(
         self, url: str, max_retries: int = 3
     ) -> Optional[BeautifulSoup]:
+        """
+        Fetch and parse HTML content from a URL with retry logic.
+        
+        Downloads content from the specified URL and parses it into a
+        BeautifulSoup object. Includes comprehensive error handling,
+        retry logic with exponential backoff, and various failure modes.
+        
+        Args:
+            url: The URL to fetch content from
+            max_retries: Maximum number of retry attempts (default: 3)
+            
+        Returns:
+            BeautifulSoup object of the parsed HTML, or None if failed
+            
+        Raises:
+            No exceptions - all errors are caught and logged
+            
+        Note:
+            - Respects self.delay for rate limiting
+            - Automatically retries on timeout, connection, and server errors
+            - Validates response content length to detect blocking
+            - Returns None in offline mode with a warning
+            
+        Example:
+            >>> parser = SomeParser("example.com")
+            >>> soup = parser.get_soup_from_url("https://example.com/article")
+            >>> if soup:
+            ...     title = soup.find("title").text
+        """
         if OFFLINE:
             self.logger.warning(f"Attempted to fetch URL in offline mode: {url}")
             return None
@@ -137,7 +210,25 @@ class BaseParser(ABC):
         return None
 
     def get_soup_from_localfile(self, file_name: str) -> Optional[BeautifulSoup]:
-        """Load HTML content from a local test file."""
+        """
+        Load HTML content from a local test file.
+        
+        This method supports offline testing by loading pre-saved HTML files
+        from the test_data directory. Useful for development and testing
+        without making live HTTP requests.
+        
+        Args:
+            file_name: Name of the HTML file in the test_data directory
+            
+        Returns:
+            BeautifulSoup object of the parsed HTML, or None if file not found
+            
+        Example:
+            >>> parser = SomeParser("example.com")
+            >>> soup = parser.get_soup_from_localfile("sample_article.html")
+            >>> if soup:
+            ...     content = parser.parse_article(soup)
+        """
         current_file_dir = os.path.dirname(os.path.abspath(__file__))
         project_root_dir = os.path.abspath(os.path.join(current_file_dir, ".."))
         test_file_path = os.path.join(project_root_dir, "test_data", file_name)
@@ -215,7 +306,30 @@ class BaseParser(ABC):
         return soup_sources
 
     def count_word_frequency(self, text: str) -> Dict[str, int]:
-        """Analyze text and return word frequency dictionary."""
+        """
+        Analyze text and return word frequency dictionary.
+        
+        Processes the input text through the French text processing pipeline
+        to extract meaningful word frequencies. Includes text validation,
+        cleaning, tokenization, and filtering based on configured parameters.
+        
+        Args:
+            text: Raw text content to analyze
+            
+        Returns:
+            Dictionary mapping words to their frequencies
+            
+        Note:
+            - Applies site-specific text processing rules
+            - Filters by minimum frequency if configured
+            - Handles French language specifics (accents, stopwords)
+            - Returns empty dict for invalid/insufficient text
+            
+        Example:
+            >>> parser = SomeParser("example.com")
+            >>> frequencies = parser.count_word_frequency("Le chat mange.")
+            >>> # Returns {"chat": 1, "mange": 1} (stopwords filtered)
+        """
         if not text:
             return {}
 
@@ -230,7 +344,28 @@ class BaseParser(ABC):
         return word_frequencies
 
     def to_csv(self, parsed_data: Dict[str, Any], url: str) -> None:
-        """Process article data and write word frequencies to CSV."""
+        """
+        Process article data and write word frequencies to CSV.
+        
+        Takes parsed article data, extracts word frequencies, and writes
+        the results to a daily CSV file. Includes context extraction for
+        each word and handles duplicate detection.
+        
+        Args:
+            parsed_data: Dictionary containing article metadata and full_text
+            url: Source URL or identifier for the article
+            
+        Note:
+            - Automatically extracts sentence contexts for each word
+            - Writes to date-stamped CSV files
+            - Includes duplicate detection based on title and URL
+            - Handles errors gracefully with logging
+            - CSV format: word, context, source, article_date, scraped_date, title, frequency
+            
+        Example:
+            >>> parsed = {"title": "News Title", "full_text": "Article content..."}
+            >>> parser.to_csv(parsed, "https://example.com/article")
+        """
         if not parsed_data or not parsed_data.get("full_text"):
             return
 
