@@ -223,8 +223,16 @@ class BaseParser(ABC):
             if not word_freqs:
                 return
 
+            # Extract sentence contexts for each word
+            word_contexts = self.text_processor.extract_sentences_with_words(
+                full_text, list(word_freqs.keys())
+            )
+
             self.csv_writer.write_article(
-                parsed_data=parsed_data, url=url, word_freqs=word_freqs
+                parsed_data=parsed_data, 
+                url=url, 
+                word_freqs=word_freqs,
+                word_contexts=word_contexts
             )
         except Exception as e:
             self.logger.error(f"Error writing to CSV for {url}: {e}")

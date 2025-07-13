@@ -1,11 +1,12 @@
 import csv
 import os
 from datetime import datetime
+from typing import Optional
 
 from ..config.settings import DEBUG
 from article_scrapers.utils.logger import get_logger
 
-CSV_FIELDS = ["word", "source", "article_date", "scraped_date", "title", "frequency"]
+CSV_FIELDS = ["word", "context", "source", "article_date", "scraped_date", "title", "frequency"]
 
 
 class DailyCSVWriter:
@@ -38,7 +39,7 @@ class DailyCSVWriter:
                 self.logger.error(f"Error loading existing keys: {e}")
         return existing
 
-    def write_article(self, parsed_data: dict, url: str, word_freqs: dict) -> None:
+    def write_article(self, parsed_data: dict, url: str, word_freqs: dict, word_contexts: Optional[dict] = None) -> None:
         if not word_freqs or not isinstance(word_freqs, dict):
             self.logger.warning(f"No valid word frequencies for {parsed_data.get('title', 'Unknown')}")
             return
@@ -79,8 +80,12 @@ class DailyCSVWriter:
                 rows_written = 0
                 for word, freq in valid_freqs.items():
                     try:
+                        # Get context for this word, or empty string if not available
+                        context = word_contexts.get(word, "") if word_contexts else ""
+                        
                         writer.writerow({
                             "word": str(word)[:100],  # Truncate long words
+                            "context": str(context)[:500],  # Truncate long contexts
                             "source": str(url)[:500],
                             "article_date": parsed_data.get("article_date", ""),
                             "scraped_date": parsed_data.get("date_scraped", ""),

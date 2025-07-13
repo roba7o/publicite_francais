@@ -73,15 +73,61 @@ class FrenchTextProcessor:
         if not text:
             return []
 
-        # Batch processing for better performance
-        words = [
-            word for word in text.split()
-            if (word.strip() and 
-                self.min_word_length <= len(word) <= self.max_word_length and 
-                word not in self.french_stopwords)
-        ]
-        
+        words = []
+        for word in text.split():
+            word_clean = word.strip()
+            # Exclude words that are only numbers
+            if word_clean.isdigit():
+                continue
+            # Optionally, exclude words that are mostly numbers (e.g., 12e, 1er)
+            if sum(c.isdigit() for c in word_clean) / max(1, len(word_clean)) > 0.6:
+                continue
+            if (
+                word_clean
+                and self.min_word_length <= len(word_clean) <= self.max_word_length
+                and word_clean not in self.french_stopwords
+            ):
+                words.append(word_clean)
         return words
+
+    def extract_sentences_with_words(self, original_text: str, words: List[str]) -> Dict[str, str]:
+        """
+        Extract sentences containing specific words from the original text.
+        Ensures each context is a single sentence, with no newlines or extra whitespace.
+        Removes hashtags, triple quotes, and strips punctuation/whitespace from context.
+        Args:
+            original_text: The original text (before cleaning)
+            words: List of words to find sentences for
+        Returns:
+            Dictionary mapping words to their containing sentences
+        """
+        import string
+        if not original_text or not words:
+            return {}
+
+        # Split text into sentences (French sentence endings)
+        sentence_pattern = r'(?<=[.!?])\s+'
+        sentences = re.split(sentence_pattern, original_text)
+
+        word_contexts = {}
+        for sentence in sentences:
+            # Remove newlines and extra spaces
+            clean_sentence = ' '.join(sentence.split())
+            # Remove hashtags and triple quotes
+            clean_sentence = clean_sentence.replace('##', '').replace('"""', '')
+            # Remove leading/trailing punctuation and whitespace
+            clean_sentence = clean_sentence.strip(string.punctuation + ' "\'\n\t')
+            if len(clean_sentence) < 10:
+                continue
+            cleaned_for_match = self.clean_text(clean_sentence)
+            sentence_words = cleaned_for_match.split()
+            for word in words:
+                # Exclude words that are only numbers or mostly numbers
+                if word.isdigit() or sum(c.isdigit() for c in word) / max(1, len(word)) > 0.6:
+                    continue
+                if word in sentence_words and word not in word_contexts:
+                    word_contexts[word] = clean_sentence[:200]  # Limit context length
+        return word_contexts
 
     def count_word_frequency(self, text: str) -> Dict[str, int]:
         validated_text = self.validate_text(text)
