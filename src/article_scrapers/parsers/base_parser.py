@@ -1,3 +1,13 @@
+"""
+Base parser module providing common functionality for all article parsers.
+
+This module contains the abstract BaseParser class that handles:
+- HTML fetching (live and offline modes)
+- Text processing and word frequency analysis
+- CSV output generation
+- Common configuration management
+"""
+
 import os
 import time
 from abc import ABC, abstractmethod
@@ -13,6 +23,7 @@ from article_scrapers.config.settings import DEBUG, OFFLINE
 from article_scrapers.utils.logger import get_logger
 
 
+# Default configuration for sites not in SITE_CONFIGS
 DEFAULT_SITE_CONFIG = {
     "min_word_frequency": 1,
     "min_word_length": 3,
@@ -22,6 +33,9 @@ DEFAULT_SITE_CONFIG = {
 
 
 class BaseParser(ABC):
+    """Abstract base class for all article parsers."""
+    
+    # Standard headers for web requests
     HEADERS = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
     }
@@ -29,12 +43,20 @@ class BaseParser(ABC):
     def __init__(
         self, site_domain: str, debug: Optional[bool] = None, delay: float = 1.0
     ):
+        """
+        Initialize the base parser with site-specific configuration.
+        
+        Args:
+            site_domain: Domain name for configuration lookup
+            debug: Override debug setting
+            delay: Delay between requests (seconds)
+        """
         self.logger = get_logger(self.__class__.__name__)
         self.site_domain = site_domain
         self.debug = debug if debug is not None else DEBUG
         self.delay = delay
 
-        # Use test output directory when in offline mode
+        # Set up output directory based on mode
         if OFFLINE:
             current_file_dir = os.path.dirname(os.path.abspath(__file__))
             project_root_dir = os.path.abspath(os.path.join(current_file_dir, ".."))
@@ -43,12 +65,12 @@ class BaseParser(ABC):
             output_dir = "output"
         self.csv_writer = DailyCSVWriter(debug=self.debug, output_dir=output_dir)
 
-        # Load configuration
+        # Load and apply site-specific configuration
         self.config = SITE_CONFIGS.get(site_domain, DEFAULT_SITE_CONFIG)
         self.text_processor = FrenchTextProcessor()
         self.min_word_frequency = self.config["min_word_frequency"]
 
-        # Apply configuration
+        # Apply configuration to text processor
         if self.config.get("additional_stopwords"):
             self.text_processor.expand_stopwords(
                 set(self.config["additional_stopwords"])
@@ -59,13 +81,14 @@ class BaseParser(ABC):
         self.text_processor.set_word_length_limits(min_length, max_length)
 
     def get_soup_from_url(self, url: str) -> Optional[BeautifulSoup]:
+        """Fetch HTML content from a URL and return BeautifulSoup object."""
         if OFFLINE:
             self.logger.warning(f"Attempted to fetch URL in offline mode: {url}")
             return None
 
         try:
             response = requests.get(url, headers=self.HEADERS, timeout=10)
-            time.sleep(self.delay)
+            time.sleep(self.delay)  # Rate limiting
             response.raise_for_status()
             return BeautifulSoup(response.content, "html.parser")
         except Exception as e:
@@ -73,6 +96,7 @@ class BaseParser(ABC):
             return None
 
     def get_soup_from_localfile(self, file_name: str) -> Optional[BeautifulSoup]:
+        """Load HTML content from a local test file."""
         current_file_dir = os.path.dirname(os.path.abspath(__file__))
         project_root_dir = os.path.abspath(os.path.join(current_file_dir, ".."))
         test_file_path = os.path.join(project_root_dir, "test_data", file_name)
@@ -91,7 +115,15 @@ class BaseParser(ABC):
     def get_test_sources_from_directory(
         self, source_name: str
     ) -> List[Tuple[Optional[BeautifulSoup], str]]:
-        """Auto-discover test files from the test_data/raw_url_soup directory based on source name."""
+        """
+        Auto-discover and load test files from the test_data directory.
+        
+        Args:
+            source_name: Name of the news source to map to directory
+            
+        Returns:
+            List of (soup, filename) tuples
+        """
         current_file_dir = os.path.dirname(os.path.abspath(__file__))
         project_root_dir = os.path.abspath(os.path.join(current_file_dir, ".."))
         test_data_dir = os.path.join(project_root_dir, "test_data", "raw_url_soup")
@@ -127,11 +159,13 @@ class BaseParser(ABC):
         return soup_sources
 
     def count_word_frequency(self, text: str) -> Dict[str, int]:
+        """Analyze text and return word frequency dictionary."""
         if not text:
             return {}
 
         word_frequencies = self.text_processor.count_word_frequency(text)
 
+        # Filter by minimum frequency if configured
         if self.min_word_frequency > 1:
             word_frequencies = self.text_processor.filter_by_frequency(
                 word_frequencies, self.min_word_frequency
@@ -140,6 +174,7 @@ class BaseParser(ABC):
         return word_frequencies
 
     def to_csv(self, parsed_data: Dict[str, Any], url: str) -> None:
+        """Process article data and write word frequencies to CSV."""
         if not parsed_data or not parsed_data.get("full_text"):
             return
 
@@ -158,4 +193,13 @@ class BaseParser(ABC):
 
     @abstractmethod
     def parse_article(self, soup: BeautifulSoup) -> Optional[Dict[str, Any]]:
+        """
+        Abstract method that must be implemented by subclasses.
+        
+        Args:
+            soup: BeautifulSoup object of the article page
+            
+        Returns:
+            Dictionary with article data or None if parsing fails
+        """
         pass

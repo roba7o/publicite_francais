@@ -1,3 +1,10 @@
+"""
+Core processor module for handling article scraping and processing.
+
+This module coordinates between scrapers (URL extraction) and parsers (content extraction),
+managing both live and offline modes.
+"""
+
 import importlib
 from typing import Tuple, Optional, List, Any, Dict
 
@@ -11,20 +18,30 @@ logger = get_logger(__name__)
 
 
 class ArticleProcessor:
+    """Main processor class that coordinates scraping and parsing operations."""
+
     @staticmethod
     def import_class(class_path: str) -> type:
+        """Dynamically import a class from a string path."""
         module_path, class_name = class_path.rsplit(".", 1)
         module = importlib.import_module(module_path)
         return getattr(module, class_name)
 
     @classmethod
     def process_source(cls, config: ScraperConfig) -> Tuple[int, int]:
+        """
+        Process a single news source using its scraper and parser.
+        
+        Returns:
+            Tuple[int, int]: (processed_count, total_attempted)
+        """
         if not config.enabled:
             logger.info(f"Skipping disabled source: {config.name}")
             return 0, 0
 
         logger.info(f"Processing source: {config.name}")
 
+        # Initialize scraper and parser classes
         try:
             ScraperClass = cls.import_class(config.scraper_class)
             ParserClass = cls.import_class(config.parser_class)
@@ -35,6 +52,7 @@ class ArticleProcessor:
             logger.error(f"Failed to initialize components for {config.name}: {e}")
             return 0, 0
 
+        # Get content sources based on mode
         if OFFLINE:
             sources = cls._get_test_sources(parser, config.name)
         else:
@@ -44,6 +62,7 @@ class ArticleProcessor:
             logger.warning(f"No content sources found for {config.name}")
             return 0, 0
 
+        # Process each article
         processed_count = 0
         total_attempted = len(sources)
 
@@ -60,6 +79,7 @@ class ArticleProcessor:
     def _get_live_sources(
         scraper: Any, parser: Any
     ) -> List[Tuple[Optional[BeautifulSoup], str]]:
+        """Extract URLs from live website and fetch their content."""
         try:
             urls = scraper.get_article_urls()
             if not urls:
@@ -78,13 +98,14 @@ class ArticleProcessor:
     def _get_test_sources(
         parser: Any, source_name: str
     ) -> List[Tuple[Optional[BeautifulSoup], str]]:
-        # Auto-discover test files based on source name
+        """Load test files from the test_data directory."""
         return parser.get_test_sources_from_directory(source_name)
 
     @staticmethod
     def _process_article(
         parser: Any, soup: BeautifulSoup, source_identifier: str
     ) -> bool:
+        """Parse a single article and save results to CSV."""
         try:
             parsed_content = parser.parse_article(soup)
             if parsed_content:
