@@ -13,6 +13,7 @@ env/
 
 # Data files
 output/
+test_data/
 
 # Environment
 .env

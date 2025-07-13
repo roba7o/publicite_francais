@@ -1,65 +1,75 @@
-from article_scrapers.parsers.base_parser import BaseParser
+# article_scrapers/parsers/slate_fr_parser.py
+
+"""
+Parser for Slate.fr articles.
+
+This module provides the SlateFrArticleParser class, which extends BaseParser
+to specifically extract and process content from Slate.fr articles.
+"""
+
 from datetime import datetime
+from typing import Dict, Any, List, Optional
+
+from bs4 import BeautifulSoup, Tag
+
+from article_scrapers.parsers.base_parser import BaseParser
+
 
 class SlateFrArticleParser(BaseParser):
-    def __init__(self):
-        # Just pass the site domain - all config is handled by BaseParser
-        super().__init__(site_domain='slate.fr')
-        
-        # Add site-specific stopwords if needed
-        slate_stopwords = {
-            'slate', 'article', 'lire', 'aussi', 'voir', 'copyright', 'droits', 'réservés'
-        }
-        self.add_custom_stopwords(slate_stopwords)
-        
-        # Set word length limits (optional)
-        self.set_word_length_limits(min_length=4, max_length=30)
+    def __init__(self) -> None:
+        super().__init__(site_domain="slate.fr")
 
-    def parse_article_content(self, soup):
-        """Parses article content and extracts metadata."""
+    def parse_article(self, soup: BeautifulSoup) -> Optional[Dict[str, Any]]:
         try:
-            article = soup.find('article')
-            if not article:
-                self.logger.warning("No <article> tag found — this might not be an <article> page")
+            article_tag = soup.find("article")
+            if not article_tag or not isinstance(article_tag, Tag):
                 return None
 
-            paragraphs = self.extract_paragraphs(article)
-            if not paragraphs:
-                self.logger.warning("No content extracted from paragraphs")
-                return None
+            paragraphs = self._extract_paragraphs(article_tag)
+            full_text = "\n\n".join(paragraphs) if paragraphs else ""
 
-            full_text = '\n\n'.join(paragraphs) if paragraphs else "No content"
-            
-            # Get text statistics for debugging
-            if self.debug:
-                stats = self.get_text_statistics(full_text)
-                self.logger.info(f"Text stats: {stats['total_unique_words']} unique words, "
-                               f"{stats['total_word_count']} total words")
-                self.logger.debug(f"Top words: {stats['top_10_words']}")
+            if not full_text:
+                return None
 
             return {
-                'full_text': full_text,
-                'num_paragraphs': len(paragraphs) if paragraphs else 0,
-                'title': self.extract_title(soup) or "Unknown title",
-                'article_date': self.extract_date(soup) or "Unknown date",
-                'date_scraped': datetime.now().strftime("%Y-%m-%d"),
+                "full_text": full_text,
+                "num_paragraphs": len(paragraphs),
+                "title": self._extract_title(soup),
+                "article_date": self._extract_date(soup),
+                "date_scraped": datetime.now().strftime("%Y-%m-%d"),
             }
 
         except Exception as e:
-            self.logger.error(f"Error parsing article: {e}")
+            self.logger.error(f"Error parsing Slate.fr article: {e}")
             return None
 
-    def extract_paragraphs(self, article):
-        """Extract text from paragraphs in the article."""
-        paragraphs = article.find_all('p')
-        return [p.get_text(separator=' ', strip=True) for p in paragraphs if not p.get('class')]
+    def _extract_paragraphs(self, article_tag: Tag) -> List[str]:
+        paragraphs: List[str] = []
+        for p in article_tag.find_all("p"):
+            if isinstance(p, Tag) and not p.get("class"):
+                text = p.get_text(separator=" ", strip=True)
+                text = " ".join(text.split())
+                if text and len(text.split()) > 5:
+                    paragraphs.append(text)
+        return paragraphs
 
-    def extract_title(self, soup):
-        """Extract the article's title."""
-        title_tag = soup.find('h1')
-        return title_tag.get_text(strip=True) if title_tag else "Unknown title"
+    def _extract_title(self, soup: BeautifulSoup) -> str:
+        title_tag = soup.find("h1")
+        if title_tag and isinstance(title_tag, Tag):
+            return title_tag.get_text(strip=True)
+        return "Unknown title"
 
-    def extract_date(self, soup):
-        """Extract the article's date."""
-        date_tag = soup.find('time')
-        return date_tag.get_text(strip=True) if date_tag else "Unknown date"
+    def _extract_date(self, soup: BeautifulSoup) -> str:
+        date_tag = soup.find("time")
+        if date_tag and isinstance(date_tag, Tag) and date_tag.has_attr("datetime"):
+            date_str = str(date_tag["datetime"])
+            try:
+                dt_obj = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+                return dt_obj.strftime("%Y-%m-%d")
+            except ValueError:
+                return date_str
+        elif date_tag and isinstance(date_tag, Tag):
+            text_date = date_tag.get_text(strip=True)
+            if text_date:
+                return text_date
+        return "Unknown date"
