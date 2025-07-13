@@ -1,4 +1,5 @@
 from article_scrapers.config.website_parser_scrapers_config import SCRAPER_CONFIGS
+from article_scrapers.config.settings import OFFLINE
 from article_scrapers.core.processor import ArticleProcessor
 from article_scrapers.utils.logging_config import setup_logging
 from article_scrapers.utils.logger import get_logger
@@ -8,7 +9,8 @@ logger = get_logger(__name__)
 
 
 def main():
-    logger.info("Starting article scraping system")
+    mode = "OFFLINE" if OFFLINE else "LIVE"
+    logger.info(f"Starting article scraping system in {mode} mode")
 
     total_processed = 0
     total_attempted = 0
@@ -19,6 +21,9 @@ def main():
         total_attempted += attempted
 
     logger.info(f"Completed processing. Success: {total_processed}/{total_attempted}")
+    
+    if OFFLINE:
+        logger.info("Results saved to test_data/test_output/ directory")
 
 
 if __name__ == "__main__":

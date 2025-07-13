@@ -2,6 +2,7 @@ import importlib
 from typing import Tuple, Optional, List, Any, Dict
 
 from ..config.website_parser_scrapers_config import ScraperConfig
+from ..config.settings import OFFLINE
 from article_scrapers.utils.logger import get_logger
 from bs4 import BeautifulSoup
 
@@ -35,10 +36,10 @@ class ArticleProcessor:
             return 0, 0
 
         sources = []
-        if config.live_mode:
-            sources = cls._get_live_sources(scraper, parser)
+        if OFFLINE or not config.live_mode:
+            sources = cls._get_test_sources(parser, config.test_files, config.name)
         else:
-            sources = cls._get_test_sources(parser, config.test_files)
+            sources = cls._get_live_sources(scraper, parser)
 
         if not sources:
             logger.warning(f"No content sources found for {config.name}")
@@ -71,15 +72,17 @@ class ArticleProcessor:
         return soup_sources
 
     @staticmethod
-    def _get_test_sources(parser: Any, test_files: Optional[List[str]]) -> List[Tuple[Optional[BeautifulSoup], str]]:
-        if not test_files:
-            return []
-
-        soup_sources = []
-        for file_name in test_files:
-            soup = parser.get_soup_from_localfile(file_name)
-            soup_sources.append((soup, file_name))
-        return soup_sources
+    def _get_test_sources(parser: Any, test_files: Optional[List[str]], source_name: str) -> List[Tuple[Optional[BeautifulSoup], str]]:
+        if test_files:
+            # Use specific test files if provided
+            soup_sources = []
+            for file_name in test_files:
+                soup = parser.get_soup_from_localfile(file_name)
+                soup_sources.append((soup, file_name))
+            return soup_sources
+        else:
+            # Auto-discover test files based on source name
+            return parser.get_test_sources_from_directory(source_name)
 
     @staticmethod
     def _process_article(parser: Any, soup: BeautifulSoup, source_identifier: str) -> bool:
