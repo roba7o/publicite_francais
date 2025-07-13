@@ -1,4 +1,6 @@
-output/
+# Generated output and logs (new structure)
+src/article_scrapers/output/*.csv
+src/article_scrapers/logs/*.log
 
 # Python
 __pycache__/
@@ -11,7 +13,7 @@ venv/
 env/
 .env/
 
-# Data files
+# Legacy directories (now removed)
 output/
 test_data/output/
 logs/
