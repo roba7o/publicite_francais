@@ -1,97 +1,69 @@
-from article_scrapers.parsers.base_parser import BaseParser
 from datetime import datetime
 import re
+from typing import Dict, Any, List, Optional
+
+from bs4 import BeautifulSoup, Tag
+
+from article_scrapers.parsers.base_parser import BaseParser
+
 
 class FranceInfoArticleParser(BaseParser):
-    def __init__(self):
-        super().__init__(site_domain='franceinfo.fr')
-        
+    def __init__(self) -> None:
+        super().__init__(site_domain="franceinfo.fr")
 
-    def parse_article_content(self, soup):
-        """Parses FranceInfo article content and extracts metadata."""
+    def parse_article(self, soup: BeautifulSoup) -> Optional[Dict[str, Any]]:
         try:
-            # Main content extraction
-            content_div = soup.find('div', class_='c-body')
-            if not content_div:
-                self.logger.warning("No main content div found")
+            content_div = soup.find("div", class_="c-body")
+            if not content_div or not isinstance(content_div, Tag):
                 return None
 
-            paragraphs = self.extract_paragraphs(content_div)
-            full_text = '\n\n'.join(paragraphs) if paragraphs else "No content"
-            
-            # Get text statistics
-            if self.debug:
-                stats = self.get_text_statistics(full_text)
-                self.logger.info(f"Text stats: {stats['total_unique_words']} unique words, "
-                               f"{stats['total_word_count']} total words")
-                self.logger.debug(f"Top words: {stats['top_10_words']}")
+            paragraphs = self._extract_paragraphs(content_div)
+            full_text = "\n\n".join(paragraphs) if paragraphs else ""
+
+            if not full_text:
+                return None
 
             return {
-                'full_text': full_text,
-                'num_paragraphs': len(paragraphs),
-                'title': self.extract_title(soup),
-                'article_date': self.extract_date(soup),
-                'date_scraped': datetime.now().strftime("%Y-%m-%d"),
-                'author': self.extract_author(soup),
-                'tags': self.extract_tags(soup),
-                'image_caption': self.extract_image_caption(soup),
+                "full_text": full_text,
+                "num_paragraphs": len(paragraphs),
+                "title": self._extract_title(soup),
+                "article_date": self._extract_date(soup),
+                "date_scraped": datetime.now().strftime("%Y-%m-%d"),
             }
 
         except Exception as e:
-            self.logger.error(f"Error parsing article: {e}")
+            self.logger.error(f"Error parsing FranceInfo article: {e}")
             return None
 
-    def extract_paragraphs(self, content_div):
-        """Extract text paragraphs from main content."""
-        paragraphs = []
-        for element in content_div.find_all(['p', 'h2']):
-            if element.name == 'h2':
-                # Add subheaders as separate paragraphs
-                paragraphs.append(f"\n\n## {element.get_text(strip=True)} ##\n")
-            else:
-                # Clean paragraph text
-                text = element.get_text(separator=' ', strip=True)
-                text = re.sub(r'\s+', ' ', text)  # Normalize whitespace
-                if text and len(text.split()) > 3:  # Skip very short paragraphs
-                    paragraphs.append(text)
+    def _extract_paragraphs(self, content_div: Tag) -> List[str]:
+        paragraphs: List[str] = []
+        for element in content_div.find_all(["p", "h2", "li"]):
+            if isinstance(element, Tag):
+                if element.name == "h2":
+                    text = element.get_text(strip=True)
+                    if text:
+                        paragraphs.append(f"\n\n## {text} ##\n")
+                elif element.name == "p" or element.name == "li":
+                    text = element.get_text(separator=" ", strip=True)
+                    text = re.sub(r"\s+", " ", text).strip()
+                    if text and len(text.split()) > 3:
+                        paragraphs.append(text)
         return paragraphs
 
-    def extract_title(self, soup):
-        """Extract article title from h1 tag."""
-        title_tag = soup.find('h1')
-        return title_tag.get_text(strip=True) if title_tag else "Unknown title"
+    def _extract_title(self, soup: BeautifulSoup) -> str:
+        title_tag = soup.find("h1")
+        if title_tag and isinstance(title_tag, Tag):
+            return title_tag.get_text(strip=True)
+        return "Unknown title"
 
-    def extract_date(self, soup):
-        """Extract publication date from time tag."""
-        time_tag = soup.find('time')
-        if time_tag and time_tag.has_attr('datetime'):
-            return time_tag['datetime']
+    def _extract_date(self, soup: BeautifulSoup) -> str:
+        time_tag = soup.find("time")
+        if time_tag and isinstance(time_tag, Tag) and time_tag.has_attr("datetime"):
+            date_str = str(time_tag["datetime"])
+            try:
+                dt_obj = datetime.fromisoformat(date_str)
+                return dt_obj.strftime("%Y-%m-%d")
+            except ValueError:
+                return date_str
+
         return datetime.now().strftime("%Y-%m-%d")
-
-    def extract_author(self, soup):
-        """Extract author information if available."""
-        author_tag = soup.find('span', class_='c-signature__author')
-        return author_tag.get_text(strip=True) if author_tag else "Unknown author"
-
-    def extract_tags(self, soup):
-        """Extract article tags."""
-        tags_section = soup.find('section', class_='related-tags')
-        if not tags_section:
-            return []
-        
-        tags = []
-        for tag in tags_section.find_all('a', class_='fi-tag'):
-            tag_text = tag.get_text(strip=True)
-            if tag_text:
-                tags.append(tag_text)
-        return tags
-
-    def extract_image_caption(self, soup):
-        """Extract caption from article's main image."""
-        figcaption = soup.find('figcaption')
-        if figcaption:
-            # Remove the photographer credit (content in span)
-            for span in figcaption.find_all('span'):
-                span.decompose()
-            return figcaption.get_text(strip=True)
-        return None

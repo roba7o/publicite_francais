@@ -1,162 +1,161 @@
-from bs4 import BeautifulSoup
-import requests
 import os
 import time
+from abc import ABC, abstractmethod
+from typing import Dict, Any, Optional, List, Tuple
+
+import requests
+from bs4 import BeautifulSoup
+
 from article_scrapers.utils.csv_writer import DailyCSVWriter
-from article_scrapers.utils.french_text_processor import FrenchTextProcessor  # Add this import
-from ..config.text_processing_config import SITE_CONFIGS
-from ..config.settings import DEBUG
+from article_scrapers.utils.french_text_processor import FrenchTextProcessor
+from article_scrapers.config.text_processing_config import SITE_CONFIGS
+from article_scrapers.config.settings import DEBUG, OFFLINE
 from article_scrapers.utils.logger import get_logger
 
-class BaseParser:
-    def __init__(self, site_domain=None, debug=None, delay=1):
+
+DEFAULT_SITE_CONFIG = {
+    "min_word_frequency": 1,
+    "min_word_length": 3,
+    "max_word_length": 50,
+    "additional_stopwords": [],
+}
+
+
+class BaseParser(ABC):
+    HEADERS = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
+    }
+
+    def __init__(
+        self, site_domain: str, debug: Optional[bool] = None, delay: float = 1.0
+    ):
         self.logger = get_logger(self.__class__.__name__)
-        
-        self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
-        }
+        self.site_domain = site_domain
         self.debug = debug if debug is not None else DEBUG
         self.delay = delay
-        self.csv_writer = DailyCSVWriter(debug=True)
-        
-        # Configure based on site
-        self.site_domain = site_domain
-        self.config = self._get_site_config(site_domain)
-        
-        # Add French text processor with site-specific config
+
+        # Use test output directory when in offline mode
+        if OFFLINE:
+            current_file_dir = os.path.dirname(os.path.abspath(__file__))
+            project_root_dir = os.path.abspath(os.path.join(current_file_dir, ".."))
+            output_dir = os.path.join(project_root_dir, "test_data", "test_output")
+        else:
+            output_dir = "output"
+        self.csv_writer = DailyCSVWriter(debug=self.debug, output_dir=output_dir)
+
+        # Load configuration
+        self.config = SITE_CONFIGS.get(site_domain, DEFAULT_SITE_CONFIG)
         self.text_processor = FrenchTextProcessor()
-        self.min_word_frequency = self.config['min_word_frequency']
-        self._apply_config()
+        self.min_word_frequency = self.config["min_word_frequency"]
 
-    def _get_site_config(self, site_domain):
-        """Get configuration for the specific site."""
-        if not site_domain:
-            return SITE_CONFIGS['default']
-        return SITE_CONFIGS.get(site_domain, SITE_CONFIGS['default'])
-    
-    def _apply_config(self):
-        """Apply site-specific configuration."""
-        # Add site-specific stopwords
-        if self.config['additional_stopwords']:
-            self.text_processor.expand_stopwords(self.config['additional_stopwords'])
-            
-        # Set word length limits
-        self.text_processor.set_word_length_limits(
-            min_length=self.config['min_word_length'],
-            max_length=self.config['max_word_length']
-        )
-        
-        if self.debug:
-            self.logger.info(f"Applied config for {self.site_domain or 'default'}: "
-                           f"min_freq={self.config['min_word_frequency']}, "
-                           f"word_length={self.config['min_word_length']}-{self.config['max_word_length']}, "
-                           f"custom_stopwords={len(self.config['additional_stopwords'])}")
+        # Apply configuration
+        if self.config.get("additional_stopwords"):
+            self.text_processor.expand_stopwords(
+                set(self.config["additional_stopwords"])
+            )
 
-    def get_soup_from_url(self, url):
-        """
-        Get a BeautifulSoup object from a given URL.
-        """
-        if self.debug:
-            self.logger.info(f"Fetching URL: {url}...")
+        min_length = self.config.get("min_word_length", 3)
+        max_length = self.config.get("max_word_length", 50)
+        self.text_processor.set_word_length_limits(min_length, max_length)
 
-        try:
-            response = requests.get(url, headers=self.headers)
-            time.sleep(self.delay)  # Politeness delay
-            response.raise_for_status()
-            
-            self.logger.info(f"Successfully fetched URL: {url}")
-            return BeautifulSoup(response.content, 'html.parser')
-
-        except requests.exceptions.RequestException as e:
-            status_code = getattr(response, 'status_code', 'N/A') if 'response' in locals() else 'N/A'
-            self.logger.error(f"Failed to fetch URL: {url} | Status Code: {status_code} | Error: {e}")
+    def get_soup_from_url(self, url: str) -> Optional[BeautifulSoup]:
+        if OFFLINE:
+            self.logger.warning(f"Attempted to fetch URL in offline mode: {url}")
             return None
 
-    def get_soup_from_localfile(self, file_name):
-        """
-        Get a BeautifulSoup object from a local html file -> for testing purposes.
-        """
-        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # root dir
-        test_file_path = os.path.join(base_dir, "test_data", file_name)
-        
+        try:
+            response = requests.get(url, headers=self.HEADERS, timeout=10)
+            time.sleep(self.delay)
+            response.raise_for_status()
+            return BeautifulSoup(response.content, "html.parser")
+        except Exception as e:
+            self.logger.error(f"Error fetching {url}: {e}")
+            return None
+
+    def get_soup_from_localfile(self, file_name: str) -> Optional[BeautifulSoup]:
+        current_file_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root_dir = os.path.abspath(os.path.join(current_file_dir, ".."))
+        test_file_path = os.path.join(project_root_dir, "test_data", file_name)
+
+        if not os.path.exists(test_file_path):
+            self.logger.error(f"Test file not found: {test_file_path}")
+            return None
+
         try:
             with open(test_file_path, "r", encoding="utf-8") as f:
-                self.logger.debug(f"Loading local file for parsing: {test_file_path}")
-                return BeautifulSoup(f.read(), 'html.parser')
+                return BeautifulSoup(f.read(), "html.parser")
         except Exception as e:
-            self.logger.error(f"Failed to read local file: {test_file_path} | Error: {e}")
+            self.logger.error(f"Error reading {test_file_path}: {e}")
             return None
 
-    def count_word_frequency(self, text):
-        """
-        Count word frequencies in text using enhanced French text processing.
-        """
-        # Use the enhanced text processor instead of basic split
+    def get_test_sources_from_directory(
+        self, source_name: str
+    ) -> List[Tuple[Optional[BeautifulSoup], str]]:
+        """Auto-discover test files from the test_data/raw_url_soup directory based on source name."""
+        current_file_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root_dir = os.path.abspath(os.path.join(current_file_dir, ".."))
+        test_data_dir = os.path.join(project_root_dir, "test_data", "raw_url_soup")
+
+        # Map source names to directory names
+        source_to_dir = {
+            "Slate.fr": "slate_fr",
+            "FranceInfo.fr": "france_info_fr",
+            "TF1 Info": "tf1_fr",
+            "Depeche.fr": "depeche_fr",
+            "LeMonde.fr": "lemonde_fr",
+        }
+
+        dir_name = source_to_dir.get(source_name, source_name.lower().replace(" ", "_"))
+        source_dir = os.path.join(test_data_dir, dir_name)
+
+        if not os.path.exists(source_dir):
+            self.logger.warning(f"Test directory not found: {source_dir}")
+            return []
+
+        soup_sources = []
+        try:
+            for filename in os.listdir(source_dir):
+                if filename.endswith((".html", ".php")):
+                    file_path = os.path.join(source_dir, filename)
+                    with open(file_path, "r", encoding="utf-8") as f:
+                        soup = BeautifulSoup(f.read(), "html.parser")
+                        soup_sources.append((soup, filename))
+                        self.logger.info(f"Loaded test file: {filename}")
+        except Exception as e:
+            self.logger.error(f"Error reading test files from {source_dir}: {e}")
+
+        return soup_sources
+
+    def count_word_frequency(self, text: str) -> Dict[str, int]:
+        if not text:
+            return {}
+
         word_frequencies = self.text_processor.count_word_frequency(text)
-        
-        # Filter by minimum frequency if specified
+
         if self.min_word_frequency > 1:
             word_frequencies = self.text_processor.filter_by_frequency(
                 word_frequencies, self.min_word_frequency
             )
-        
-        if self.debug:
-            self.logger.debug(f"Counted {len(word_frequencies)} unique words (after filtering)")
-            
+
         return word_frequencies
 
-    def to_csv(self, dict_content, url):
-        try:
-            word_freqs = self.count_word_frequency(dict_content["full_text"])
-            
-            if not word_freqs:
-                self.logger.warning(f"No words found after processing for URL: {url}")
-                return
-                
-            self.csv_writer.write_article(
-                parsed_data=dict_content,
-                url=url,
-                word_freqs=word_freqs
-            )
-            self.logger.info(f"Successfully wrote {len(word_freqs)} words to CSV for URL: {url}")
-        except Exception as e:
-            self.logger.error(f"Error writing to CSV for URL: {url} | Error: {e}")
+    def to_csv(self, parsed_data: Dict[str, Any], url: str) -> None:
+        if not parsed_data or not parsed_data.get("full_text"):
+            return
 
-    def add_custom_stopwords(self, stopwords):
-        """
-        Add custom stopwords to the text processor.
-        
-        Args:
-            stopwords: Set or list of additional stopwords
-        """
-        self.text_processor.expand_stopwords(set(stopwords))
-        
-    def set_word_length_limits(self, min_length=3, max_length=50):
-        """
-        Set minimum and maximum word length limits.
-        
-        Args:
-            min_length: Minimum word length
-            max_length: Maximum word length
-        """
-        self.text_processor.set_word_length_limits(min_length, max_length)
-        
-    def get_text_statistics(self, text):
-        """
-        Get statistics about the processed text.
-        
-        Args:
-            text: Text to analyze
-            
-        Returns:
-            Dictionary with text statistics
-        """
-        word_freqs = self.count_word_frequency(text)
-        top_words = self.text_processor.get_top_words(text, 10)
-        
-        return {
-            'total_unique_words': len(word_freqs),
-            'total_word_count': sum(word_freqs.values()),
-            'top_10_words': top_words,
-            'average_word_length': sum(len(word) for word in word_freqs.keys()) / len(word_freqs) if word_freqs else 0
-        }
+        try:
+            full_text = parsed_data["full_text"]
+            word_freqs = self.count_word_frequency(full_text)
+
+            if not word_freqs:
+                return
+
+            self.csv_writer.write_article(
+                parsed_data=parsed_data, url=url, word_freqs=word_freqs
+            )
+        except Exception as e:
+            self.logger.error(f"Error writing to CSV for {url}: {e}")
+
+    @abstractmethod
+    def parse_article(self, soup: BeautifulSoup) -> Optional[Dict[str, Any]]:
+        pass
