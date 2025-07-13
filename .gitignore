@@ -13,7 +13,7 @@ env/
 
 # Data files
 output/
-test_data/
+test_data/output/
 
 #rubbish
 bin/
