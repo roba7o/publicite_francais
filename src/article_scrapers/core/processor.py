@@ -203,7 +203,7 @@ class ArticleProcessor:
                 ):
                     processed_count += 1
                     
-        if sources:
+        if sources and processed_count > 0:
             batch_duration = logger.performance.end_timer("article_processing_batch", 
                                                          {"source": config.name, "processed": processed_count, "attempted": total_attempted})
 

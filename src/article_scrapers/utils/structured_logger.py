@@ -211,7 +211,8 @@ class PerformanceLogger:
             Duration in milliseconds
         """
         if timer_name not in self._timers:
-            self.logger.warning(f"Timer '{timer_name}' was not started")
+            # Only warn if we're in a context where the timer should have been started
+            # This prevents spurious warnings when no processing actually occurred
             return 0.0
             
         duration = (time.time() - self._timers[timer_name]) * 1000

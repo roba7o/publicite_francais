@@ -64,9 +64,9 @@ def setup_logging(
     # Determine default log directory (relative to project root)
     if log_directory is None:
         import os
-        # Get the project root directory (2 levels up from this file)
+        # Get the project root directory (3 levels up from this file: utils -> article_scrapers -> src -> project_root)
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        project_root = os.path.abspath(os.path.join(current_dir, "..", ".."))
+        project_root = os.path.abspath(os.path.join(current_dir, "..", "..", ".."))
         
         if OFFLINE:
             log_directory = os.path.join(project_root, "src", "article_scrapers", "test_data", "logs")

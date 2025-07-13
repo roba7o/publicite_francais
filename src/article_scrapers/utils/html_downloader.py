@@ -39,12 +39,12 @@ if __name__ == "__main__":
             "https://www.ladepeche.fr/2025/04/16/icone-de-la-tendance-cette-paire-de-nike-air-jordan-frole-la-rupture-de-stock-12636138.php",
             "https://www.ladepeche.fr/2025/01/17/fendez-jusqua-100-buches-par-heure-avec-ce-fendeur-de-bois-a-prix-casse-ce-vendredi-12447694.php",
         ],
-        "lemonde_fr": [
-            "https://www.lemonde.fr/afrique/article/2025/07/11/au-mali-le-general-assimi-goita-promulgue-une-loi-lui-accordant-un-mandat-illimite-de-president_6620633_3212.html",
-            "https://www.lemonde.fr/international/article/2025/07/13/la-chine-et-l-indonesie-renforcent-leurs-liens-economiques_6182350_3210.html",
-            "https://www.lemonde.fr/societe/article/2025/07/14/le-gouvernement-francais-annonce-des-reformes-pour-renforcer-la-securite-sociale_6182361_3224.html",
-            "https://www.lemonde.fr/en/international/article/2024/11/06/algerian-boxer-imane-khelif-taking-legal-action-over-gender-reports_6731869_4.html",
-        ],
+        "france_info": [
+            "https://www.franceinfo.fr/france/nouvelle-caledonie-iles-loyaute/nouvelle-caledonie-une-majorite-de-la-classe-politique-salue-l-accord-le-rn-exprime-de-vives-inquietudes_7374766.html",
+            "https://www.franceinfo.fr/societe/armee-securite-defense/infographie-de-32-milliards-en-2017-a-plus-de-67-prevus-en-2030-comment-le-budget-de-la-defense-francaise-a-evolue-ces-dernieres-annees_7374634.html",
+            "https://www.franceinfo.fr/france/nouvelle-caledonie/creation-d-un-etat-de-nouvelle-caledonie-nationalite-corps-electoral-ce-que-contient-l-accord-historique-signe-entre-l-etat-et-les-forces-politiques-du-territoire_7372849.html",
+            "https://www.franceinfo.fr/politique/elisabeth-borne-recadre-son-ministre-de-l-enseignement-superieur-qui-avait-declare-que-la-notion-d-islamo-gauchisme-n-existait-pas_7375003.html"
+            ],
         "tf1_fr": [
             "https://www.tf1info.fr/economie/comment-investir-son-argent-avec-un-cashback-2377334.html",
             "https://www.tf1info.fr/societe/les-astuces-pour-eviter-les-arnaques-en-ligne-2377335.html",

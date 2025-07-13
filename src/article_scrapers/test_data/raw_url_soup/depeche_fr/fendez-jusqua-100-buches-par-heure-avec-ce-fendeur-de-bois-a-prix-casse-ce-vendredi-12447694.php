@@ -145,9 +145,9 @@
                         <div class="navbar-top__brand-text hide-on-med-and-down">dimanche 13 juillet 2025, Saint Henri</div>
         </div>
             <div class="aside-weather aside-weather--small hide-on-med-and-down">
-        <img src="https://assets.ladepeche.fr/img/meteo/temps/04d.png?4af8ae7a"
+        <img src="https://assets.ladepeche.fr/img/meteo/temps/01d.png?71f53b51"
              class="aside-weather__today-media responsive-img"
-             rel="js-weather-image-0" title="Nuageux">
+             rel="js-weather-image-0" title="Ciel dégagé">
         <div class="aside-weather__today-temp" rel="js-weather-temps-0">20° / 29°</div>
         <a class="aside-weather__change"
            href="https://profil.ladepeche.fr/account/"
@@ -490,6 +490,89 @@
                 <div class="article__media">
                     <figure class="ratio ratio-standard ratio-large--xl">
                                                                                                     <picture class="ratio-target">
+                                <source media="(max-width: 1200px)" data-srcset="https://images.ladepeche.fr/api/v1/images/view/686fd0fe3f0f5e03e70c9ad3/standard/image.jpg?v=1">
+                                <img src="https://assets.ladepeche.fr/img/lazy_large.jpg?afc28884"
+                                     data-src="https://images.ladepeche.fr/api/v1/images/view/686fd0fe3f0f5e03e70c9ad3/large/image.jpg?v=1"
+                                     alt="Auchan fracasse le prix de cette machine à café Delonghi seulement pendant quelques jours"
+                                     class="responsive-img">
+                            </picture>
+                                            </figure>
+                </div>
+                <div class="article__content">
+                                            <div class="article__topic hide-on-large-only">Maison</div>
+                                                            <p class="article__title">
+                        <a class="stretched-link"
+                                                          href="/2025/07/13/auchan-fracasse-le-prix-de-cette-machine-a-cafe-delonghi-seulement-pendant-quelques-jours-12818651.php"
+                                                      data-xiti-action="shopping-jardin::colgauche::article1::article-titre,N">
+                            Auchan fracasse le prix de cette machine à café Delonghi seulement pendant quelques jours
+                        </a>
+                    </p>
+                    <p class="article__chapo hide-on-med-and-down">
+                                                    <span class="article__topic hide-on-med-and-down">
+                                Maison.
+                            </span>
+                                                Si vous avez envie de préparer de délicieux cafés, alors, faites confiance à cette machine à café...
+                    </p>
+                </div>
+            </article>
+                    <article class="article article--vertical article--vertical-wide">
+                <div class="article__media">
+                    <figure class="ratio ratio-standard ratio-large--xl">
+                                                                                                    <picture class="ratio-target">
+                                <source media="(max-width: 1200px)" data-srcset="https://images.ladepeche.fr/api/v1/images/view/686fca72bfd19c7936057a36/standard/image.jpg?v=1">
+                                <img src="https://assets.ladepeche.fr/img/lazy_large.jpg?afc28884"
+                                     data-src="https://images.ladepeche.fr/api/v1/images/view/686fca72bfd19c7936057a36/large/image.jpg?v=1"
+                                     alt="Profitez d’un espace ombragé cet été, avec cette pergola au prix réduit sur Amazon"
+                                     class="responsive-img">
+                            </picture>
+                                            </figure>
+                </div>
+                <div class="article__content">
+                                                            <p class="article__title">
+                        <a class="stretched-link"
+                                                          href="/2025/07/13/profitez-dun-espace-ombrage-cet-ete-avec-cette-pergola-au-prix-reduit-sur-amazon-12818578.php"
+                                                      data-xiti-action="shopping-jardin::colgauche::article2::article-titre,N">
+                            Profitez d’un espace ombragé cet été, avec cette pergola au prix réduit sur Amazon
+                        </a>
+                    </p>
+                    <p class="article__chapo hide-on-med-and-down">
+                                                Si vous avez envie de passer un bel été au frais, alors, pensez à cette pergola. Elle est...
+                    </p>
+                </div>
+            </article>
+                    <article class="article article--vertical article--vertical-wide">
+                <div class="article__media">
+                    <figure class="ratio ratio-standard ratio-large--xl">
+                                                                                                    <picture class="ratio-target">
+                                <source media="(max-width: 1200px)" data-srcset="https://images.ladepeche.fr/api/v1/images/view/686fb477b78810a91808af46/standard/image.jpg?v=1">
+                                <img src="https://assets.ladepeche.fr/img/lazy_large.jpg?afc28884"
+                                     data-src="https://images.ladepeche.fr/api/v1/images/view/686fb477b78810a91808af46/large/image.jpg?v=1"
+                                     alt="Ultra-complète, cette batterie de cuisine Ninja est à moins de 100 euros, chez Electro Dépôt"
+                                     class="responsive-img">
+                            </picture>
+                                            </figure>
+                </div>
+                <div class="article__content">
+                                            <div class="article__topic hide-on-large-only">Maison</div>
+                                                            <p class="article__title">
+                        <a class="stretched-link"
+                                                          href="/2025/07/13/ultra-complete-cette-batterie-de-cuisine-ninja-est-a-moins-de-100-euros-chez-electro-depot-12818350.php"
+                                                      data-xiti-action="shopping-jardin::colgauche::article3::article-titre,N">
+                            Ultra-complète, cette batterie de cuisine Ninja est à moins de 100 euros, chez Electro Dépôt
+                        </a>
+                    </p>
+                    <p class="article__chapo hide-on-med-and-down">
+                                                    <span class="article__topic hide-on-med-and-down">
+                                Maison.
+                            </span>
+                                                Offrez-vous la performance professionnelle à la maison avec la batterie de cuisine Ninja Foodi...
+                    </p>
+                </div>
+            </article>
+                    <article class="article article--vertical article--vertical-wide">
+                <div class="article__media">
+                    <figure class="ratio ratio-standard ratio-large--xl">
+                                                                                                    <picture class="ratio-target">
                                 <source media="(max-width: 1200px)" data-srcset="https://images.ladepeche.fr/api/v1/images/view/686fd4a5a2b3481e2d0b3b30/standard/image.jpg?v=1">
                                 <img src="https://assets.ladepeche.fr/img/lazy_large.jpg?afc28884"
                                      data-src="https://images.ladepeche.fr/api/v1/images/view/686fd4a5a2b3481e2d0b3b30/large/image.jpg?v=1"
@@ -503,7 +586,7 @@
                                                             <p class="article__title">
                         <a class="stretched-link"
                                                           href="/2025/07/13/electro-depot-ces-5-offres-a-moins-de-200-euros-sont-a-saisir-avant-la-rupture-de-stock-12818704.php"
-                                                      data-xiti-action="shopping-jardin::colgauche::article1::article-titre,N">
+                                                      data-xiti-action="shopping-jardin::colgauche::article4::article-titre,N">
                             Electro Dépôt : ces 5 offres à moins de 200 euros sont à saisir avant la rupture de stock
                         </a>
                     </p>
@@ -512,93 +595,6 @@
                                 Maison.
                             </span>
                                                 Si vous avez envie de trouver le prochain appareil qui va faciliter votre quotidien et vous faire...
-                    </p>
-                </div>
-            </article>
-                    <article class="article article--vertical article--vertical-wide">
-                <div class="article__media">
-                    <figure class="ratio ratio-standard ratio-large--xl">
-                                                                                                    <picture class="ratio-target">
-                                <source media="(max-width: 1200px)" data-srcset="https://images.ladepeche.fr/api/v1/images/view/686fb352c73d97b1f70c9670/standard/image.jpg?v=1">
-                                <img src="https://assets.ladepeche.fr/img/lazy_large.jpg?afc28884"
-                                     data-src="https://images.ladepeche.fr/api/v1/images/view/686fb352c73d97b1f70c9670/large/image.jpg?v=1"
-                                     alt="Offre choc : cet aspirateur Dyson V8 voit son prix chuter de 80 % chez Conforama"
-                                     class="responsive-img">
-                            </picture>
-                                            </figure>
-                </div>
-                <div class="article__content">
-                                            <div class="article__topic hide-on-large-only">Soldes</div>
-                                                            <p class="article__title">
-                        <a class="stretched-link"
-                                                          href="/2025/07/13/offre-choc-cet-aspirateur-dyson-v8-voit-son-prix-chuter-de-80-chez-conforama-12818338.php"
-                                                      data-xiti-action="shopping-jardin::colgauche::article2::article-titre,N">
-                            Offre choc : cet aspirateur Dyson V8 voit son prix chuter de 80 % chez Conforama
-                        </a>
-                    </p>
-                    <p class="article__chapo hide-on-med-and-down">
-                                                    <span class="article__topic hide-on-med-and-down">
-                                Soldes.
-                            </span>
-                                                Transformez votre quotidien avec un aspirateur sans fil, puissant et polyvalent, pensé pour...
-                    </p>
-                </div>
-            </article>
-                    <article class="article article--vertical article--vertical-wide">
-                <div class="article__media">
-                    <figure class="ratio ratio-standard ratio-large--xl">
-                                                                                                    <picture class="ratio-target">
-                                <source media="(max-width: 1200px)" data-srcset="https://images.ladepeche.fr/api/v1/images/view/686fd602ee5130d83c0865f7/standard/image.jpg?v=1">
-                                <img src="https://assets.ladepeche.fr/img/lazy_large.jpg?afc28884"
-                                     data-src="https://images.ladepeche.fr/api/v1/images/view/686fd602ee5130d83c0865f7/large/image.jpg?v=1"
-                                     alt="Recommandés par les professionnels, ces 3 outils Stanley sont à moins de 25 euros sur Amazon"
-                                     class="responsive-img">
-                            </picture>
-                                            </figure>
-                </div>
-                <div class="article__content">
-                                            <div class="article__topic hide-on-large-only">Bricolage</div>
-                                                            <p class="article__title">
-                        <a class="stretched-link"
-                                                          href="/2025/07/13/recommandes-par-les-professionnels-ces-3-outils-stanley-sont-a-moins-de-25-euros-sur-amazon-12818722.php"
-                                                      data-xiti-action="shopping-jardin::colgauche::article3::article-titre,N">
-                            Recommandés par les professionnels, ces 3 outils Stanley sont à moins de 25 euros sur Amazon
-                        </a>
-                    </p>
-                    <p class="article__chapo hide-on-med-and-down">
-                                                    <span class="article__topic hide-on-med-and-down">
-                                Bricolage.
-                            </span>
-                                                Si vous avez envie d’effectuer des travaux aisément, alors, craquez pour ces 3 outils Stanley....
-                    </p>
-                </div>
-            </article>
-                    <article class="article article--vertical article--vertical-wide">
-                <div class="article__media">
-                    <figure class="ratio ratio-standard ratio-large--xl">
-                                                                                                    <picture class="ratio-target">
-                                <source media="(max-width: 1200px)" data-srcset="https://images.ladepeche.fr/api/v1/images/view/686fd02fffc2a8bb24056989/standard/image.jpg?v=1">
-                                <img src="https://assets.ladepeche.fr/img/lazy_large.jpg?afc28884"
-                                     data-src="https://images.ladepeche.fr/api/v1/images/view/686fd02fffc2a8bb24056989/large/image.jpg?v=1"
-                                     alt="La machine à glaces Ninja Creami est à prix délirant sur Cdiscount"
-                                     class="responsive-img">
-                            </picture>
-                                            </figure>
-                </div>
-                <div class="article__content">
-                                            <div class="article__topic hide-on-large-only">Maison</div>
-                                                            <p class="article__title">
-                        <a class="stretched-link"
-                                                          href="/2025/07/13/la-machine-a-glaces-ninja-creami-est-a-prix-delirant-sur-cdiscount-12818615.php"
-                                                      data-xiti-action="shopping-jardin::colgauche::article4::article-titre,N">
-                            La machine à glaces Ninja Creami est à prix délirant sur Cdiscount
-                        </a>
-                    </p>
-                    <p class="article__chapo hide-on-med-and-down">
-                                                    <span class="article__topic hide-on-med-and-down">
-                                Maison.
-                            </span>
-                                                Si vous avez envie de vous régaler avec des desserts rafraîchissants cet été, alors, optez pour...
                     </p>
                 </div>
             </article>

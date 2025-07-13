@@ -154,9 +154,9 @@
                         <div class="navbar-top__brand-text hide-on-med-and-down">dimanche 13 juillet 2025, Saint Henri</div>
         </div>
             <div class="aside-weather aside-weather--small hide-on-med-and-down">
-        <img src="https://assets.ladepeche.fr/img/meteo/temps/04d.png?4af8ae7a"
+        <img src="https://assets.ladepeche.fr/img/meteo/temps/01d.png?71f53b51"
              class="aside-weather__today-media responsive-img"
-             rel="js-weather-image-0" title="Nuageux">
+             rel="js-weather-image-0" title="Ciel dégagé">
         <div class="aside-weather__today-temp" rel="js-weather-temps-0">20° / 29°</div>
         <a class="aside-weather__change"
            href="https://profil.ladepeche.fr/account/"
@@ -458,7 +458,7 @@
                 </div>
                 <div class="article-full__media-infos"></div>
                     </div>
-        <div class="grid-m" rel="js-article-premium" data-article-token="eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJtb2RfZm9fYXBpLXJlYWdpciIsImV4cCI6MTc1MjM5ODYyMi40NDgxMTg5MjUwOTQ2MDQ0OTIxODc1LCJzaXRlX2NvZGUiOiJkZG0iLCJpZCI6MTI4MjI0MzR9.4fWmR1f2R0XKBsJzIxX2bNZvngZB_sRatPWmMDjX7u4">
+        <div class="grid-m" rel="js-article-premium" data-article-token="eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJtb2RfZm9fYXBpLXJlYWdpciIsImV4cCI6MTc1MjQyOTU2MC4yMjg3ODI4OTIyMjcxNzI4NTE1NjI1LCJzaXRlX2NvZGUiOiJkZG0iLCJpZCI6MTI4MjI0MzR9.BH5Fn6OOEnVaO_1__UK6iAD7TYPu4mNQifmtKBalnD8">
             <div class="article-full__left-col">
                 <div class="article-full__section-1">
                     <div class="article-full__infos">
@@ -749,7 +749,7 @@ Aller, un petit vol au-dessus du lot, &ccedil;a vous tente&nbsp;?</p>
                                 <textarea name="texte" class="js-comments-validate materialize-textarea" placeholder="Ajouter un commentaire" rel="js-comment-textarea"></textarea>
                                 <input type="hidden" name="info_id" class="js-comments-validate" value="12822434"/>
                                 <input type="hidden" name="parentcommentid" value="0">
-                                <input type="hidden" name="token" class="js-comments-validate" value="eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJtb2RfZm9fYXBpLXJlYWdpciIsImV4cCI6MTc1MjM5ODYyMi40NjY0NDQwMTU1MDI5Mjk2ODc1LCJzaXRlX2NvZGUiOiJkZG0iLCJpbmZvX2lkIjoxMjgyMjQzNH0.heRnUJzIyJHNkJBtRtZ9jrnGREj-rscnOqz1FWQfXw4"/>
+                                <input type="hidden" name="token" class="js-comments-validate" value="eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJtb2RfZm9fYXBpLXJlYWdpciIsImV4cCI6MTc1MjQyOTU2MC4yNDUwMzMwMjU3NDE1NzcxNDg0Mzc1LCJzaXRlX2NvZGUiOiJkZG0iLCJpbmZvX2lkIjoiMTI4MjI0MzQifQ.LRt3GudLSZ0ab1cRa40l9JUDR2KzC05Q_UlgP75NMl8"/>
                                 <input type="submit" name="post" value="Publier mon commentaire" id="post-btn" class="btn" data-xiti-action="article::commentaire::ddm-12822434::tyrolienne-au-dessus-du-lot-2-km-de-cordes-tendues-pour-un-saut-vertigineux-en-toute-securite,N">
                                                                     <a href="https://www.ladepeche.fr/page/charte-moderation" class="react-chart-link" target="_blank">Lire la charte de modération</a>
                                                             </form>
@@ -825,10 +825,10 @@ Aller, un petit vol au-dessus du lot, &ccedil;a vous tente&nbsp;?</p>
             </li>
                     <li class="aside-tops__item">
                 <span class="aside-tops__number">5</span>
-                <a href="/2025/07/10/lours-etait-a-30-metres-il-sest-redresse-il-a-crache-le-berger-pyreneen-ne-doit-la-vie-qua-son-beret-12817718.php" class="aside-tops__title"
+                <a href="/2025/07/11/ils-ne-me-voient-pas-ils-se-reajustent-comme-devant-un-miroir-regulierement-des-passants-viennent-faire-leurs-besoins-sous-sa-fenetre-12820809.php" class="aside-tops__title"
                    data-xiti-action="detail-article::coldroite::tops-lus::article,N">
-                    <span class="aside-tops__topic">Ours des Pyrénées.</span>
-                    <span class="aside-tops__title-text">"L’ours était à 30 mètres, il s’est redressé, il a craché" : la course folle du berger pyrénéen qui ne doit la vie qu’à son béret !</span>
+                    <span class="aside-tops__topic">Société.</span>
+                    <span class="aside-tops__title-text">"Ils ne me voient pas, ils se réajustent comme devant un miroir" : régulièrement, des passants viennent faire leurs besoins sous sa fenêtre</span>
                 </a>
             </li>
             </ul>
@@ -848,14 +848,6 @@ Aller, un petit vol au-dessus du lot, &ccedil;a vous tente&nbsp;?</p>
             </li>
                     <li class="aside-tops__item">
                 <span class="aside-tops__number">2</span>
-                <a href="/2025/07/12/guerre-en-ukraine-la-france-identifiee-comme-principal-adversaire-de-la-russie-en-europe-quest-ce-que-ca-veut-dire-12821968.php" class="aside-tops__title"
-                   data-xiti-action="detail-article::coldroite::tops-commentes::article,N">
-                    <span class="aside-tops__topic">Russie.</span>
-                    <span class="aside-tops__title-text">Guerre en Ukraine : la France identifiée comme "principal adversaire" de la Russie en Europe, qu’est-ce que ça veut dire ?</span>
-                </a>
-            </li>
-                    <li class="aside-tops__item">
-                <span class="aside-tops__number">3</span>
                 <a href="/2025/07/09/cela-affaiblirait-encore-notre-securite-sociale-les-medicaments-generiques-bientot-moins-rembourses-un-senateur-tire-la-sonnette-dalarme-12813577.php" class="aside-tops__title"
                    data-xiti-action="detail-article::coldroite::tops-commentes::article,N">
                     <span class="aside-tops__topic">Santé.</span>
@@ -863,11 +855,19 @@ Aller, un petit vol au-dessus du lot, &ccedil;a vous tente&nbsp;?</p>
                 </a>
             </li>
                     <li class="aside-tops__item">
-                <span class="aside-tops__number">4</span>
-                <a href="/2025/07/12/laissee-sans-surveillance-par-sa-mere-une-petite-fille-de-4-ans-chute-de-7-etages-et-meurt-12822519.php" class="aside-tops__title"
+                <span class="aside-tops__number">3</span>
+                <a href="/2025/07/13/legion-dhonneur-gisele-pelicot-mona-ozouf-quelles-sont-les-personnalites-qui-vont-recevoir-la-precieuse-distinction-pour-la-promotion-2025-12823428.php" class="aside-tops__title"
                    data-xiti-action="detail-article::coldroite::tops-commentes::article,N">
-                    <span class="aside-tops__topic">Faits divers.</span>
-                    <span class="aside-tops__title-text">Laissée sans surveillance par sa mère, une petite fille de 4 ans chute de 7 étages et meurt</span>
+                    <span class="aside-tops__topic">14-Juillet.</span>
+                    <span class="aside-tops__title-text">Légion d’honneur : Gisèle Pélicot, Mona Ozouf… quelles sont les personnalités qui vont recevoir la précieuse distinction pour la promotion 2025 ?</span>
+                </a>
+            </li>
+                    <li class="aside-tops__item">
+                <span class="aside-tops__number">4</span>
+                <a href="/2025/07/13/jai-toujours-aime-les-maths-qui-est-marie-gaillard-cette-jeune-toulousaine-de-17-ans-qui-va-participer-aux-olympiades-internationales-de-physique-12813039.php" class="aside-tops__title"
+                   data-xiti-action="detail-article::coldroite::tops-commentes::article,N">
+                    <span class="aside-tops__topic">Sciences et techniques.</span>
+                    <span class="aside-tops__title-text">"J’ai toujours aimé les maths": Qui est Marie Gaillard, cette jeune Toulousaine de 17 ans qui va participer aux Olympiades Internationales de physique ?</span>
                 </a>
             </li>
                     <li class="aside-tops__item">
@@ -903,34 +903,34 @@ Aller, un petit vol au-dessus du lot, &ccedil;a vous tente&nbsp;?</p>
             </li>
                     <li class="aside-tops__item">
                 <span class="aside-tops__number">2</span>
-                <a href="/2025/07/13/tyrolienne-au-dessus-du-lot-2-km-de-cordes-tendues-pour-un-saut-vertigineux-en-toute-securite-12822434.php" class="aside-tops__title"
+                <a href="/2025/07/13/moulis-celebre-le-marbre-pyreneen-une-semaine-dateliers-dart-et-de-fete-a-la-carriere-daubert-12823327.php" class="aside-tops__title"
                    data-xiti-action="detail-article::coldroite::tops-rank-topic::article,N">
-                    <span class="aside-tops__topic">Animations.</span>
-                    <span class="aside-tops__title-text">Tyrolienne au-dessus du Lot : 2 km de cordes tendues pour un saut vertigineux en toute sécurité</span>
+                    <span class="aside-tops__topic">Culture et loisirs.</span>
+                    <span class="aside-tops__title-text">Moulis célèbre le marbre pyrénéen : une semaine d’ateliers, d’art et de fête à la carrière d’Aubert</span>
                 </a>
             </li>
                     <li class="aside-tops__item">
                 <span class="aside-tops__number">3</span>
-                <a href="/2025/07/13/au-village-lete-en-pente-douce-12823151.php" class="aside-tops__title"
+                <a href="/2025/07/13/un-concert-lyrique-a-caillavet-pour-restaurer-la-chapelle-de-las-12823410.php" class="aside-tops__title"
                    data-xiti-action="detail-article::coldroite::tops-rank-topic::article,N">
-                    <span class="aside-tops__topic">Fêtes et festivals.</span>
-                    <span class="aside-tops__title-text">Labastide-Saint-Pierre. Au village, l’été en pente douce</span>
+                    <span class="aside-tops__topic">Musique.</span>
+                    <span class="aside-tops__title-text">Un concert lyrique à Caillavet pour restaurer la chapelle de Las</span>
                 </a>
             </li>
                     <li class="aside-tops__item">
                 <span class="aside-tops__number">4</span>
-                <a href="/2025/07/13/des-visites-guidees-ludiques-12823144.php" class="aside-tops__title"
+                <a href="/2025/07/13/lavelanet-met-trois-de-ses-talents-a-lhonneur-peinture-sculpture-et-emotion-a-la-salle-myriam-leonard-12823304.php" class="aside-tops__title"
                    data-xiti-action="detail-article::coldroite::tops-rank-topic::article,N">
-                    <span class="aside-tops__topic">Animations.</span>
-                    <span class="aside-tops__title-text">Saint-Antonin-Noble-Val. Des visites guidées ludiques</span>
+                    <span class="aside-tops__topic">Culture et loisirs.</span>
+                    <span class="aside-tops__title-text">Lavelanet met trois de ses talents à l’honneur : peinture, sculpture et émotion à la salle Myriam-Léonard</span>
                 </a>
             </li>
                     <li class="aside-tops__item">
                 <span class="aside-tops__number">5</span>
-                <a href="/2025/07/13/a-vos-jetons-et-cartons-12823140.php" class="aside-tops__title"
+                <a href="/2025/07/13/duels-a-lepee-concert-et-et-le-cinema-en-plein-air-fait-son-show-avec-des-animations-a-tarascon-12823286.php" class="aside-tops__title"
                    data-xiti-action="detail-article::coldroite::tops-rank-topic::article,N">
                     <span class="aside-tops__topic">Animations.</span>
-                    <span class="aside-tops__title-text">Laguépie. À vos jetons et cartons</span>
+                    <span class="aside-tops__title-text">Duels à l’épée, concert et E.T. : le cinéma en plein air fait son show avec des animations à Tarascon</span>
                 </a>
             </li>
             </ul>
@@ -947,6 +947,14 @@ Aller, un petit vol au-dessus du lot, &ccedil;a vous tente&nbsp;?</p>
     <ul class="aside-tops__items ">
                     <li class="aside-tops__item">
                 <span class="aside-tops__number">1</span>
+                <a href="/2025/07/13/on-va-souvent-retrouver-la-rocade-de-bordeaux-12822957.php" class="aside-tops__title"
+                   data-xiti-action="detail-article::coldroite::tops-rank-ville::article,N">
+                    <span class="aside-tops__topic">Rugby à XV.</span>
+                    <span class="aside-tops__title-text">Rugby amateur – Fédérale 2 : "On va souvent retrouver la rocade de Bordeaux"… Le RC Villeneuve fera cap à l’ouest en 2025-2026</span>
+                </a>
+            </li>
+                    <li class="aside-tops__item">
+                <span class="aside-tops__number">2</span>
                 <a href="/2025/07/12/du-covid-a-la-ferme-comment-une-diplomee-des-beaux-arts-a-bati-sa-vie-entre-maraichage-et-circuits-courts-12822333.php" class="aside-tops__title"
                    data-xiti-action="detail-article::coldroite::tops-rank-ville::article,N">
                     <span class="aside-tops__topic">Agriculture.</span>
@@ -954,7 +962,7 @@ Aller, un petit vol au-dessus du lot, &ccedil;a vous tente&nbsp;?</p>
                 </a>
             </li>
                     <li class="aside-tops__item">
-                <span class="aside-tops__number">2</span>
+                <span class="aside-tops__number">3</span>
                 <a href="/2025/07/11/entre-juillet-et-septembre-le-lot-et-garonne-devient-terre-de-cinema-avec-quatre-tournages-12820903.php" class="aside-tops__title"
                    data-xiti-action="detail-article::coldroite::tops-rank-ville::article,N">
                     <span class="aside-tops__topic">Cinéma.</span>
@@ -962,7 +970,7 @@ Aller, un petit vol au-dessus du lot, &ccedil;a vous tente&nbsp;?</p>
                 </a>
             </li>
                     <li class="aside-tops__item">
-                <span class="aside-tops__number">3</span>
+                <span class="aside-tops__number">4</span>
                 <a href="/2025/07/10/villeneuve-en-fete-beach-volley-feu-dartifice-bal-des-pompiers-et-activites-nautiques-au-coeur-dun-week-end-brulant-12817937.php" class="aside-tops__title"
                    data-xiti-action="detail-article::coldroite::tops-rank-ville::article,N">
                     <span class="aside-tops__topic">Fêtes et festivals.</span>
@@ -970,19 +978,11 @@ Aller, un petit vol au-dessus du lot, &ccedil;a vous tente&nbsp;?</p>
                 </a>
             </li>
                     <li class="aside-tops__item">
-                <span class="aside-tops__number">4</span>
+                <span class="aside-tops__number">5</span>
                 <a href="/2025/07/10/ultra-combine-elea-aubert-vise-le-titre-mondial-pour-villeneuve-sa-famille-et-son-entraineur-12812936.php" class="aside-tops__title"
                    data-xiti-action="detail-article::coldroite::tops-rank-ville::article,N">
                     <span class="aside-tops__topic">Athlétisme.</span>
                     <span class="aside-tops__title-text">Ultra-combiné : Eléa Aubert vise le titre mondial pour Villeneuve, sa famille et son entraîneur</span>
-                </a>
-            </li>
-                    <li class="aside-tops__item">
-                <span class="aside-tops__number">5</span>
-                <a href="/2025/07/08/un-enorme-cadeau-danne-sila-piano-voix-et-emotion-pure-pour-trois-soirs-uniques-au-theatre-roger-louret-de-villeneuve-sur-lot-12813478.php" class="aside-tops__title"
-                   data-xiti-action="detail-article::coldroite::tops-rank-ville::article,N">
-                    <span class="aside-tops__topic">Concerts.</span>
-                    <span class="aside-tops__title-text">"Un énorme cadeau" d’Anne Sila : piano, voix et émotion pure pour trois soirs uniques au théâtre Roger-Louret de Villeneuve-sur-Lot</span>
                 </a>
             </li>
             </ul>

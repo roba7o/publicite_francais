@@ -10,7 +10,7 @@
         'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
     })(window,document,'script','dataLayer','GTM-5NFGMPZ');</script>
     <!-- End Google Tag Manager -->
-                                <title>Intempéries dans le Lot : des fils électriques sont tombés au sol, une route est coupée - ladepeche.fr</title>
+                                <title>Intempéries dans le Lot : un câble électrique chute au sol, la route est de nouveau ouverte - ladepeche.fr</title>
             <meta name="description" content="Ce samedi 12 juillet, à Frayssinet, des fils électriques sont tombés sur la chaussée, entraînant une coupure de circulation sur la RD820, après un épisode orageux dans le Lot.">
 <meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1">
 <meta name="apple-itunes-app" content="app-id=395530315">
@@ -31,12 +31,12 @@
                                         <meta property="og:url" content="https://www.ladepeche.fr/2025/07/12/intemperies-dans-le-lot-des-fils-electriques-sont-tombes-au-sol-une-route-est-coupee-12822614.php">
                                                             <meta property="og:site_name" content="ladepeche.fr">
                                                             <meta property="og:type" content="article">
-                                                            <meta property="og:title" content="Intempéries dans le Lot : des fils électriques sont tombés au sol, une route est coupée">
+                                                            <meta property="og:title" content="Intempéries dans le Lot : un câble électrique chute au sol, la route est de nouveau ouverte">
                                                             <meta property="og:description" content="Ce samedi 12 juillet, à Frayssinet, des fils électriques sont tombés sur la chaussée, entraînant une coupure de circulation sur la RD820, après un épisode orageux dans le Lot.">
                                                             <meta property="og:image" content="https://images.ladepeche.fr/api/v1/images/view/68729abf30698be77b05d336/large/image.jpg?v=1">
                                                             <meta property="twitter:card" content="summary_large_image">
                                                             <meta property="twitter:description" content="Ce samedi 12 juillet, à Frayssinet, des fils électriques sont tombés sur la chaussée, entraînant une coupure de circulation sur la RD820, après un épisode orageux dans le Lot.">
-                                                            <meta property="twitter:title" content="Intempéries dans le Lot : des fils électriques sont tombés au sol, une route est coupée">
+                                                            <meta property="twitter:title" content="Intempéries dans le Lot : un câble électrique chute au sol, la route est de nouveau ouverte">
                                                             <meta property="twitter:url" content="https://www.ladepeche.fr/2025/07/12/intemperies-dans-le-lot-des-fils-electriques-sont-tombes-au-sol-une-route-est-coupee-12822614.php">
                                                             <meta property="twitter:creator" content="@ladepechedumidi">
                                                             <meta property="twitter:site" content="@ladepechedumidi">
@@ -69,10 +69,10 @@
 <link rel="stylesheet" href="https://assets.ladepeche.fr/css/print.css?cceee73e" media="print">
 
             <script type="application/ld+json">
-        {"@context":"http://schema.org","@type":"NewsArticle","mainEntityOfPage":{"@type":"WebPage","@id":"https://www.ladepeche.fr/2025/07/12/intemperies-dans-le-lot-des-fils-electriques-sont-tombes-au-sol-une-route-est-coupee-12822614.php"},"headline":"Intemp\u00e9ries dans le Lot\u00a0: des fils \u00e9lectriques sont tomb\u00e9s au sol, une route est coup\u00e9e","description":"Ce samedi 12&nbsp;juillet, \u00e0 Frayssinet, des fils \u00e9lectriques sont tomb\u00e9s sur la chauss\u00e9e, entra\u00eenant une coupure de circulation sur la RD820, apr\u00e8s un \u00e9pisode orageux dans le Lot.","articleBody":"Ce samedi 12&nbsp;juillet, le d\u00e9partement du Lot \u00e9tait plac\u00e9, pour la fin de journ\u00e9e et la soir\u00e9e, en vigilance jaune orages.\n\n\nmaps\n\n\nVers 19&nbsp;heures, \u00e0 Frayssinet, des fils \u00e9lectriques \u00e0 moyenne tension sont tomb\u00e9s sur la chauss\u00e9e. Pour \u00e9viter des accidents, la circulation sur la RD820, en direction de Cahors, a donc \u00e9t\u00e9 coup\u00e9e dans les deux sens. Une d\u00e9viation est mise en place. Les pompiers du Lot \u00e9taient sur place pour s\u00e9curiser les lieux.\n\nLe secteur de Gourdon impact\u00e9\n\nCependant, vers 19h30, aucune coupure \u00e9lectrique n&rsquo;\u00e9tait signal\u00e9e.\n\n\nfb\n\n\nL&rsquo;\u00e9pisode orageux a commenc\u00e9 quelques heures auparavant. Vers 17&nbsp;heures, le vent s&rsquo;est fortement lev\u00e9 et le ciel grondait. De nombreuses chutes d&rsquo;arbre ont \u00e9t\u00e9 signal\u00e9es, notamment sur le secteur de Gourdon, mobilisant la direction d\u00e9partementale des routes.","wordCount":146,"datePublished":"2025-07-12T17:32:36+00:00","dateModified":"2025-07-12T17:32:36+00:00","author":{"@type":"Person","name":"La r\u00e9daction du Lot"},"publisher":{"@type":"Organization","name":"ladepeche.fr","logo":{"@type":"ImageObject","url":"https://www.ladepeche.fr/img/logos/logo-amp.png","width":600,"height":60}},"keywords":"lot,frayssinet,faits-divers","articleSection":["ladepeche.fr","lot","faits-divers"],"image":{"@type":"ImageObject","url":"https://images.ladepeche.fr/api/v1/images/view/68729abf30698be77b05d336/hd/image.jpg?v=1","width":1200,"height":500,"name":"Apr\u00e8s un \u00e9pisode orageux, des fils \u00e9lectriques sont tomb\u00e9s sur la chauss\u00e9e \u00e0 Frayssinet.","author":{"@type":"Person","name":"DDM illustration"}}}
+        {"@context":"http://schema.org","@type":"NewsArticle","mainEntityOfPage":{"@type":"WebPage","@id":"https://www.ladepeche.fr/2025/07/12/intemperies-dans-le-lot-des-fils-electriques-sont-tombes-au-sol-une-route-est-coupee-12822614.php"},"headline":"Intemp\u00e9ries dans le Lot\u00a0: un c\u00e2ble \u00e9lectrique chute au sol, la route est de nouveau ouverte","description":"Ce samedi 12&nbsp;juillet, \u00e0 Frayssinet, des fils \u00e9lectriques sont tomb\u00e9s sur la chauss\u00e9e, entra\u00eenant une coupure de circulation sur la RD820, apr\u00e8s un \u00e9pisode orageux dans le Lot.","articleBody":"Ce samedi 12&nbsp;juillet, le d\u00e9partement du Lot \u00e9tait plac\u00e9, pour la fin de journ\u00e9e et la soir\u00e9e, en vigilance jaune orages.\n\n\nmaps\n\n\nVers 19&nbsp;heures, \u00e0 Frayssinet, des fils \u00e9lectriques \u00e0 moyenne tension sont tomb\u00e9s sur la chauss\u00e9e. Pour \u00e9viter des accidents, la circulation sur la RD820, en direction de Cahors, a donc \u00e9t\u00e9 coup\u00e9e dans les deux sens. Une d\u00e9viation est mise en place. Les pompiers du Lot \u00e9taient sur place pour s\u00e9curiser les lieux.\n\nLe secteur de Gourdon impact\u00e9\n\nCependant, vers 19h30, aucune coupure \u00e9lectrique n&rsquo;\u00e9tait signal\u00e9e. Vers 21&nbsp;heures, les \u00e9quipes d&rsquo;Enedis \u00e9taient sur place pour r\u00e9soudre le probl\u00e8me. La route a pu \u00eatre r\u00e9ouverte vers 21&nbsp;heures.\n\n\nfb\n\n\nL&rsquo;\u00e9pisode orageux a commenc\u00e9 quelques heures auparavant. Vers 17&nbsp;heures, le vent s&rsquo;est fortement lev\u00e9 et le ciel grondait. De nombreuses chutes d&rsquo;arbre ont \u00e9t\u00e9 signal\u00e9es, notamment sur le secteur de Gourdon, mobilisant la direction d\u00e9partementale des routes.","wordCount":173,"datePublished":"2025-07-12T17:32:36+00:00","dateModified":"2025-07-13T15:21:00+00:00","author":{"@type":"Person","name":"La r\u00e9daction du Lot"},"publisher":{"@type":"Organization","name":"ladepeche.fr","logo":{"@type":"ImageObject","url":"https://www.ladepeche.fr/img/logos/logo-amp.png","width":600,"height":60}},"keywords":"lot,frayssinet,faits-divers","articleSection":["ladepeche.fr","lot","faits-divers"],"image":{"@type":"ImageObject","url":"https://images.ladepeche.fr/api/v1/images/view/68729abf30698be77b05d336/hd/image.jpg?v=1","width":1200,"height":500,"name":"Apr\u00e8s un \u00e9pisode orageux, des fils \u00e9lectriques sont tomb\u00e9s sur la chauss\u00e9e \u00e0 Frayssinet.","author":{"@type":"Person","name":"DDM illustration"}}}
     </script>
             <script type="application/ld+json">
-            {"@context":"http://schema.org","@type":"videoObject","name":"Intemp\u00e9ries dans le Lot\u00a0: des fils \u00e9lectriques sont tomb\u00e9s au sol, une route est coup\u00e9e","description":"Ce samedi 12&nbsp;juillet, \u00e0 Frayssinet, des fils \u00e9lectriques sont tomb\u00e9s sur la chauss\u00e9e, entra\u00eenant une coupure de circulation sur la RD820, apr\u00e8s un \u00e9pisode orageux dans le Lot.","thumbnailUrl":"https://medialb.ultimedia.com/multi/3fzfx/xf8zqz5-O.jpg","uploadDate":"2025-07-12T17:32:36+00:00","embedUrl":"//www.ultimedia.com/deliver/generic/iframe/mdtk/01325094/src/xf8zqz5/zone/18/showtitle/1/"}
+            {"@context":"http://schema.org","@type":"videoObject","name":"Intemp\u00e9ries dans le Lot\u00a0: un c\u00e2ble \u00e9lectrique chute au sol, la route est de nouveau ouverte","description":"Ce samedi 12&nbsp;juillet, \u00e0 Frayssinet, des fils \u00e9lectriques sont tomb\u00e9s sur la chauss\u00e9e, entra\u00eenant une coupure de circulation sur la RD820, apr\u00e8s un \u00e9pisode orageux dans le Lot.","thumbnailUrl":"https://medialb.ultimedia.com/multi/3fzfx/xf8zqz5-O.jpg","uploadDate":"2025-07-12T17:32:36+00:00","embedUrl":"//www.ultimedia.com/deliver/generic/iframe/mdtk/01325094/src/xf8zqz5/zone/18/showtitle/1/"}
         </script>
         
     <script async src="https://accounts.google.com/gsi/client" defer></script>
@@ -141,14 +141,14 @@
         <div class="navbar-top__brand">
                             <a href="/"
                    data-xiti-action="thema-faits-divers::header::transverse::logo,N">
-                    <img src="https://assets.ladepeche.fr/img/logos/logo.svg?401462f6" alt="Intemp&#x00E9;ries&#x20;dans&#x20;le&#x20;Lot&#x00A0;&#x3A;&#x20;des&#x20;fils&#x20;&#x00E9;lectriques&#x20;sont&#x20;tomb&#x00E9;s&#x20;au&#x20;sol,&#x20;une&#x20;route&#x20;est&#x20;coup&#x00E9;e" class="navbar-top__brand-logo">
+                    <img src="https://assets.ladepeche.fr/img/logos/logo.svg?401462f6" alt="Intemp&#x00E9;ries&#x20;dans&#x20;le&#x20;Lot&#x00A0;&#x3A;&#x20;un&#x20;c&#x00E2;ble&#x20;&#x00E9;lectrique&#x20;chute&#x20;au&#x20;sol,&#x20;la&#x20;route&#x20;est&#x20;de&#x20;nouveau&#x20;ouverte" class="navbar-top__brand-logo">
                 </a>
                         <div class="navbar-top__brand-text hide-on-med-and-down">dimanche 13 juillet 2025, Saint Henri</div>
         </div>
             <div class="aside-weather aside-weather--small hide-on-med-and-down">
-        <img src="https://assets.ladepeche.fr/img/meteo/temps/04d.png?4af8ae7a"
+        <img src="https://assets.ladepeche.fr/img/meteo/temps/01d.png?71f53b51"
              class="aside-weather__today-media responsive-img"
-             rel="js-weather-image-0" title="Nuageux">
+             rel="js-weather-image-0" title="Ciel dégagé">
         <div class="aside-weather__today-temp" rel="js-weather-temps-0">20° / 29°</div>
         <a class="aside-weather__change"
            href="https://profil.ladepeche.fr/account/"
@@ -297,13 +297,13 @@
                                     <a href="/faits-divers/">Faits divers</a>
                             </li>
             </ul>
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https://www.ladepeche.fr/faits-divers/","name":"Faits divers"}},{"@type":"ListItem","position":2,"item":{"@id":"https://www.ladepeche.fr/2025/07/12/intemperies-dans-le-lot-des-fils-electriques-sont-tombes-au-sol-une-route-est-coupee-12822614.php","name":"Intemp\u00e9ries dans le Lot\u00a0: des fils \u00e9lectriques sont tomb\u00e9s au sol, une route est coup\u00e9e"}}]}</script>
-                        <div data-article-id="12822614" data-article-id-elt="12822614" data-nl-topic="Faits divers" data-nl-type="video">
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https://www.ladepeche.fr/faits-divers/","name":"Faits divers"}},{"@type":"ListItem","position":2,"item":{"@id":"https://www.ladepeche.fr/2025/07/12/intemperies-dans-le-lot-des-fils-electriques-sont-tombes-au-sol-une-route-est-coupee-12822614.php","name":"Intemp\u00e9ries dans le Lot\u00a0: un c\u00e2ble \u00e9lectrique chute au sol, la route est de nouveau ouverte"}}]}</script>
+                        <div data-article-id="12822614" data-article-id-elt="12823586" data-nl-topic="Faits divers" data-nl-type="video">
                                     <div class="grid-l">
                         <div class="section">
                                                         <main>
     <article class="article-full">
-        <h1 class="article-full__title">Intempéries dans le Lot : des fils électriques sont tombés au sol, une route est coupée</h1>
+        <h1 class="article-full__title">Intempéries dans le Lot : un câble électrique chute au sol, la route est de nouveau ouverte</h1>
         <div class="article-full__media-wrapper fullscreen-s">
                                         <div class="article-full__media ">
                     
@@ -322,11 +322,11 @@
                 <div class="article-full__section-1">
                     <div class="article-full__infos">
                                                                                     <div class="article-full__share" rel="js-share">
-                                    <a class="icon-facebook icon-facebook-small" role="button" data-toggle="hit-share" data-xiti-action="article::partage-facebook::ddm-12822614::intemperies-dans-le-lot-des-fils-electriques-sont-tombes-au-sol-une-route-est-coupee,N"></a>
-                                    <a class="icon-twitter icon-twitter-small" role="button" data-toggle="hit-share" data-xiti-action="article::partage-twitter::ddm-12822614::intemperies-dans-le-lot-des-fils-electriques-sont-tombes-au-sol-une-route-est-coupee,N"></a>
-                                    <a class="icon-linkedin icon-linkedin-small" data-toggle="hit-share" data-xiti-action="article::partage-linkedin::ddm-12822614::intemperies-dans-le-lot-des-fils-electriques-sont-tombes-au-sol-une-route-est-coupee,N"></a>
+                                    <a class="icon-facebook icon-facebook-small" role="button" data-toggle="hit-share" data-xiti-action="article::partage-facebook::ddm-12822614::intemperies-dans-le-lot-un-cable-electrique-chute-au-sol-la-route-est-de-nouveau-ouverte,N"></a>
+                                    <a class="icon-twitter icon-twitter-small" role="button" data-toggle="hit-share" data-xiti-action="article::partage-twitter::ddm-12822614::intemperies-dans-le-lot-un-cable-electrique-chute-au-sol-la-route-est-de-nouveau-ouverte,N"></a>
+                                    <a class="icon-linkedin icon-linkedin-small" data-toggle="hit-share" data-xiti-action="article::partage-linkedin::ddm-12822614::intemperies-dans-le-lot-un-cable-electrique-chute-au-sol-la-route-est-de-nouveau-ouverte,N"></a>
                                     <a class="icon-printer icon-printer-small hide-on-med-and-down" role="button"></a>
-                                    <a class="icon-mail icon-mail-small" role="button" data-toggle="hit-share" data-xiti-action="article::partage::ddm-12822614::intemperies-dans-le-lot-des-fils-electriques-sont-tombes-au-sol-une-route-est-coupee,N"></a>
+                                    <a class="icon-mail icon-mail-small" role="button" data-toggle="hit-share" data-xiti-action="article::partage::ddm-12822614::intemperies-dans-le-lot-un-cable-electrique-chute-au-sol-la-route-est-de-nouveau-ouverte,N"></a>
                                 </div>
                                                         <div class="article-full__infos-topics">
                                                 <span class="article-tags">
@@ -334,6 +334,11 @@
                                 </div>
                             <div class="article-full__infos-dates">
                                                                     <span>Publié le <time content="2025-07-12T19:32:36+02:00">12/07/2025 à 19:32</time></span>
+                                                                            <span>, mis à jour
+                                            <time content="2025-07-13T17:21:00+02:00">
+                                                                                                    le 13/07/2025 à 17:21
+                                                                                            </time>
+                                        </span>
                                                                                                 </div>
                                                                             <div class="author">
                                     <span class="author-name">
@@ -345,9 +350,9 @@
             import { initETXPlayer } from 'https://player.voxa.majelan.com/voxa-player.js';
 
             let config = {
-                audioUrl: 'https://images.ladepeche.fr/asset/68729d41d415ac36b20642a2.mp3',
-                resourceId: 'V6IcGu-zre',
-                duration: 64,
+                audioUrl: 'https://images.ladepeche.fr/asset/6873cfcf11425c572d03b4a0.mp3',
+                resourceId: 'DxzoLfN0Lj',
+                duration: 68,
                 //informationTooltip: false,
                 ad: {
                     enabled: true,
@@ -391,7 +396,7 @@
 
 <h2 class="txt-int">Le secteur de Gourdon impact&eacute;</h2>
 
-<p>Cependant, vers 19h30, aucune coupure &eacute;lectrique n&rsquo;&eacute;tait signal&eacute;e.</p>
+<p>Cependant, vers 19h30, aucune coupure &eacute;lectrique n&rsquo;&eacute;tait signal&eacute;e. Vers 21&nbsp;heures, les &eacute;quipes d&rsquo;Enedis &eacute;taient sur place pour r&eacute;soudre le probl&egrave;me. La route a pu &ecirc;tre r&eacute;ouverte vers 21&nbsp;heures.</p>
 
                 
 <iframe width="500" height="367" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share" data-src="https://www.facebook.com/plugins/post.php?href=https%3A%2F%2Fwww.facebook.com%2FPrefet46%2Fposts%2Fpfbid02DRwjcDLBTy1LNbxjX5gQyXRurb6bWCJhreqHT8b51ePg8jaqXYFdgdu7pUn64xJGl&amp;show_text=true&amp;width=500"></iframe>
@@ -420,7 +425,7 @@
                                 <div class="article-full__childs-content">
                                                                         <a class="article-full__childs-title stretched-link"
                                        href="/2025/07/12/orages-5-500-eclairs-inondations-accidents-routes-coupees-le-point-sur-la-situation-apres-une-apres-midi-dantesque-12822642.php"
-                                       data-xiti-action="article::fils::ddm-12822614::intemperies-dans-le-lot-des-fils-electriques-sont-tombes-au-sol-une-route-est-coupee,N">
+                                       data-xiti-action="article::fils::ddm-12822614::intemperies-dans-le-lot-un-cable-electrique-chute-au-sol-la-route-est-de-nouveau-ouverte,N">
                                         Orages : 5 500 éclairs, inondations, accidents, routes coupées… Le point sur la situation après une après-midi dantesque
                                     </a>
                                 </div>
@@ -440,7 +445,7 @@
                                 <div class="article-full__childs-content">
                                                                         <a class="article-full__childs-title stretched-link"
                                        href="/2025/07/12/direct-orages-laude-et-les-pyrenees-orientales-places-en-vigilance-orange-des-precipitations-intenses-attendues-dans-le-sud-de-la-france-12821926.php"
-                                       data-xiti-action="article::fils::ddm-12822614::intemperies-dans-le-lot-des-fils-electriques-sont-tombes-au-sol-une-route-est-coupee,N">
+                                       data-xiti-action="article::fils::ddm-12822614::intemperies-dans-le-lot-un-cable-electrique-chute-au-sol-la-route-est-de-nouveau-ouverte,N">
                                         REPLAY. Orages : l’Aude et les Pyrénées-Orientales en vigilance orange, des trombes d’eau s’abattent sur le sud de la France
                                     </a>
                                 </div>
@@ -460,7 +465,7 @@
                                 <div class="article-full__childs-content">
                                                                         <a class="article-full__childs-title stretched-link"
                                        href="/2025/07/12/orages-une-voiture-foudroyee-dans-les-pyrenees-une-vingtaine-dinterventions-pour-les-pompiers-en-ariege-12822509.php"
-                                       data-xiti-action="article::fils::ddm-12822614::intemperies-dans-le-lot-des-fils-electriques-sont-tombes-au-sol-une-route-est-coupee,N">
+                                       data-xiti-action="article::fils::ddm-12822614::intemperies-dans-le-lot-un-cable-electrique-chute-au-sol-la-route-est-de-nouveau-ouverte,N">
                                         Orages : une voiture foudroyée dans les Pyrénées, une vingtaine d’interventions pour les pompiers en Ariège
                                     </a>
                                 </div>
@@ -480,7 +485,7 @@
                                 <div class="article-full__childs-content">
                                                                         <a class="article-full__childs-title stretched-link"
                                        href="/2025/07/12/un-hotel-inonde-accident-arbres-tombes-sur-la-chaussee-le-point-sur-les-intemperies-dans-le-tarn-12822457.php"
-                                       data-xiti-action="article::fils::ddm-12822614::intemperies-dans-le-lot-des-fils-electriques-sont-tombes-au-sol-une-route-est-coupee,N">
+                                       data-xiti-action="article::fils::ddm-12822614::intemperies-dans-le-lot-un-cable-electrique-chute-au-sol-la-route-est-de-nouveau-ouverte,N">
                                         Un hôtel inondé, accident, arbres tombés sur la chaussée : le point sur les intempéries dans le Tarn
                                     </a>
                                 </div>
@@ -501,7 +506,7 @@
                                                                             <i class="article--premium__mini icon-sub-marker"></i>
                                                                         <a class="article-full__childs-title stretched-link"
                                        href="/2025/06/30/temoignage-ma-femme-commence-a-peter-les-plombs-la-detresse-dun-couple-de-retraites-prive-delectricite-depuis-5-jours-a-cause-des-orages-12795816.php"
-                                       data-xiti-action="article::fils::ddm-12822614::intemperies-dans-le-lot-des-fils-electriques-sont-tombes-au-sol-une-route-est-coupee,N">
+                                       data-xiti-action="article::fils::ddm-12822614::intemperies-dans-le-lot-un-cable-electrique-chute-au-sol-la-route-est-de-nouveau-ouverte,N">
                                         TEMOIGNAGE. "Ma femme commence à péter les plombs" : la détresse d’un couple de retraités, privé d’électricité depuis 5 jours à cause des orages
                                     </a>
                                 </div>
@@ -522,7 +527,7 @@
                                                                             <i class="article--premium__mini icon-sub-marker"></i>
                                                                         <a class="article-full__childs-title stretched-link"
                                        href="/2025/06/26/orages-dans-le-lot-plusieurs-routes-coupees-plus-de-40-interventions-en-cours-12787295.php"
-                                       data-xiti-action="article::fils::ddm-12822614::intemperies-dans-le-lot-des-fils-electriques-sont-tombes-au-sol-une-route-est-coupee,N">
+                                       data-xiti-action="article::fils::ddm-12822614::intemperies-dans-le-lot-un-cable-electrique-chute-au-sol-la-route-est-de-nouveau-ouverte,N">
                                         Orages dans le Lot : plusieurs routes coupées, plus de 40 interventions en cours
                                     </a>
                                 </div>
@@ -599,8 +604,8 @@
                                 <textarea name="texte" class="js-comments-validate materialize-textarea" placeholder="Ajouter un commentaire" rel="js-comment-textarea"></textarea>
                                 <input type="hidden" name="info_id" class="js-comments-validate" value="12822614"/>
                                 <input type="hidden" name="parentcommentid" value="0">
-                                <input type="hidden" name="token" class="js-comments-validate" value="eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJtb2RfZm9fYXBpLXJlYWdpciIsImV4cCI6MTc1MjM5ODYyMy4wMTY4NDkwNDA5ODUxMDc0MjE4NzUsInNpdGVfY29kZSI6ImRkbSIsImluZm9faWQiOjEyODIyNjE0fQ.zdN6QAcDjaWEurS6o94lFWJXPo-if2Zqy_K_6R48Oxw"/>
-                                <input type="submit" name="post" value="Publier mon commentaire" id="post-btn" class="btn" data-xiti-action="article::commentaire::ddm-12822614::intemperies-dans-le-lot-des-fils-electriques-sont-tombes-au-sol-une-route-est-coupee,N">
+                                <input type="hidden" name="token" class="js-comments-validate" value="eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJtb2RfZm9fYXBpLXJlYWdpciIsImV4cCI6MTc1MjQyOTk5Mi45MTM4MjAwMjgzMDUwNTM3MTA5Mzc1LCJzaXRlX2NvZGUiOiJkZG0iLCJpbmZvX2lkIjoxMjgyMjYxNH0.-sg2WvpSH0blLiYOItQekQcBjI94BiU8aKdK7aew_Qo"/>
+                                <input type="submit" name="post" value="Publier mon commentaire" id="post-btn" class="btn" data-xiti-action="article::commentaire::ddm-12822614::intemperies-dans-le-lot-un-cable-electrique-chute-au-sol-la-route-est-de-nouveau-ouverte,N">
                                                                     <a href="https://www.ladepeche.fr/page/charte-moderation" class="react-chart-link" target="_blank">Lire la charte de modération</a>
                                                             </form>
                         </div>
@@ -675,10 +680,10 @@
             </li>
                     <li class="aside-tops__item">
                 <span class="aside-tops__number">5</span>
-                <a href="/2025/07/10/lours-etait-a-30-metres-il-sest-redresse-il-a-crache-le-berger-pyreneen-ne-doit-la-vie-qua-son-beret-12817718.php" class="aside-tops__title"
+                <a href="/2025/07/11/ils-ne-me-voient-pas-ils-se-reajustent-comme-devant-un-miroir-regulierement-des-passants-viennent-faire-leurs-besoins-sous-sa-fenetre-12820809.php" class="aside-tops__title"
                    data-xiti-action="detail-article::coldroite::tops-lus::article,N">
-                    <span class="aside-tops__topic">Ours des Pyrénées.</span>
-                    <span class="aside-tops__title-text">"L’ours était à 30 mètres, il s’est redressé, il a craché" : la course folle du berger pyrénéen qui ne doit la vie qu’à son béret !</span>
+                    <span class="aside-tops__topic">Société.</span>
+                    <span class="aside-tops__title-text">"Ils ne me voient pas, ils se réajustent comme devant un miroir" : régulièrement, des passants viennent faire leurs besoins sous sa fenêtre</span>
                 </a>
             </li>
             </ul>
@@ -698,14 +703,22 @@
             </li>
                     <li class="aside-tops__item">
                 <span class="aside-tops__number">2</span>
-                <a href="/2025/07/12/guerre-en-ukraine-la-france-identifiee-comme-principal-adversaire-de-la-russie-en-europe-quest-ce-que-ca-veut-dire-12821968.php" class="aside-tops__title"
+                <a href="/2025/07/08/guerre-en-ukraine-cauchemar-russe-ultra-efficace-quest-ce-que-le-canon-archer-que-la-suede-va-envoyer-a-lukraine-12813703.php" class="aside-tops__title"
                    data-xiti-action="detail-article::coldroite::tops-commentes::article,N">
-                    <span class="aside-tops__topic">Russie.</span>
-                    <span class="aside-tops__title-text">Guerre en Ukraine : la France identifiée comme "principal adversaire" de la Russie en Europe, qu’est-ce que ça veut dire ?</span>
+                    <span class="aside-tops__topic">Guerre en Ukraine.</span>
+                    <span class="aside-tops__title-text">Guerre en Ukraine : "Cauchemar russe", "ultra-efficace…" Qu’est-ce que le canon Archer que la Suède va envoyer à l’Ukraine ?</span>
                 </a>
             </li>
                     <li class="aside-tops__item">
                 <span class="aside-tops__number">3</span>
+                <a href="/2025/07/10/miss-france-les-choses-sont-prises-au-serieux-la-nouvelle-miss-alsace-nee-au-senegal-fait-face-a-une-vague-dinsultes-racistes-12818141.php" class="aside-tops__title"
+                   data-xiti-action="detail-article::coldroite::tops-commentes::article,N">
+                    <span class="aside-tops__topic">Miss France 2025.</span>
+                    <span class="aside-tops__title-text">Miss France : "Les choses sont prises au sérieux"… La nouvelle Miss Alsace, née au Sénégal, fait face à une vague d’insultes racistes</span>
+                </a>
+            </li>
+                    <li class="aside-tops__item">
+                <span class="aside-tops__number">4</span>
                 <a href="/2025/07/09/cela-affaiblirait-encore-notre-securite-sociale-les-medicaments-generiques-bientot-moins-rembourses-un-senateur-tire-la-sonnette-dalarme-12813577.php" class="aside-tops__title"
                    data-xiti-action="detail-article::coldroite::tops-commentes::article,N">
                     <span class="aside-tops__topic">Santé.</span>
@@ -713,19 +726,11 @@
                 </a>
             </li>
                     <li class="aside-tops__item">
-                <span class="aside-tops__number">4</span>
-                <a href="/2025/07/12/laissee-sans-surveillance-par-sa-mere-une-petite-fille-de-4-ans-chute-de-7-etages-et-meurt-12822519.php" class="aside-tops__title"
-                   data-xiti-action="detail-article::coldroite::tops-commentes::article,N">
-                    <span class="aside-tops__topic">Faits divers.</span>
-                    <span class="aside-tops__title-text">Laissée sans surveillance par sa mère, une petite fille de 4 ans chute de 7 étages et meurt</span>
-                </a>
-            </li>
-                    <li class="aside-tops__item">
                 <span class="aside-tops__number">5</span>
-                <a href="/2025/07/09/ineopole-formation-tente-de-sortir-de-lorniere-12814958.php" class="aside-tops__title"
+                <a href="/2025/07/13/legion-dhonneur-gisele-pelicot-mona-ozouf-quelles-sont-les-personnalites-qui-vont-recevoir-la-precieuse-distinction-pour-la-promotion-2025-12823428.php" class="aside-tops__title"
                    data-xiti-action="detail-article::coldroite::tops-commentes::article,N">
-                    <span class="aside-tops__topic">Éducation.</span>
-                    <span class="aside-tops__title-text">Inéopole Formation tente de sortir de l’ornière</span>
+                    <span class="aside-tops__topic">14-Juillet.</span>
+                    <span class="aside-tops__title-text">Légion d’honneur : Gisèle Pélicot, Mona Ozouf… quelles sont les personnalités qui vont recevoir la précieuse distinction pour la promotion 2025 ?</span>
                 </a>
             </li>
             </ul>
@@ -745,42 +750,42 @@
     <ul class="aside-tops__items ">
                     <li class="aside-tops__item">
                 <span class="aside-tops__number">1</span>
-                <a href="/2025/07/13/elle-tentait-de-rejoindre-une-rave-party-en-lozere-une-jeune-femme-de-25-ans-meurt-tragiquement-dans-un-accident-de-voiture-12823180.php" class="aside-tops__title"
+                <a href="/2025/07/13/cocaine-speed-lsd-ecstasy-surpris-en-flag-le-dealer-gerait-sa-petite-superette-de-la-drogue-via-telegram-12823459.php" class="aside-tops__title"
                    data-xiti-action="detail-article::coldroite::tops-rank-topic::article,N">
-                    <span class="aside-tops__topic">Accidents.</span>
-                    <span class="aside-tops__title-text">Elle tentait de rejoindre une rave-party en Lozère : une jeune femme de 25 ans meurt tragiquement dans un accident de voiture</span>
+                    <span class="aside-tops__topic">Faits divers.</span>
+                    <span class="aside-tops__title-text">Cocaïne, speed, LSD, ecstasy… Surpris en flag, le dealer gérait sa petite supérette de la drogue via Telegram</span>
                 </a>
             </li>
                     <li class="aside-tops__item">
                 <span class="aside-tops__number">2</span>
-                <a href="/2025/07/13/accident-sur-lautoroute-pres-de-toulouse-un-vehicule-finit-sur-le-toit-trois-blesses-dans-la-collision-12823162.php" class="aside-tops__title"
+                <a href="/2025/07/13/cet-homme-sentait-fort-lalcool-un-maire-est-agresse-lors-de-lune-fete-dans-sa-commune-il-recoit-plusieurs-coups-de-poing-12823546.php" class="aside-tops__title"
                    data-xiti-action="detail-article::coldroite::tops-rank-topic::article,N">
-                    <span class="aside-tops__topic">Faits divers.</span>
-                    <span class="aside-tops__title-text">Accident sur l’autoroute près de Toulouse : un véhicule finit sur le toit, trois blessés dans la collision</span>
+                    <span class="aside-tops__topic">Politique.</span>
+                    <span class="aside-tops__title-text">"Cet homme sentait fort l’alcool" : un maire est agressé lors de l’une fête dans sa commune, il reçoit plusieurs coups de poing</span>
                 </a>
             </li>
                     <li class="aside-tops__item">
                 <span class="aside-tops__number">3</span>
-                <a href="/2025/07/12/il-roulait-au-volant-dun-vehicule-vole-la-police-fouille-son-appartement-et-exhume-5-kg-de-drogue-12822493.php" class="aside-tops__title"
+                <a href="/2025/07/13/cinq-vehicules-entrent-en-collision-dans-un-enorme-carambolage-neuf-victimes-sont-recensees-dont-un-bebe-de-20-mois-12823445.php" class="aside-tops__title"
                    data-xiti-action="detail-article::coldroite::tops-rank-topic::article,N">
-                    <span class="aside-tops__topic">Faits divers.</span>
-                    <span class="aside-tops__title-text">Il roulait au volant d’un véhicule volé : la police fouille son appartement et exhume 5 kg de drogue</span>
+                    <span class="aside-tops__topic">Accidents.</span>
+                    <span class="aside-tops__title-text">Cinq véhicules entrent en collision dans un énorme carambolage : neuf victimes sont recensées, dont un bébé de 20 mois</span>
                 </a>
             </li>
                     <li class="aside-tops__item">
                 <span class="aside-tops__number">4</span>
-                <a href="/2025/07/12/laissee-sans-surveillance-par-sa-mere-une-petite-fille-de-4-ans-chute-de-7-etages-et-meurt-12822519.php" class="aside-tops__title"
+                <a href="/2025/07/13/espagne-emeutes-chasse-comment-lagression-dun-homme-de-68-ans-a-entraine-une-explosion-de-violences-de-lautre-cote-des-pyrenees-12823377.php" class="aside-tops__title"
                    data-xiti-action="detail-article::coldroite::tops-rank-topic::article,N">
-                    <span class="aside-tops__topic">Faits divers.</span>
-                    <span class="aside-tops__title-text">Laissée sans surveillance par sa mère, une petite fille de 4 ans chute de 7 étages et meurt</span>
+                    <span class="aside-tops__topic">Espagne.</span>
+                    <span class="aside-tops__title-text">Espagne : émeutes, "chasse"… comment l’agression d’un homme de 68 ans a entraîné une explosion de violences de l’autre côté des Pyrénées</span>
                 </a>
             </li>
                     <li class="aside-tops__item">
                 <span class="aside-tops__number">5</span>
-                <a href="/2025/07/12/barrieres-en-metal-parpaings-pierres-une-quarantaine-dindividus-piegent-des-policiers-qui-intervenaient-pour-un-vol-de-moto-12822189.php" class="aside-tops__title"
+                <a href="/2025/07/13/coince-dans-une-machine-a-pinces-un-petit-garcon-se-retrouve-bloque-au-milieu-des-peluches-les-pompiers-sont-appeles-pour-le-sauver-12823397.php" class="aside-tops__title"
                    data-xiti-action="detail-article::coldroite::tops-rank-topic::article,N">
                     <span class="aside-tops__topic">Faits divers.</span>
-                    <span class="aside-tops__title-text">Barrières en métal, parpaings, pierres… une quarantaine d’individus piègent des policiers qui intervenaient pour un vol de moto</span>
+                    <span class="aside-tops__title-text">Coincé dans une machine à pinces : un petit garçon se retrouvé bloqué au milieu des peluches, les pompiers sont appelés pour le sauver</span>
                 </a>
             </li>
             </ul>
