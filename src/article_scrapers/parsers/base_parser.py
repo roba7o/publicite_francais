@@ -4,6 +4,8 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional, List, Tuple
 
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from bs4 import BeautifulSoup
 
 from article_scrapers.utils.csv_writer import DailyCSVWriter
@@ -27,6 +29,36 @@ class BaseParser(ABC):
     HEADERS = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
     }
+    
+    # Shared session with connection pooling
+    _session = None
+    
+    @classmethod
+    def get_session(cls):
+        """Get or create a shared requests session with connection pooling"""
+        if cls._session is None:
+            cls._session = requests.Session()
+            
+            # Configure retry strategy
+            retry_strategy = Retry(
+                total=3,
+                backoff_factor=1,
+                status_forcelist=[429, 500, 502, 503, 504],
+            )
+            
+            # Configure HTTP adapter with connection pooling
+            adapter = HTTPAdapter(
+                max_retries=retry_strategy,
+                pool_connections=10,  # Number of connection pools
+                pool_maxsize=20,     # Max connections per pool
+                pool_block=False
+            )
+            
+            cls._session.mount("http://", adapter)
+            cls._session.mount("https://", adapter)
+            cls._session.headers.update(cls.HEADERS)
+            
+        return cls._session
 
     def __init__(self, site_domain: str, debug: Optional[bool] = None, delay: float = 1.0):
         self.logger = get_logger(self.__class__.__name__)
@@ -60,7 +92,8 @@ class BaseParser(ABC):
 
         for attempt in range(max_retries):
             try:
-                response = requests.get(url, headers=self.HEADERS, timeout=15)
+                session = self.get_session()
+                response = session.get(url, timeout=15)
                 time.sleep(self.delay)
                 response.raise_for_status()
                 

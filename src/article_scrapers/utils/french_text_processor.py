@@ -55,6 +55,7 @@ class FrenchTextProcessor:
         text = text.lower()
         text = unicodedata.normalize('NFD', text)
         
+        # Optimized accent replacement
         text = re.sub(r'[àâä]', 'a', text)
         text = re.sub(r'[éèêë]', 'e', text)
         text = re.sub(r'[îï]', 'i', text)
@@ -62,6 +63,7 @@ class FrenchTextProcessor:
         text = re.sub(r'[ûüù]', 'u', text)
         text = re.sub(r'[ÿ]', 'y', text)
         
+        # Single regex for character filtering
         text = re.sub(r'[^a-z0-9\s\'-]', ' ', text)
         text = re.sub(r'\s+', ' ', text).strip()
         
@@ -71,12 +73,13 @@ class FrenchTextProcessor:
         if not text:
             return []
 
-        words = []
-        for word in text.split():
+        # Batch processing for better performance
+        words = [
+            word for word in text.split()
             if (word.strip() and 
                 self.min_word_length <= len(word) <= self.max_word_length and 
-                word not in self.french_stopwords):
-                words.append(word)
+                word not in self.french_stopwords)
+        ]
         
         return words
 
