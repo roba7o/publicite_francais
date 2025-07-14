@@ -26,7 +26,7 @@ import json
 import time
 import sys
 import os
-from datetime import datetime
+import datetime
 from typing import Dict, Any, Optional, Union
 from contextlib import contextmanager
 from pathlib import Path
@@ -55,7 +55,7 @@ class StructuredFormatter(logging.Formatter):
             JSON string with structured log data
         """
         log_data = {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat() + "Z",
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),
@@ -107,7 +107,7 @@ class HumanFormatter(logging.Formatter):
         reset = self.COLORS['RESET']
         
         # Format timestamp
-        timestamp = datetime.fromtimestamp(record.created).strftime('%Y-%m-%d %H:%M:%S')
+        timestamp = datetime.datetime.fromtimestamp(record.created).strftime('%Y-%m-%d %H:%M:%S')
         
         # Base format with color
         formatted = f"{color}[{record.levelname}]{reset} "
