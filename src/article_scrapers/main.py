@@ -126,15 +126,6 @@ def main():
         "offline": OFFLINE
     })
 
-    # Print final health summary
-    from article_scrapers.utils.error_recovery import health_monitor
-
-    health_summary = health_monitor.get_health_summary()
-    if health_summary:
-        logger.info("Final health monitoring summary", extra_data={
-            "health_summary": health_summary,
-            "monitoring_enabled": True
-        })
 
 
 if __name__ == "__main__":

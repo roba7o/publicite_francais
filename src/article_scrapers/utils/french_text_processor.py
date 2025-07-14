@@ -426,16 +426,12 @@ class FrenchTextProcessor:
             >>> freq = processor.count_word_frequency("Le chat mange. Le chat dort.")
             >>> # Returns {"chat": 2, "mange": 1, "dort": 1}
         """
-        with self.logger.performance.timer("text_validation", {"text_length": len(text) if text else 0}):
-            validated_text = self.validate_text(text)
-            if not validated_text:
-                return {}
+        validated_text = self.validate_text(text)
+        if not validated_text:
+            return {}
 
-        with self.logger.performance.timer("text_cleaning", {"text_length": len(validated_text)}):
-            cleaned_text = self.clean_text(validated_text)
-            
-        with self.logger.performance.timer("text_tokenization", {"cleaned_length": len(cleaned_text)}):
-            words = self.tokenize_french_text(cleaned_text)
+        cleaned_text = self.clean_text(validated_text)
+        words = self.tokenize_french_text(cleaned_text)
 
         if not words:
             self.logger.debug("Word frequency analysis returned empty", extra_data={
@@ -444,13 +440,11 @@ class FrenchTextProcessor:
             })
             return {}
 
-        with self.logger.performance.timer("word_counting", {"word_count": len(words)}):
-            word_counts = dict(Counter(words))
+        word_counts = dict(Counter(words))
 
         # Remove words that appear suspiciously often (likely parsing errors)
-        with self.logger.performance.timer("frequency_filtering", {"unique_words": len(word_counts)}):
-            total_words = sum(word_counts.values())
-            max_frequency = max(total_words * 0.1, 10)  # Max 10% of total or 10 occurrences
+        total_words = sum(word_counts.values())
+        max_frequency = max(total_words * 0.1, 10)  # Max 10% of total or 10 occurrences
 
         filtered_words = {
             word: count for word, count in word_counts.items() if count <= max_frequency

@@ -16,6 +16,7 @@ Example usage:
 
 import csv
 import os
+import threading
 from datetime import datetime
 from typing import Optional
 
@@ -35,6 +36,9 @@ CSV_FIELDS = [
 
 class DailyCSVWriter:
     """Handles writing article word frequency data to daily CSV files."""
+    
+    # Class-level lock for thread safety during concurrent writes
+    _write_lock = threading.Lock()
 
     def __init__(self, output_dir=None, debug=None):
         self.logger = get_structured_logger(self.__class__.__name__)
@@ -109,70 +113,73 @@ class DailyCSVWriter:
             return
 
         backup_filename = f"{self.filename}.backup"
-        file_exists = os.path.isfile(self.filename)
 
-        try:
-            if file_exists:
-                import shutil
+        # Use class-level lock to prevent concurrent file access issues
+        with self._write_lock:
+            file_exists = os.path.isfile(self.filename)
 
-                shutil.copy2(self.filename, backup_filename)
+            try:
+                if file_exists:
+                    import shutil
 
-            with open(self.filename, mode="a", newline="", encoding="utf-8") as f:
-                writer = csv.DictWriter(f, fieldnames=CSV_FIELDS)
-                if not file_exists:
-                    writer.writeheader()
+                    shutil.copy2(self.filename, backup_filename)
 
-                rows_written = 0
-                for word, freq in valid_freqs.items():
-                    try:
-                        # Get context for this word, or empty string if not available
-                        context = word_contexts.get(word, "") if word_contexts else ""
+                with open(self.filename, mode="a", newline="", encoding="utf-8") as f:
+                    writer = csv.DictWriter(f, fieldnames=CSV_FIELDS)
+                    if not file_exists:
+                        writer.writeheader()
 
-                        writer.writerow(
-                            {
-                                "word": str(word)[:100],  # Truncate long words
-                                "context": str(context)[:500],  # Truncate long contexts
-                                "source": str(url)[:500],
-                                "article_date": parsed_data.get("article_date", ""),
-                                "scraped_date": parsed_data.get("date_scraped", ""),
-                                "title": str(parsed_data["title"])[
-                                    :200
-                                ],  # Truncate long titles
-                                "frequency": (
-                                    int(freq) if isinstance(freq, (int, float)) else 1
-                                ),
-                            }
-                        )
-                        rows_written += 1
-                    except (ValueError, TypeError) as e:
-                        self.logger.warning(f"Skipping invalid word '{word}': {e}")
+                    rows_written = 0
+                    for word, freq in valid_freqs.items():
+                        try:
+                            # Get context for this word, or empty string if not available
+                            context = word_contexts.get(word, "") if word_contexts else ""
 
-            if self.debug:
-                self.logger.info(
-                    f"Wrote {rows_written} word frequencies for '{parsed_data['title']}'"
+                            writer.writerow(
+                                {
+                                    "word": str(word)[:100],  # Truncate long words
+                                    "context": str(context)[:500],  # Truncate long contexts
+                                    "source": str(url)[:500],
+                                    "article_date": parsed_data.get("article_date", ""),
+                                    "scraped_date": parsed_data.get("date_scraped", ""),
+                                    "title": str(parsed_data["title"])[
+                                        :200
+                                    ],  # Truncate long titles
+                                    "frequency": (
+                                        int(freq) if isinstance(freq, (int, float)) else 1
+                                    ),
+                                }
+                            )
+                            rows_written += 1
+                        except (ValueError, TypeError) as e:
+                            self.logger.warning(f"Skipping invalid word '{word}': {e}")
+
+                if self.debug:
+                    self.logger.info(
+                        f"Wrote {rows_written} word frequencies for '{parsed_data['title']}'"
+                    )
+                self.existing_keys.add(key)
+
+                if os.path.exists(backup_filename):
+                    os.remove(backup_filename)
+
+            except PermissionError:
+                self.logger.error(f"Permission denied writing to {self.filename}")
+            except OSError as e:
+                self.logger.error(f"File system error writing CSV: {e}")
+                if os.path.exists(backup_filename):
+                    import shutil
+
+                    shutil.move(backup_filename, self.filename)
+                    self.logger.info("Restored backup file")
+            except Exception as e:
+                self.logger.error(
+                    f"Unexpected error writing '{parsed_data['title']}' to CSV: {e}"
                 )
-            self.existing_keys.add(key)
+                if os.path.exists(backup_filename):
+                    import shutil
 
-            if os.path.exists(backup_filename):
-                os.remove(backup_filename)
-
-        except PermissionError:
-            self.logger.error(f"Permission denied writing to {self.filename}")
-        except OSError as e:
-            self.logger.error(f"File system error writing CSV: {e}")
-            if os.path.exists(backup_filename):
-                import shutil
-
-                shutil.move(backup_filename, self.filename)
-                self.logger.info("Restored backup file")
-        except Exception as e:
-            self.logger.error(
-                f"Unexpected error writing '{parsed_data['title']}' to CSV: {e}"
-            )
-            if os.path.exists(backup_filename):
-                import shutil
-
-                shutil.move(backup_filename, self.filename)
+                    shutil.move(backup_filename, self.filename)
 
 
 # Alias for backward compatibility with tests
