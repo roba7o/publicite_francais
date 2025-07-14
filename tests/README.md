@@ -13,7 +13,6 @@ tests/
 ├── unit/                         # Unit tests for individual components
 │   ├── test_french_text_processor.py  # Text processing functionality
 │   ├── test_csv_writer.py        # CSV output handling
-│   ├── test_error_recovery.py    # Circuit breaker and retry logic
 │   └── test_base_parser.py       # Base parser functionality
 ├── integration/                  # Integration tests for component interaction
 │   ├── test_text_processing_pipeline.py  # End-to-end text processing
@@ -33,7 +32,6 @@ Test individual components in isolation using mocks and fixtures:
 
 - **FrenchTextProcessor**: Text validation, cleaning, tokenization, word frequency analysis
 - **CSVWriter**: File creation, data writing, error handling, concurrent access
-- **ErrorRecovery**: Circuit breaker patterns, retry mechanisms, health monitoring
 - **BaseParser**: HTML parsing, text extraction, validation
 
 ### Integration Tests (`tests/integration/`)

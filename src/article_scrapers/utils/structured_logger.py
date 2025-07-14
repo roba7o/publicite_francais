@@ -2,13 +2,12 @@
 Enhanced structured logging system for the French article scraper.
 
 This module provides a comprehensive logging framework with structured output,
-multiple handlers, performance tracking, and detailed debugging capabilities.
+multiple handlers, and detailed debugging capabilities.
 Designed for production environments with configurable log levels and formats.
 
 Features:
 - Structured JSON logging for machine parsing
 - Human-readable console output for development
-- Performance metrics and timing
 - Context-aware logging with request IDs
 - File rotation and retention
 - Configurable log levels per component
@@ -18,10 +17,7 @@ Features:
 Example:
     >>> from article_scrapers.utils.structured_logger import get_structured_logger
     >>> logger = get_structured_logger(__name__)
-    >>> logger.info("Processing started", extra={"source": "slate.fr", "articles": 25})
-    >>> with logger.performance_timer("article_processing"):
-    ...     # Processing code here
-    ...     pass
+    >>> logger.info("Processing started", extra_data={"source": "slate.fr", "articles": 25})
 """
 
 import logging
@@ -76,13 +72,6 @@ class StructuredFormatter(logging.Formatter):
         if record.exc_info:
             log_data["exception"] = self.formatException(record.exc_info)
             
-        # Add performance data if present
-        if hasattr(record, 'duration'):
-            log_data["duration_ms"] = record.duration
-            
-        if hasattr(record, 'performance_data'):
-            log_data["performance"] = record.performance_data
-            
         return json.dumps(log_data, ensure_ascii=False)
 
 
@@ -134,111 +123,23 @@ class HumanFormatter(logging.Formatter):
                     context_items.append(f"{key}={value}")
             if context_items:
                 formatted += f" | {' '.join(context_items)}"
-                
-        # Add performance info
-        if hasattr(record, 'duration'):
-            formatted += f" | duration={record.duration}ms"
             
         return formatted
 
 
-class PerformanceLogger:
-    """
-    Performance tracking and logging utilities.
-    
-    Provides context managers and decorators for measuring and logging
-    execution times, memory usage, and other performance metrics.
-    """
-    
-    def __init__(self, logger: logging.Logger):
-        self.logger = logger
-        self._timers: Dict[str, float] = {}
-        
-    @contextmanager
-    def timer(self, operation_name: str, extra_data: Optional[Dict] = None):
-        """
-        Context manager for timing operations.
-        
-        Args:
-            operation_name: Name of the operation being timed
-            extra_data: Additional context to include in log
-            
-        Yields:
-            Dictionary that will contain timing results
-            
-        Example:
-            >>> with logger.performance.timer("url_fetch", {"url": "example.com"}):
-            ...     # Code to time
-            ...     pass
-        """
-        start_time = time.time()
-        result = {"operation": operation_name}
-        
-        try:
-            yield result
-            success = True
-        except Exception as e:
-            success = False
-            result["error"] = str(e)
-            raise
-        finally:
-            duration = (time.time() - start_time) * 1000  # Convert to milliseconds
-            result["duration_ms"] = round(duration, 2)
-            result["success"] = success
-            
-            log_data = extra_data.copy() if extra_data else {}
-            log_data["performance"] = result
-            
-            self.logger.info(
-                f"Performance: {operation_name} {'completed' if success else 'failed'} "
-                f"in {duration:.2f}ms",
-                extra={"extra_data": log_data}
-            )
-    
-    def start_timer(self, timer_name: str) -> None:
-        """Start a named timer."""
-        self._timers[timer_name] = time.time()
-        
-    def end_timer(self, timer_name: str, extra_data: Optional[Dict] = None) -> float:
-        """
-        End a named timer and log the result.
-        
-        Args:
-            timer_name: Name of the timer to end
-            extra_data: Additional context to include
-            
-        Returns:
-            Duration in milliseconds
-        """
-        if timer_name not in self._timers:
-            # Only warn if we're in a context where the timer should have been started
-            # This prevents spurious warnings when no processing actually occurred
-            return 0.0
-            
-        duration = (time.time() - self._timers[timer_name]) * 1000
-        del self._timers[timer_name]
-        
-        log_data = extra_data.copy() if extra_data else {}
-        self.logger.info(
-            f"Timer '{timer_name}': {duration:.2f}ms",
-            extra={"extra_data": log_data, "duration": duration}
-        )
-        
-        return duration
 
 
 class StructuredLogger:
     """
-    Enhanced logger with structured output and performance tracking.
+    Enhanced logger with structured output.
     
     Wraps the standard Python logger with additional functionality for
-    structured logging, performance measurement, and context management.
+    structured logging and context management.
     """
     
     def __init__(self, name: str, logger: logging.Logger):
         self.name = name
         self.logger = logger
-        self.performance = PerformanceLogger(logger)
         self._context: Dict[str, Any] = {}
         
     def add_context(self, **kwargs) -> None:

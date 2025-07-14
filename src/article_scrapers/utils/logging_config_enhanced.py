@@ -96,9 +96,6 @@ def _setup_component_log_levels() -> None:
         # CSV writing - less verbose unless debugging
         "article_scrapers.utils.csv_writer": logging.WARNING if not DEBUG else logging.INFO,
         
-        # Error recovery - always informative
-        "article_scrapers.utils.error_recovery": logging.INFO,
-        
         # Parsers - moderate verbosity
         "article_scrapers.parsers": logging.INFO,
         
