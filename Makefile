@@ -12,6 +12,9 @@ IMAGE := my-scraper
 # Default command
 .DEFAULT_GOAL := help
 
+# Declare phony targets to avoid conflicts with files/directories
+.PHONY: run run-live run-offline test tests test-essential test-integration test-offline lint format check-format mypy clean docker-build docker-run help tree
+
 # ========== Local venv commands ==========
 
 run:  ## Run main script locally (must be inside venv)
@@ -33,6 +36,18 @@ run-offline:  ## Run script in offline mode (OFFLINE = True)
 
 test:  ## Run all tests
 	PYTHONPATH=$(SRC) pytest -v
+
+tests:  ## Run all tests (alias for test)
+	PYTHONPATH=$(SRC) pytest -v
+
+test-essential:  ## Run essential working tests only
+	PYTHONPATH=$(SRC) pytest -v tests/test_essential.py
+
+test-integration:  ## Run integration tests only
+	PYTHONPATH=$(SRC) pytest -v tests/integration/
+
+test-offline:  ## Run the offline mode integration test
+	PYTHONPATH=$(SRC) pytest -v tests/integration/test_offline_mode.py::TestOfflineMode::test_make_run_offline_integration
 
 lint:  ## Run flake8 on the src directory
 	flake8 $(SRC)
@@ -78,7 +93,11 @@ tree:  ## Show directory tree
 # make run-offline      # run script in offline mode (OFFLINE = True)
 # make docker-build     # build docker image
 # make docker-run       # run script inside docker
-# make test             # run tests
+# make test             # run all tests
+# make tests            # run all tests (alias)
+# make test-essential   # run essential working tests only
+# make test-integration # run integration tests only
+# make test-offline     # run offline mode integration test
 # make lint             # check code style
 # make format           # auto-format code
 # make mypy             # static type checks
