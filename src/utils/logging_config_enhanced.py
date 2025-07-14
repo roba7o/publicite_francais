@@ -152,7 +152,3 @@ def configure_debug_mode(enabled: bool = True) -> None:
     configure_component_logging(debug_components)
 
 
-# Backward compatibility - maintain the original function name
-def setup_enhanced_logging(*args, **kwargs):
-    """Alias for setup_logging for backward compatibility."""
-    return setup_logging(*args, **kwargs)
