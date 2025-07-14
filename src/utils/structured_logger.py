@@ -15,7 +15,7 @@ Features:
 - Debug mode with detailed tracing
 
 Example:
-    >>> from article_scrapers.utils.structured_logger import get_structured_logger
+    >>> from utils.structured_logger import get_structured_logger
     >>> logger = get_structured_logger(__name__)
     >>> logger.info("Processing started", extra_data={"source": "slate.fr", "articles": 25})
 """
@@ -32,7 +32,7 @@ from contextlib import contextmanager
 from pathlib import Path
 import threading
 
-from article_scrapers.config.settings import DEBUG
+from config.settings import DEBUG
 
 
 class StructuredFormatter(logging.Formatter):
@@ -244,7 +244,7 @@ class LogConfig:
                 # Get the project root directory from this file's location
                 current_dir = os.path.dirname(os.path.abspath(__file__))
                 project_root = os.path.abspath(os.path.join(current_dir, "..", "..", ".."))
-                log_directory = os.path.join(project_root, "src", "article_scrapers", "logs")
+                log_directory = os.path.join(project_root, "src", "logs")
             
             LogConfig._setup_file_handlers(root_logger, log_directory, 
                                          enable_structured_logging, log_level)

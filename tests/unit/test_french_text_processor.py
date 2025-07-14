@@ -7,7 +7,7 @@ cleaning, tokenization, and word frequency analysis.
 
 import pytest
 from unittest.mock import patch, Mock
-from article_scrapers.utils.french_text_processor import FrenchTextProcessor
+from utils.french_text_processor import FrenchTextProcessor
 
 
 class TestFrenchTextProcessor:

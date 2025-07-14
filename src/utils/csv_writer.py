@@ -9,7 +9,7 @@ The CSV format is designed for vocabulary learning and text analysis,
 with each row representing a word occurrence with its context and metadata.
 
 Example usage:
-    >>> from article_scrapers.utils.csv_writer import DailyCSVWriter
+    >>> from utils.csv_writer import DailyCSVWriter
     >>> writer = DailyCSVWriter(debug=True)
     >>> writer.write_article(article_data, url, frequencies, contexts)
 """
@@ -20,8 +20,8 @@ import threading
 from datetime import datetime
 from typing import Optional
 
-from ..config.settings import DEBUG
-from article_scrapers.utils.structured_logger import get_structured_logger
+from config.settings import DEBUG
+from utils.structured_logger import get_structured_logger
 
 CSV_FIELDS = [
     "word",
@@ -43,7 +43,7 @@ class DailyCSVWriter:
     def __init__(self, output_dir=None, debug=None):
         self.logger = get_structured_logger(self.__class__.__name__)
         
-        # Set default output directory to src/article_scrapers/output
+        # Set default output directory to src/output
         if output_dir is None:
             current_dir = os.path.dirname(os.path.abspath(__file__))
             output_dir = os.path.join(current_dir, "..", "output")

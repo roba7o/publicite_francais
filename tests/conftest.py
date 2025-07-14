@@ -19,11 +19,11 @@ from typing import Dict, List, Any
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 # Import after path setup
-from article_scrapers.utils.structured_logger import get_structured_logger
-from article_scrapers.utils.french_text_processor import FrenchTextProcessor
-from article_scrapers.utils.csv_writer import DailyCSVWriter
-from article_scrapers.config.website_parser_scrapers_config import ScraperConfig
-from article_scrapers.core.processor import ArticleProcessor
+from utils.structured_logger import get_structured_logger
+from utils.french_text_processor import FrenchTextProcessor
+from utils.csv_writer import DailyCSVWriter
+from config.website_parser_scrapers_config import ScraperConfig
+from core.processor import ArticleProcessor
 
 
 @pytest.fixture(scope="session")
@@ -164,8 +164,8 @@ def setup_test_environment(monkeypatch):
     monkeypatch.setenv('DEBUG', 'True')
     
     # Patch settings if already imported
-    with patch('article_scrapers.config.settings.OFFLINE', True):
-        with patch('article_scrapers.config.settings.DEBUG', True):
+    with patch('config.settings.OFFLINE', True):
+        with patch('config.settings.DEBUG', True):
             yield
 
 

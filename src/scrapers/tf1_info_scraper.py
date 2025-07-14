@@ -5,9 +5,9 @@ TF1 Info Scraper - Extracts article URLs from TF1 Info homepage
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
-from article_scrapers.utils.structured_logger import get_structured_logger
+from utils.structured_logger import get_structured_logger
 import json
-from ..config.settings import DEBUG
+from config.settings import DEBUG
 
 
 class TF1InfoURLScraper:

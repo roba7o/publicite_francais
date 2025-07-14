@@ -13,7 +13,7 @@ from typing import Dict, Any, List, Optional
 
 from bs4 import BeautifulSoup, Tag
 
-from article_scrapers.parsers.base_parser import BaseParser
+from parsers.base_parser import BaseParser
 
 
 class TF1InfoArticleParser(BaseParser):

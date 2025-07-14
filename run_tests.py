@@ -73,7 +73,7 @@ def verify_system_health():
     
     # Check output directory
     total_checks += 1
-    output_dir = os.path.join(current_dir, "src", "article_scrapers", "output")
+    output_dir = os.path.join(current_dir, "src", "output")
     if os.path.exists(output_dir):
         print(f"✅ Output directory exists: {output_dir}")
         checks_passed += 1
@@ -82,7 +82,7 @@ def verify_system_health():
     
     # Check logs directory
     total_checks += 1
-    logs_dir = os.path.join(current_dir, "src", "article_scrapers", "logs")
+    logs_dir = os.path.join(current_dir, "src", "logs")
     if os.path.exists(logs_dir):
         print(f"✅ Logs directory exists: {logs_dir}")
         checks_passed += 1
@@ -92,7 +92,7 @@ def verify_system_health():
     # Check CSV writer import
     total_checks += 1
     try:
-        from article_scrapers.utils.csv_writer import CSVWriter
+        from utils.csv_writer import CSVWriter
         print("✅ CSVWriter import successful")
         checks_passed += 1
     except ImportError as e:
@@ -101,7 +101,7 @@ def verify_system_health():
     # Check text processor import
     total_checks += 1
     try:
-        from article_scrapers.utils.french_text_processor import FrenchTextProcessor
+        from utils.french_text_processor import FrenchTextProcessor
         print("✅ FrenchTextProcessor import successful")
         checks_passed += 1
     except ImportError as e:
@@ -110,7 +110,7 @@ def verify_system_health():
     # Check logging setup
     total_checks += 1
     try:
-        from article_scrapers.utils.logging_config_enhanced import setup_logging
+        from utils.logging_config_enhanced import setup_logging
         setup_logging()
         print("✅ Logging setup successful")
         checks_passed += 1
@@ -136,8 +136,8 @@ if __name__ == "__main__":
     
     if health_ok and tests_ok:
         print("🎉 ALL SYSTEMS GO! Repository cleanup successful.")
-        print("✅ Logging: Consolidated to src/article_scrapers/logs/")
-        print("✅ Output: Consolidated to src/article_scrapers/output/")
+        print("✅ Logging: Consolidated to src/logs/")
+        print("✅ Output: Consolidated to src/output/")
         print("✅ Core functionality: Working correctly")
         sys.exit(0)
     else:

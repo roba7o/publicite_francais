@@ -1,8 +1,8 @@
-from article_scrapers.config.website_parser_scrapers_config import SCRAPER_CONFIGS
-from article_scrapers.config.settings import OFFLINE
-from article_scrapers.core.processor import ArticleProcessor
-from article_scrapers.utils.logging_config_enhanced import setup_logging, configure_debug_mode
-from article_scrapers.utils.structured_logger import get_structured_logger
+from config.website_parser_scrapers_config import SCRAPER_CONFIGS
+from config.settings import OFFLINE
+from core.processor import ArticleProcessor
+from utils.logging_config_enhanced import setup_logging, configure_debug_mode
+from utils.structured_logger import get_structured_logger
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 
@@ -10,7 +10,7 @@ setup_logging()
 logger = get_structured_logger(__name__)
 
 # Configure debug mode based on settings
-from article_scrapers.config.settings import DEBUG
+from config.settings import DEBUG
 if DEBUG:
     configure_debug_mode(enabled=True)
 
@@ -121,7 +121,7 @@ def main():
         })
 
     logger.info("Results saved", extra_data={
-        "output_directory": "src/article_scrapers/output",
+        "output_directory": "src/output",
         "mode": mode,
         "offline": OFFLINE
     })

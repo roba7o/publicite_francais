@@ -5,9 +5,9 @@ Grabbing top 8 articles from ladepeche.fr which are then passed on to parser
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
-from ..config.settings import DEBUG
+from config.settings import DEBUG
 
-from article_scrapers.utils.structured_logger import get_structured_logger
+from utils.structured_logger import get_structured_logger
 
 
 class LadepecheFrURLScraper:

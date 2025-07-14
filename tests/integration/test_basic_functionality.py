@@ -9,9 +9,9 @@ import pytest
 import tempfile
 import os
 from pathlib import Path
-from article_scrapers.utils.french_text_processor import FrenchTextProcessor
-from article_scrapers.utils.csv_writer import DailyCSVWriter
-from article_scrapers.utils.logging_config_enhanced import setup_logging
+from utils.french_text_processor import FrenchTextProcessor
+from utils.csv_writer import DailyCSVWriter
+from utils.logging_config_enhanced import setup_logging
 
 
 class TestBasicFunctionality:
@@ -23,7 +23,7 @@ class TestBasicFunctionality:
         import os
         current_dir = os.path.dirname(os.path.abspath(__file__))
         project_root = os.path.abspath(os.path.join(current_dir, "..", ".."))
-        log_directory = os.path.join(project_root, "src", "article_scrapers", "logs")
+        log_directory = os.path.join(project_root, "src", "logs")
         setup_logging(log_directory=log_directory)
         # If we get here without errors, logging setup worked
         assert True
@@ -143,7 +143,7 @@ class TestBasicFunctionality:
         
         # Check that the writer uses the expected output directory structure
         output_path = str(writer.output_dir)
-        assert 'src/article_scrapers' in output_path
+        assert 'src' in output_path
         assert output_path.endswith('output')
         
         # Verify the directory exists
@@ -156,10 +156,10 @@ class TestBasicFunctionality:
         import os
         current_dir = os.path.dirname(os.path.abspath(__file__))
         project_root = os.path.abspath(os.path.join(current_dir, "..", ".."))
-        log_directory = os.path.join(project_root, "src", "article_scrapers", "logs")
+        log_directory = os.path.join(project_root, "src", "logs")
         setup_logging(log_directory=log_directory)
         
-        # The logging should be set up to use src/article_scrapers/logs
+        # The logging should be set up to use src/logs
         # We can't easily test the exact path without accessing logging internals,
         # but we can verify setup completes without errors
         assert True  # If we got here, logging setup worked

@@ -7,14 +7,14 @@ with existing code.
 
 Usage:
     # Simple setup (backward compatible)
-    >>> from article_scrapers.utils.logging_config_enhanced import setup_logging
+    >>> from utils.logging_config_enhanced import setup_logging
     >>> setup_logging()
     
     # Advanced setup with structured logging
     >>> setup_logging(level="DEBUG", use_structured=True, enable_file_logging=True)
     
     # Component-specific log levels
-    >>> from article_scrapers.utils.logging_config_enhanced import configure_component_levels
+    >>> from utils.logging_config_enhanced import configure_component_levels
     >>> configure_component_levels({
     ...     "article_scrapers.core": "DEBUG",
     ...     "article_scrapers.parsers": "INFO"
@@ -25,8 +25,8 @@ import logging
 import os
 from typing import Union, Dict, Optional
 
-from article_scrapers.config.settings import DEBUG, OFFLINE
-from article_scrapers.utils.structured_logger import LogConfig, configure_component_logging
+from config.settings import DEBUG, OFFLINE
+from utils.structured_logger import LogConfig, configure_component_logging
 
 
 def setup_logging(
@@ -69,7 +69,7 @@ def setup_logging(
         project_root = os.path.abspath(os.path.join(current_dir, "..", "..", ".."))
         
         # Always use the logs directory inside src/article_scrapers
-        log_directory = os.path.join(project_root, "src", "article_scrapers", "logs")
+        log_directory = os.path.join(project_root, "src", "logs")
     
     # Use the structured logging system
     LogConfig.setup_logging(

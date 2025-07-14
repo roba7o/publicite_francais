@@ -3,8 +3,8 @@ import unicodedata
 from collections import Counter
 from typing import Dict, List, Set, Optional
 
-from article_scrapers.config.junk_words_config import get_junk_patterns
-from article_scrapers.utils.structured_logger import get_structured_logger
+from config.junk_words_config import get_junk_patterns
+from utils.structured_logger import get_structured_logger
 
 
 class FrenchTextProcessor:

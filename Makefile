@@ -3,8 +3,8 @@
 # Python interpreter (uses virtualenv by default)
 PYTHON := python
 SRC := src
-MAIN_MODULE := article_scrapers.main
-SETTINGS_FILE := $(SRC)/article_scrapers/config/settings.py
+MAIN_MODULE := main
+SETTINGS_FILE := $(SRC)/config/settings.py
 
 # Docker image name
 IMAGE := my-scraper

@@ -195,10 +195,10 @@ pytest tests/integration/test_text_processing_pipeline.py -s
 python -c "import sys; print(sys.path)"
 
 # Verify package imports
-python -c "from article_scrapers.utils.french_text_processor import FrenchTextProcessor"
+python -c "from utils.french_text_processor import FrenchTextProcessor"
 
 # Check test data availability
-ls -la src/article_scrapers/test_data/raw_url_soup/
+ls -la src/test_data/raw_url_soup/
 ```
 
 ## Continuous Integration

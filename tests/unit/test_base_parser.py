@@ -8,7 +8,7 @@ import pytest
 from unittest.mock import Mock, patch, MagicMock
 from bs4 import BeautifulSoup
 import requests
-from article_scrapers.parsers.base_parser import BaseParser
+from parsers.base_parser import BaseParser
 
 
 class TestBaseParser:

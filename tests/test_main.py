@@ -8,9 +8,9 @@ after the repository cleanup and directory restructuring.
 import pytest
 import tempfile
 import os
-from article_scrapers.utils.french_text_processor import FrenchTextProcessor
-from article_scrapers.utils.csv_writer import DailyCSVWriter
-from article_scrapers.utils.logging_config_enhanced import setup_logging
+from utils.french_text_processor import FrenchTextProcessor
+from utils.csv_writer import DailyCSVWriter
+from utils.logging_config_enhanced import setup_logging
 
 
 class TestSystemFunctionality:
@@ -22,7 +22,7 @@ class TestSystemFunctionality:
         import os
         current_dir = os.path.dirname(os.path.abspath(__file__))
         project_root = os.path.abspath(os.path.join(current_dir, ".."))
-        log_directory = os.path.join(project_root, "src", "article_scrapers", "logs")
+        log_directory = os.path.join(project_root, "src", "logs")
         setup_logging(log_directory=log_directory)
         assert True  # If we get here, logging setup worked
     

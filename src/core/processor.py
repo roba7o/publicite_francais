@@ -1,10 +1,10 @@
 import importlib
 from typing import Tuple, Optional, List, Any
 
-from ..config.website_parser_scrapers_config import ScraperConfig
-from ..config.settings import OFFLINE
-from article_scrapers.utils.structured_logger import get_structured_logger
-from article_scrapers.utils.validators import DataValidator
+from config.website_parser_scrapers_config import ScraperConfig
+from config.settings import OFFLINE
+from utils.structured_logger import get_structured_logger
+from utils.validators import DataValidator
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time

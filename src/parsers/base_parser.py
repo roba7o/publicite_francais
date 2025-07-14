@@ -8,11 +8,11 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 from bs4 import BeautifulSoup
 
-from article_scrapers.utils.csv_writer import DailyCSVWriter
-from article_scrapers.utils.french_text_processor import FrenchTextProcessor
-from article_scrapers.config.text_processing_config import SITE_CONFIGS
-from article_scrapers.config.settings import DEBUG, OFFLINE
-from article_scrapers.utils.structured_logger import get_structured_logger
+from utils.csv_writer import DailyCSVWriter
+from utils.french_text_processor import FrenchTextProcessor
+from config.text_processing_config import SITE_CONFIGS
+from config.settings import DEBUG, OFFLINE
+from utils.structured_logger import get_structured_logger
 
 DEFAULT_SITE_CONFIG = {
     "min_word_frequency": 1,
@@ -275,7 +275,7 @@ class BaseParser(ABC):
 
         # Import URL mapping
         try:
-            from article_scrapers.test_data.url_mapping import URL_MAPPING
+            from test_data.url_mapping import URL_MAPPING
         except ImportError:
             self.logger.error("URL mapping import failed", extra_data={
                 "module": "test_data/url_mapping.py",
