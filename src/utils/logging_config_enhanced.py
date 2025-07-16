@@ -9,10 +9,12 @@ Usage:
     # Simple setup (backward compatible)
     >>> from utils.logging_config_enhanced import setup_logging
     >>> setup_logging()
-    
+
     # Advanced setup with structured logging
-    >>> setup_logging(level="DEBUG", use_structured=True, enable_file_logging=True)
-    
+    >>> setup_logging(
+    ...     level="DEBUG", use_structured=True, enable_file_logging=True
+    ... )
+
     # Component-specific log levels
     >>> from utils.logging_config_enhanced import configure_component_levels
     >>> configure_component_levels({
@@ -22,11 +24,9 @@ Usage:
 """
 
 import logging
-import os
 from typing import Union, Dict, Optional
 
-from config.settings import DEBUG, OFFLINE
-from utils.structured_logger import get_structured_logger
+from config.settings import DEBUG
 
 
 def setup_logging(
@@ -34,11 +34,11 @@ def setup_logging(
     use_structured: bool = True,
     enable_file_logging: bool = True,
     console_format: str = "human",
-    log_directory: Optional[str] = None
+    log_directory: Optional[str] = None,
 ) -> None:
     """
     Setup enhanced logging configuration with backward compatibility.
-    
+
     Args:
         level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
                Defaults to DEBUG if DEBUG=True, INFO otherwise
@@ -52,14 +52,14 @@ def setup_logging(
         level = logging.DEBUG if DEBUG else logging.INFO
     elif isinstance(level, str):
         level = getattr(logging, level.upper())
-    
+
     # Setup basic logging
     logging.basicConfig(
         level=level,
-        format='%(asctime)s | %(levelname)s | %(name)s | %(message)s',
-        handlers=[logging.StreamHandler()]
+        format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+        handlers=[logging.StreamHandler()],
     )
-    
+
     # Setup component-specific log levels for better debugging
     _setup_component_log_levels()
 
@@ -68,26 +68,25 @@ def _setup_component_log_levels() -> None:
     """Setup appropriate log levels for different components."""
     component_levels: Dict[str, Union[str, int]] = {
         # Core processing - more verbose in debug mode
-        "article_scrapers.core.processor": logging.DEBUG if DEBUG else logging.INFO,
-        
+        "article_scrapers.core.processor": (
+            logging.DEBUG if DEBUG else logging.INFO
+        ),
         # Text processing - moderate verbosity
         "article_scrapers.utils.french_text_processor": logging.INFO,
-        
         # CSV writing - less verbose unless debugging
-        "article_scrapers.utils.csv_writer": logging.WARNING if not DEBUG else logging.INFO,
-        
+        "article_scrapers.utils.csv_writer": (
+            logging.WARNING if not DEBUG else logging.INFO
+        ),
         # Parsers - moderate verbosity
         "article_scrapers.parsers": logging.INFO,
-        
-        # Scrapers - moderate verbosity  
+        # Scrapers - moderate verbosity
         "article_scrapers.scrapers": logging.INFO,
-        
         # External libraries - quiet unless errors
         "urllib3": logging.WARNING,
         "requests": logging.WARNING,
         "urllib3.connectionpool": logging.WARNING,
     }
-    
+
     for component, level in component_levels.items():
         if isinstance(level, str):
             level = getattr(logging, level.upper())
@@ -97,10 +96,10 @@ def _setup_component_log_levels() -> None:
 def configure_debug_mode(enabled: bool = True) -> None:
     """
     Configure enhanced debug mode with detailed logging.
-    
+
     Args:
         enabled: Whether to enable debug mode
-        
+
     When enabled, provides:
         - DEBUG level for all components
         - Detailed performance logging
@@ -116,13 +115,15 @@ def configure_debug_mode(enabled: bool = True) -> None:
             "article_scrapers.scrapers": logging.DEBUG,
             "article_scrapers.utils": logging.DEBUG,
         }
-        
+
         # Enable HTTP debugging for network issues
-        debug_components.update({
-            "urllib3": logging.DEBUG,
-            "requests": logging.DEBUG,
-            "urllib3.connectionpool": logging.DEBUG,
-        })
+        debug_components.update(
+            {
+                "urllib3": logging.DEBUG,
+                "requests": logging.DEBUG,
+                "urllib3.connectionpool": logging.DEBUG,
+            }
+        )
     else:
         # Normal operation levels
         normal_components: Dict[str, Union[str, int]] = {
@@ -131,10 +132,8 @@ def configure_debug_mode(enabled: bool = True) -> None:
             "requests": logging.WARNING,
         }
         debug_components = normal_components
-    
+
     for component, level in debug_components.items():
         if isinstance(level, str):
             level = getattr(logging, level.upper())
         logging.getLogger(component).setLevel(level)
-
-

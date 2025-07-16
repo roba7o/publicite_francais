@@ -3,8 +3,9 @@
 """
 Parser for Ladepeche.fr articles.
 
-This module provides the LadepecheFrArticleParser class, which extends BaseParser
-to specifically extract and process content from Ladepeche.fr articles.
+This module provides the LadepecheFrArticleParser class, which extends
+BaseParser to specifically extract and process content from Ladepeche.fr
+articles.
 """
 
 from datetime import datetime
@@ -19,7 +20,8 @@ from parsers.base_parser import BaseParser
 class LadepecheFrArticleParser(BaseParser):
     """
     Parses article content from ladepeche.fr.
-    Inherits common fetching and text processing functionalities from BaseParser.
+    Inherits common fetching and text processing functionalities from
+    BaseParser.
     """
 
     def __init__(self) -> None:
@@ -32,14 +34,16 @@ class LadepecheFrArticleParser(BaseParser):
 
     def parse_article(self, soup: BeautifulSoup) -> Optional[Dict[str, Any]]:
         """
-        Parses the BeautifulSoup object to extract main article content and metadata.
+        Parses the BeautifulSoup object to extract main article content and
+        metadata.
 
         Args:
             soup (BeautifulSoup): The BeautifulSoup object of the article page.
 
         Returns:
-            Optional[Dict[str, Any]]: A dictionary containing extracted article data,
-                                      or None if the main content cannot be found.
+            Optional[Dict[str, Any]]: A dictionary containing extracted article
+                                      data, or None if the main content cannot
+                                      be found.
         """
         try:
             # Look for the main article content area
@@ -48,14 +52,17 @@ class LadepecheFrArticleParser(BaseParser):
             )
             if not article_content_area:
                 self.logger.warning(
-                    "No main article content area found (article or .article-content)."
+                    "No main article content area found (article or "
+                    ".article-content)."
                 )
-                # Attempt a more general fallback if specific elements aren't found
+                # Attempt a more general fallback if specific elements
+                # aren't found
                 article_content_area = soup.find("main")
 
             if not article_content_area:
                 self.logger.warning(
-                    "No article content found even with general fallback. This might not be an article page."
+                    "No article content found even with general fallback. "
+                    "This might not be an article page."
                 )
                 return None
 
@@ -71,7 +78,9 @@ class LadepecheFrArticleParser(BaseParser):
             # Log basic text info for debugging
             if self.debug:
                 word_count = len(full_text.split())
-                self.logger.info(f"Ladepeche.fr text stats: total_words={word_count}")
+                self.logger.info(
+                    f"Ladepeche.fr text stats: total_words={word_count}"
+                )
 
             return {
                 "full_text": full_text,
@@ -83,15 +92,19 @@ class LadepecheFrArticleParser(BaseParser):
             }
 
         except Exception as e:
-            self.logger.error(f"Error parsing Ladepeche.fr article: {e}", exc_info=True)
+            self.logger.error(
+                f"Error parsing Ladepeche.fr article: {e}", exc_info=True
+            )
             return None
 
     def _extract_paragraphs(self, content_area: BeautifulSoup) -> List[str]:
         """
-        Extracts text from paragraphs within the main content area, filtering out non-content.
+        Extracts text from paragraphs within the main content area, filtering
+        out non-content.
 
         Args:
-            content_area (BeautifulSoup): The BeautifulSoup object of the main content area.
+            content_area (BeautifulSoup): The BeautifulSoup object of the main
+                                          content area.
 
         Returns:
             List[str]: A list of extracted and cleaned paragraph strings.
@@ -115,8 +128,9 @@ class LadepecheFrArticleParser(BaseParser):
         text_elements = content_area.find_all(["p", "h2", "li"])
 
         for element in text_elements:
-            # Check for parent elements that might indicate non-content sections
-            # This can prevent including text from 'related articles' or 'author boxes'
+            # Check for parent elements that might indicate non-content
+            # sections. This can prevent including text from 'related articles'
+            # or 'author boxes'
             if element.find_parent(
                 class_=["related-articles", "author-box", "article-meta"]
             ):
@@ -162,7 +176,8 @@ class LadepecheFrArticleParser(BaseParser):
         for selector in title_selectors:
             if selector.startswith("meta"):
                 tag = soup.find(
-                    lambda tag: tag.name == "meta" and tag.get("property") == "og:title"
+                    lambda tag: tag.name == "meta" and
+                    tag.get("property") == "og:title"
                 )
                 if tag and tag.has_attr("content"):
                     return tag["content"].strip()
@@ -188,14 +203,16 @@ class LadepecheFrArticleParser(BaseParser):
             soup (BeautifulSoup): The BeautifulSoup object of the page.
 
         Returns:
-            str: The extracted date in YYYY-MM-DD format, or "Unknown date" if not found.
+            str: The extracted date in YYYY-MM-DD format, or "Unknown date"
+                 if not found.
         """
         date_selectors = [
             "time[datetime]",
             ".article-date time",
             ".date-publication",
             ".published-date",
-            "[data-time]",  # Added for robustness, covers the "20250712190208" case
+            "[data-time]",  # Added for robustness, covers the
+                            # "20250712190208" case
             'meta[property="article:published_time"]',
             'meta[itemprop="datePublished"]',
         ]
@@ -220,24 +237,33 @@ class LadepecheFrArticleParser(BaseParser):
                     # Format: 20250712190208 -> 2025-07-12 19:02:08
                     if len(date_str) == 14 and date_str.isdigit():
                         try:
-                            # Parse as datetime object first to ensure validity, then format
-                            dt_obj = datetime.strptime(date_str, "%Y%m%d%H%M%S")
+                            # Parse as datetime object first to ensure
+                            # validity, then format
+                            dt_obj = datetime.strptime(
+                                date_str, "%Y%m%d%H%M%S"
+                            )
                             return dt_obj.strftime("%Y-%m-%d")
                         except ValueError:
                             self.logger.debug(
-                                f"Failed to parse '{date_str}' as YYYYMMDDHHMMSS."
+                                f"Failed to parse '{date_str}' as "
+                                "YYYYMMDDHHMMSS."
                             )
                             # Continue to try other formats if this one fails
 
                     # ISO 8601 format (e.g., 2023-10-26T10:00:00+02:00)
                     try:
-                        dt_obj = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+                        dt_obj = datetime.fromisoformat(
+                            date_str.replace("Z", "+00:00")
+                        )
                         return dt_obj.strftime("%Y-%m-%d")
                     except ValueError:
-                        self.logger.debug(f"Failed to parse '{date_str}' as ISO 8601.")
+                        self.logger.debug(
+                            f"Failed to parse '{date_str}' as ISO 8601."
+                        )
                         pass  # Try other parsing methods
 
-                    # Simple date format (e.g., "12/07/2025" or "Octobre 26, 2023")
+                    # Simple date format (e.g., "12/07/2025" or
+                    # "Octobre 26, 2023")
                     # Add more common French date formats as needed.
                     # For "DD/MM/YYYY"
                     try:
@@ -251,30 +277,38 @@ class LadepecheFrArticleParser(BaseParser):
                         return dt_obj.strftime("%Y-%m-%d")
                     except ValueError:
                         pass
-                    # For "Jour Mois Année" (e.g., "12 juillet 2025") - requires locale awareness or more robust parsing
-                    # For simplicity, we can try common variations or use a more powerful date parser if complex
-                    # from dateutil.parser import parse (if you install python-dateutil)
+                    # For "Jour Mois Année" (e.g., "12 juillet 2025") -
+                    # requires locale awareness or more robust parsing
+                    # For simplicity, we can try common variations or use a
+                    # more powerful date parser if complex
+                    # from dateutil.parser import parse (if you install
+                    # python-dateutil)
                     # try:
                     #     dt_obj = parse(date_str, languages=['fr'])
                     #     return dt_obj.strftime("%Y-%m-%d")
                     # except Exception:
                     #     pass
 
-                    # If a string was found but couldn't be parsed into a standard date format,
+                    # If a string was found but couldn't be parsed into a
+                    # standard date format,
                     # return it as is, logging a warning.
                     self.logger.warning(
-                        f"Date string '{date_str}' found but could not be parsed into a standard format. Returning raw string."
+                        f"Date string '{date_str}' found but could not be "
+                        "parsed into a standard format. Returning raw string."
                     )
-                    return date_str  # Return raw string if no known format matches
+                    # Return raw string if no known format matches
+                    return date_str
 
         self.logger.debug(
-            "Article date not found or parsed using common selectors and formats. Falling back to 'Unknown date'."
+            "Article date not found or parsed using common selectors and "
+            "formats. Falling back to 'Unknown date'."
         )
         return "Unknown date"
 
     def _extract_author(self, soup: BeautifulSoup) -> str:
         """
-        Extracts author information. (Placeholder - implement specific logic for Ladepeche if needed)
+        Extracts author information. (Placeholder - implement specific logic
+        for Ladepeche if needed)
         """
         # Example for Ladepeche: look for a specific class or rel="author"
         author_tag = soup.find("span", class_="author-name") or soup.find(

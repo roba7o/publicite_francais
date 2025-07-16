@@ -61,10 +61,13 @@ class SlateFrArticleParser(BaseParser):
 
     def _extract_date(self, soup: BeautifulSoup) -> str:
         date_tag = soup.find("time")
-        if date_tag and isinstance(date_tag, Tag) and date_tag.has_attr("datetime"):
+        if (date_tag and isinstance(date_tag, Tag) and
+                date_tag.has_attr("datetime")):
             date_str = str(date_tag["datetime"])
             try:
-                dt_obj = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+                dt_obj = datetime.fromisoformat(
+                    date_str.replace("Z", "+00:00")
+                )
                 return dt_obj.strftime("%Y-%m-%d")
             except ValueError:
                 return date_str

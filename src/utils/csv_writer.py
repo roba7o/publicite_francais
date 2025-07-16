@@ -36,18 +36,18 @@ CSV_FIELDS = [
 
 class DailyCSVWriter:
     """Handles writing article word frequency data to daily CSV files."""
-    
+
     # Class-level lock for thread safety during concurrent writes
     _write_lock = threading.Lock()
 
     def __init__(self, output_dir=None, debug=None):
         self.logger = get_structured_logger(self.__class__.__name__)
-        
+
         # Set default output directory to src/output
         if output_dir is None:
             current_dir = os.path.dirname(os.path.abspath(__file__))
             output_dir = os.path.join(current_dir, "..", "output")
-        
+
         self.output_dir = output_dir
         os.makedirs(self.output_dir, exist_ok=True)
         self.filename = self._get_filename()
@@ -64,7 +64,9 @@ class DailyCSVWriter:
         existing = set()
         if os.path.isfile(self.filename):
             try:
-                with open(self.filename, mode="r", newline="", encoding="utf-8") as f:
+                with open(
+                    self.filename, mode="r", newline="", encoding="utf-8"
+                ) as f:
                     reader = csv.DictReader(f)
                     for row in reader:
                         key = f"{row['title']}:{row['source']}"
@@ -82,7 +84,8 @@ class DailyCSVWriter:
     ) -> None:
         if not word_freqs or not isinstance(word_freqs, dict):
             self.logger.warning(
-                f"No valid word frequencies for {parsed_data.get('title', 'Unknown')}"
+                f"No valid word frequencies for "
+                f"{parsed_data.get('title', 'Unknown')}"
             )
             return
 
@@ -99,7 +102,8 @@ class DailyCSVWriter:
 
         if not valid_freqs:
             self.logger.warning(
-                f"No valid word frequencies after validation for {parsed_data.get('title', 'Unknown')}"
+                f"No valid word frequencies after validation for "
+                f"{parsed_data.get('title', 'Unknown')}"
             )
             return
 
@@ -124,7 +128,9 @@ class DailyCSVWriter:
 
                     shutil.copy2(self.filename, backup_filename)
 
-                with open(self.filename, mode="a", newline="", encoding="utf-8") as f:
+                with open(
+                    self.filename, mode="a", newline="", encoding="utf-8"
+                ) as f:
                     writer = csv.DictWriter(f, fieldnames=CSV_FIELDS)
                     if not file_exists:
                         writer.writeheader()
@@ -132,31 +138,49 @@ class DailyCSVWriter:
                     rows_written = 0
                     for word, freq in valid_freqs.items():
                         try:
-                            # Get context for this word, or empty string if not available
-                            context = word_contexts.get(word, "") if word_contexts else ""
+                            # Get context for this word, or empty string if not
+                            # available
+                            context = (
+                                word_contexts.get(word, "")
+                                if word_contexts
+                                else ""
+                            )
 
                             writer.writerow(
                                 {
-                                    "word": str(word)[:100],  # Truncate long words
-                                    "context": str(context)[:500],  # Truncate long contexts
+                                    "word": str(word)[
+                                        :100
+                                    ],  # Truncate long words
+                                    "context": str(context)[
+                                        :500
+                                    ],  # Truncate long contexts
                                     "source": str(url)[:500],
-                                    "article_date": parsed_data.get("article_date", ""),
-                                    "scraped_date": parsed_data.get("date_scraped", ""),
+                                    "article_date": parsed_data.get(
+                                        "article_date", ""
+                                    ),
+                                    "scraped_date": parsed_data.get(
+                                        "date_scraped", ""
+                                    ),
                                     "title": str(parsed_data["title"])[
                                         :200
                                     ],  # Truncate long titles
                                     "frequency": (
-                                        int(freq) if isinstance(freq, (int, float)) else 1
+                                        int(freq)
+                                        if isinstance(freq, (int, float))
+                                        else 1
                                     ),
                                 }
                             )
                             rows_written += 1
                         except (ValueError, TypeError) as e:
-                            self.logger.warning(f"Skipping invalid word '{word}': {e}")
+                            self.logger.warning(
+                                f"Skipping invalid word '{word}': {e}"
+                            )
 
                 if self.debug:
                     self.logger.info(
-                        f"Wrote {rows_written} word frequencies for '{parsed_data['title']}'"
+                        f"Wrote {rows_written} word frequencies for "
+                        f"'{parsed_data['title']}'"
                     )
                 self.existing_keys.add(key)
 
@@ -164,17 +188,22 @@ class DailyCSVWriter:
                     os.remove(backup_filename)
 
             except PermissionError:
-                self.logger.error(f"Permission denied writing to {self.filename}")
+                self.logger.error(
+                    f"Permission denied writing to {self.filename}"
+                )
             except OSError as e:
                 self.logger.error(f"File system error writing CSV: {e}")
                 if os.path.exists(backup_filename):
                     import shutil
 
                     shutil.move(backup_filename, self.filename)
-                    self.logger.info("Restored backup file")
+                    self.logger.info(
+                        "Restored backup file"
+                    )
             except Exception as e:
                 self.logger.error(
-                    f"Unexpected error writing '{parsed_data['title']}' to CSV: {e}"
+                    f"Error writing '{parsed_data['title']}' to CSV: "
+                    f"{e}"
                 )
                 if os.path.exists(backup_filename):
                     import shutil
