@@ -129,6 +129,20 @@ def main():
         (total_processed / total_attempted * 100) if total_attempted > 0 else 0
     )
 
+    # Summary log for total articles processed
+    if not OFFLINE:
+        logger.info(
+            f"LIVE RUN SUMMARY: {total_processed}/{total_attempted} articles parsed successfully ({round(success_rate, 1)}%)",
+            extra_data={
+                "total_articles_successfully_parsed": total_processed,
+                "total_articles_attempted": total_attempted,
+                "success_rate_percent": round(success_rate, 1),
+                "sources_processed": len(enabled_sources),
+                "sources_failed": len(failed_sources),
+                "mode": "LIVE",
+            },
+        )
+
     logger.info(
         "Processing session completed",
         extra_data={
