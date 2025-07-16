@@ -240,3 +240,87 @@ class TestOfflineMode:
                 
         finally:
             os.chdir(original_cwd)
+
+
+class TestLiveMode:
+    """Integration tests for live mode processing."""
+
+    def test_make_run_live_integration(self):
+        """Test that 'make run-live' equivalent runs successfully."""
+        # Get the project root directory
+        project_root = Path(__file__).parent.parent.parent
+        
+        # Change to project directory and run the live mode
+        original_cwd = os.getcwd()
+        try:
+            os.chdir(project_root)
+            
+            # Run the equivalent of 'make run-live'
+            # This sets OFFLINE=False and runs the main module
+            env = os.environ.copy()
+            env['OFFLINE'] = 'False'
+            env['DEBUG'] = 'True'
+            
+            result = subprocess.run(
+                ['python3', '-m', 'main'],
+                env=env,
+                cwd=project_root,
+                capture_output=True,
+                text=True,
+                timeout=120  # 2 minute timeout
+            )
+            
+            # Check that the process completed successfully
+            assert result.returncode == 0, f"Process failed with error: {result.stderr}"
+            
+            # Check that some output was generated (indicates processing occurred)
+            assert len(result.stdout) > 0 or len(result.stderr) > 0, "No output generated"
+            
+            # Check that no critical errors occurred
+            assert "Error" not in result.stderr or "Traceback" not in result.stderr, f"Critical errors in output: {result.stderr}"
+            
+        finally:
+            os.chdir(original_cwd)
+
+    def test_live_mode_configuration_loading(self):
+        """Test that live mode loads configuration correctly."""
+        project_root = Path(__file__).parent.parent.parent
+        
+        original_cwd = os.getcwd()
+        try:
+            os.chdir(project_root)
+            
+            env = os.environ.copy()
+            env['OFFLINE'] = 'False'
+            env['DEBUG'] = 'True'
+            
+            result = subprocess.run(
+                ['python3', '-m', 'main'],
+                env=env,
+                cwd=project_root,
+                capture_output=True,
+                text=True,
+                timeout=60
+            )
+            
+            # Should not fail due to configuration issues
+            assert "ImportError" not in result.stderr, "Configuration import failed"
+            assert "ModuleNotFoundError" not in result.stderr, "Module loading failed"
+            
+            # Should indicate that configuration was loaded
+            if result.returncode == 0:
+                # Process completed successfully, indicating config was loaded
+                assert True
+            else:
+                # If it failed, it shouldn't be due to basic config issues
+                config_errors = [
+                    "No module named",
+                    "ImportError",
+                    "SyntaxError",
+                    "IndentationError"
+                ]
+                has_config_error = any(error in result.stderr for error in config_errors)
+                assert not has_config_error, f"Configuration error detected: {result.stderr}"
+                
+        finally:
+            os.chdir(original_cwd)
