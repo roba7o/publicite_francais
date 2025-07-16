@@ -26,7 +26,7 @@ import os
 from typing import Union, Dict, Optional
 
 from config.settings import DEBUG, OFFLINE
-from utils.structured_logger import LogConfig, configure_component_logging
+from utils.structured_logger import get_structured_logger
 
 
 def setup_logging(
@@ -46,14 +46,6 @@ def setup_logging(
         enable_file_logging: Whether to write logs to files
         console_format: Console output format ("human" or "structured")
         log_directory: Directory for log files (defaults to "logs")
-        
-    Features:
-        - Structured JSON logging for machine parsing
-        - Human-readable console output for development
-        - Rotating log files with size limits
-        - Performance tracking capabilities
-        - Context-aware logging
-        - Component-specific log levels
     """
     # Determine default log level based on configuration
     if level is None:
@@ -61,23 +53,11 @@ def setup_logging(
     elif isinstance(level, str):
         level = getattr(logging, level.upper())
     
-    # Determine default log directory (relative to project root)
-    if log_directory is None:
-        import os
-        # Get the project root directory (3 levels up from this file: utils -> article_scrapers -> src -> project_root)
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        project_root = os.path.abspath(os.path.join(current_dir, "..", "..", ".."))
-        
-        # Always use the logs directory inside src/article_scrapers
-        log_directory = os.path.join(project_root, "src", "logs")
-    
-    # Use the structured logging system
-    LogConfig.setup_logging(
-        log_level=level,
-        enable_file_logging=enable_file_logging,
-        log_directory=log_directory,
-        enable_structured_logging=use_structured,
-        console_format=console_format
+    # Setup basic logging
+    logging.basicConfig(
+        level=level,
+        format='%(asctime)s | %(levelname)s | %(name)s | %(message)s',
+        handlers=[logging.StreamHandler()]
     )
     
     # Setup component-specific log levels for better debugging
@@ -108,7 +88,10 @@ def _setup_component_log_levels() -> None:
         "urllib3.connectionpool": logging.WARNING,
     }
     
-    configure_component_logging(component_levels)
+    for component, level in component_levels.items():
+        if isinstance(level, str):
+            level = getattr(logging, level.upper())
+        logging.getLogger(component).setLevel(level)
 
 
 def configure_debug_mode(enabled: bool = True) -> None:
@@ -149,6 +132,9 @@ def configure_debug_mode(enabled: bool = True) -> None:
         }
         debug_components = normal_components
     
-    configure_component_logging(debug_components)
+    for component, level in debug_components.items():
+        if isinstance(level, str):
+            level = getattr(logging, level.upper())
+        logging.getLogger(component).setLevel(level)
 
 

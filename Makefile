@@ -1,7 +1,7 @@
 # ========= Makefile for article_scrapers project =========
 
 # Python interpreter (uses virtualenv by default)
-PYTHON := python
+PYTHON := python3
 SRC := src
 MAIN_MODULE := main
 SETTINGS_FILE := $(SRC)/config/settings.py

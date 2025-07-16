@@ -33,7 +33,7 @@ class TestOfflineMode:
             env['DEBUG'] = 'True'
             
             result = subprocess.run(
-                ['python', '-m', 'main'],
+                ['python3', '-m', 'main'],
                 env=env,
                 cwd=project_root,
                 capture_output=True,
@@ -71,7 +71,7 @@ class TestOfflineMode:
                 
                 # Run offline processing
                 result = subprocess.run(
-                    ['python', '-m', 'main'],
+                    ['python3', '-m', 'main'],
                     env=env,
                     cwd=project_root,
                     capture_output=True,
@@ -111,7 +111,7 @@ class TestOfflineMode:
             env['DEBUG'] = 'True'
             
             result = subprocess.run(
-                ['python', '-m', 'main'],
+                ['python3', '-m', 'main'],
                 env=env,
                 cwd=project_root,
                 capture_output=True,
@@ -144,7 +144,7 @@ class TestOfflineMode:
             env['OUTPUT_DIR'] = '/invalid/path/that/does/not/exist'
             
             result = subprocess.run(
-                ['python', '-m', 'main'],
+                ['python3', '-m', 'main'],
                 env=env,
                 cwd=project_root,
                 capture_output=True,
@@ -173,7 +173,7 @@ class TestOfflineMode:
             env['DEBUG'] = 'True'
             
             result = subprocess.run(
-                ['python', '-m', 'main'],
+                ['python3', '-m', 'main'],
                 env=env,
                 cwd=project_root,
                 capture_output=True,
@@ -220,7 +220,7 @@ class TestOfflineMode:
             start_time = time.time()
             
             result = subprocess.run(
-                ['python', '-m', 'main'],
+                ['python3', '-m', 'main'],
                 env=env,
                 cwd=project_root,
                 capture_output=True,
