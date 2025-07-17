@@ -82,7 +82,7 @@ if __name__ == "__main__":
         ],
     }
 
-    base_dir = "./src/article_scrapers/test_data/raw_url_soup"
+    base_dir = "./src/test_data/raw_url_soup"
 
     headers = {
         "User-Agent": (
