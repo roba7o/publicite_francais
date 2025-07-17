@@ -44,7 +44,7 @@ class LadepecheFrURLScraper:
             # Get top 8 articles
             for link in news_links[:8]:
                 href = link.get("href")
-                if href:
+                if href and isinstance(href, str):
                     # Build full URL
                     if href.startswith("http://") or href.startswith("https://"):
                         full_url = href

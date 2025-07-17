@@ -79,7 +79,7 @@ class DataValidator:
     @staticmethod
     def validate_article_data(data: Dict[str, Any]) -> Dict[str, Any]:
         if not isinstance(data, dict):
-            return {}
+            return {}  # type: ignore[unreachable]
 
         validated = {}
 
@@ -95,9 +95,8 @@ class DataValidator:
         validated["full_text"] = full_text.strip()
 
         # Optional fields with defaults
-        validated["article_date"] = DataValidator.validate_date(
-            data.get("article_date", "")
-        )
+        article_date = DataValidator.validate_date(data.get("article_date", ""))
+        validated["article_date"] = article_date or ""
         validated["date_scraped"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         # Clean and limit other fields

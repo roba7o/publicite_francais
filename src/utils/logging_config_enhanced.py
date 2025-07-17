@@ -49,7 +49,7 @@ def setup_logging(
     """
     # Determine default log level based on configuration
     if level is None:
-        level = logging.DEBUG if DEBUG else logging.INFO
+        level = logging.DEBUG if DEBUG else logging.INFO  # type: ignore[unreachable]
     elif isinstance(level, str):
         level = getattr(logging, level.upper())
 

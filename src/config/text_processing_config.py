@@ -1,3 +1,5 @@
+from typing import Set
+
 SITE_CONFIGS = {
     "slate.fr": {
         "additional_stopwords": {
@@ -81,9 +83,11 @@ def get_all_additional_stopwords() -> set:
     Useful for getting a comprehensive list of domain-specific
     terms that should be filtered across all sources.
     """
-    all_stopwords = set()
+    all_stopwords: Set[str] = set()
     for config in SITE_CONFIGS.values():
-        all_stopwords.update(config.get("additional_stopwords", set()))
+        additional_stopwords = config.get("additional_stopwords", set())
+        if isinstance(additional_stopwords, set):
+            all_stopwords.update(additional_stopwords)
     return all_stopwords
 
 
@@ -98,7 +102,8 @@ def is_junk_filtering_enabled(domain: str) -> bool:
         True if junk filtering is enabled, False otherwise
     """
     config = get_site_config(domain)
-    return config.get("enable_junk_filtering", True)
+    result = config.get("enable_junk_filtering", True)
+    return bool(result)
 
 
 # Export for backward compatibility

@@ -125,14 +125,14 @@ class BaseParser(ABC):
         self.text_processor = FrenchTextProcessor()
         self.min_word_frequency = self.config["min_word_frequency"]
 
-        if self.config.get("additional_stopwords"):
-            self.text_processor.expand_stopwords(
-                set(self.config["additional_stopwords"])
-            )
+        additional_stopwords = self.config.get("additional_stopwords")
+        if additional_stopwords and isinstance(additional_stopwords, (list, set)):
+            self.text_processor.expand_stopwords(set(additional_stopwords))
 
         min_length = self.config.get("min_word_length", 3)
         max_length = self.config.get("max_word_length", 50)
-        self.text_processor.set_word_length_limits(min_length, max_length)
+        if isinstance(min_length, int) and isinstance(max_length, int):
+            self.text_processor.set_word_length_limits(min_length, max_length)
 
     def get_soup_from_url(
         self, url: str, max_retries: int = 3
@@ -317,7 +317,7 @@ class BaseParser(ABC):
             )
             return []
 
-        soup_sources = []
+        soup_sources: List[Tuple[Optional[BeautifulSoup], str]] = []
         try:
             for filename in os.listdir(source_dir):
                 if filename.endswith((".html", ".php")):
@@ -381,7 +381,7 @@ class BaseParser(ABC):
         word_frequencies = self.text_processor.count_word_frequency(text)
 
         # Filter by minimum frequency if configured
-        if self.min_word_frequency > 1:
+        if isinstance(self.min_word_frequency, int) and self.min_word_frequency > 1:
             word_frequencies = self.text_processor.filter_by_frequency(
                 word_frequencies, self.min_word_frequency
             )

@@ -57,9 +57,12 @@ class ArticleProcessor:
             ...     'scrapers.slate_fr_scraper.SlateFrURLScraper')
             >>> scraper = cls(debug=True)
         """
+        from typing import Type, Any
+
         module_path, class_name = class_path.rsplit(".", 1)
         module = importlib.import_module(module_path)
-        return getattr(module, class_name)
+        cls: Type[Any] = getattr(module, class_name)
+        return cls
 
     @classmethod
     def process_source(cls, config: ScraperConfig) -> Tuple[int, int]:
@@ -305,7 +308,10 @@ class ArticleProcessor:
         parser: Any, source_name: str
     ) -> List[Tuple[Optional[BeautifulSoup], str]]:
         """Load test files from the test_data directory."""
-        return parser.get_test_sources_from_directory(source_name)
+        result: List[Tuple[Optional[BeautifulSoup], str]] = (
+            parser.get_test_sources_from_directory(source_name)
+        )
+        return result
 
     @staticmethod
     def _process_article_with_recovery(
@@ -325,7 +331,8 @@ class ArticleProcessor:
             return True
 
         try:
-            return process_article()
+            result = process_article()
+            return bool(result)
 
         except Exception as e:
             logger.error(

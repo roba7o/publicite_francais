@@ -66,7 +66,9 @@ class LadepecheFrArticleParser(BaseParser):
                 )
                 return None
 
-            paragraphs = self._extract_paragraphs(article_content_area)
+            paragraphs = self._extract_paragraphs(
+                BeautifulSoup(str(article_content_area), "html.parser")
+            )
             full_text = "\n\n".join(paragraphs) if paragraphs else ""
 
             if not full_text:
@@ -133,12 +135,14 @@ class LadepecheFrArticleParser(BaseParser):
                 continue
 
             # Check the element's own classes
-            if element.has_attr("class"):
-                if any(
-                    skip_class in " ".join(c.lower() for c in element["class"])
-                    for skip_class in skip_classes
-                ):
-                    continue
+            if hasattr(element, "has_attr") and element.has_attr("class"):
+                element_classes = (
+                    element.get("class", []) if hasattr(element, "get") else []
+                )
+                if isinstance(element_classes, list):
+                    class_string = " ".join(c.lower() for c in element_classes)
+                    if any(skip_class in class_string for skip_class in skip_classes):
+                        continue
 
             text = element.get_text(separator=" ", strip=True)
             text = re.sub(r"\s+", " ", text).strip()  # Normalize whitespace
@@ -174,8 +178,10 @@ class LadepecheFrArticleParser(BaseParser):
                 tag = soup.find(
                     lambda tag: tag.name == "meta" and tag.get("property") == "og:title"
                 )
-                if tag and tag.has_attr("content"):
-                    return tag["content"].strip()
+                if tag and hasattr(tag, "has_attr") and tag.has_attr("content"):
+                    content = tag.get("content") if hasattr(tag, "get") else None
+                    if isinstance(content, str):
+                        return content.strip()
             else:
                 tag = soup.select_one(selector)
                 if tag:
@@ -218,12 +224,22 @@ class LadepecheFrArticleParser(BaseParser):
         for selector in date_selectors:
             element = soup.select_one(selector)
             if element:
-                if element.has_attr("datetime"):
-                    date_str = element["datetime"].strip()
-                elif element.has_attr("data-time"):
-                    date_str = element["data-time"].strip()
-                elif element.name == "meta" and element.has_attr("content"):
-                    date_str = element["content"].strip()
+                if hasattr(element, "has_attr") and element.has_attr("datetime"):
+                    datetime_attr = element.get("datetime")
+                    if isinstance(datetime_attr, str):
+                        date_str = datetime_attr.strip()
+                elif hasattr(element, "has_attr") and element.has_attr("data-time"):
+                    data_time_attr = element.get("data-time")
+                    if isinstance(data_time_attr, str):
+                        date_str = data_time_attr.strip()
+                elif (
+                    element.name == "meta"
+                    and hasattr(element, "has_attr")
+                    and element.has_attr("content")
+                ):
+                    content_attr = element.get("content")
+                    if isinstance(content_attr, str):
+                        date_str = content_attr.strip()
                 else:
                     date_str = element.get_text(strip=True)
 
