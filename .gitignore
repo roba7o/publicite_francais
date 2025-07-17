@@ -1,11 +1,25 @@
-# Generated output and logs (new structure)
-src/article_scrapers/output/*.csv
-src/article_scrapers/logs/*.log
+# Output directory
+output/
 
 # Python
 __pycache__/
 *.py[cod]
 *.egg-info/
+
+# Testing and Coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Type checking
+.mypy_cache/
 
 # Venv
 venv/
@@ -13,9 +27,7 @@ venv/
 env/
 .env/
 
-# Legacy directories (now removed)
-output/
-test_data/output/
+# Logs
 logs/
 
 # Environment
@@ -24,3 +36,9 @@ logs/
 
 # OS
 .DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

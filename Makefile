@@ -61,9 +61,14 @@ check-format:  ## Check formatting without modifying files
 mypy:  ## Run static type checks
 	mypy $(SRC)
 
-clean:  ## Remove __pycache__ and .pyc files
-	find . -type d -name "__pycache__" -exec rm -r {} + ;
+clean:  ## Remove __pycache__, .pyc files, and test artifacts
+	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 	find . -name "*.pyc" -delete
+	find . -name "*.pyo" -delete
+	find . -name ".coverage*" -delete
+	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name "htmlcov" -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name ".mypy_cache" -exec rm -rf {} + 2>/dev/null || true
 
 # ========== Docker commands ==========
 
