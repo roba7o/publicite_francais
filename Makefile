@@ -50,7 +50,7 @@ test-offline:  ## Run the offline mode integration test
 	PYTHONPATH=$(SRC) pytest -v tests/integration/test_offline_mode.py::TestOfflineMode::test_make_run_offline_integration
 
 lint:  ## Run flake8 on the src directory
-	flake8 $(SRC)
+	flake8 --max-line-length=88 $(SRC)
 
 format:  ## Auto-format code with black
 	black $(SRC)
