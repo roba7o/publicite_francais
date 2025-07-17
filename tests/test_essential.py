@@ -11,6 +11,7 @@ from unittest.mock import Mock, patch
 
 from core.processor import ArticleProcessor
 from config.website_parser_scrapers_config import ScraperConfig
+from models import ArticleData
 from utils.csv_writer import DailyCSVWriter
 
 
@@ -61,7 +62,12 @@ class TestEssential:
         with tempfile.TemporaryDirectory() as temp_dir:
             writer = DailyCSVWriter(output_dir=temp_dir)
             
-            parsed_data = {'title': 'Test Article', 'article_date': '2025-07-14'}
+            parsed_data = ArticleData(
+                title='Test Article',
+                full_text='Test content for the article',
+                article_date='2025-07-14',
+                date_scraped='2025-07-14'
+            )
             url = 'https://test.com/article'
             word_freqs = {'bonjour': 3, 'monde': 2}
             

@@ -8,6 +8,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 from bs4 import BeautifulSoup
 
+from models import ArticleData
 from utils.csv_writer import DailyCSVWriter
 from utils.french_text_processor import FrenchTextProcessor
 from config.text_processing_config import SITE_CONFIGS
@@ -388,7 +389,7 @@ class BaseParser(ABC):
 
         return word_frequencies
 
-    def to_csv(self, parsed_data: Dict[str, Any], url: str) -> None:
+    def to_csv(self, parsed_data: ArticleData, url: str) -> None:
         """
         Process article data and write word frequencies to CSV.
 
@@ -397,7 +398,7 @@ class BaseParser(ABC):
         each word and handles duplicate detection.
 
         Args:
-            parsed_data: Dictionary containing article metadata and full_text
+            parsed_data: ArticleData containing article metadata and full_text
             url: Source URL or identifier for the article
 
         Note:
@@ -415,11 +416,11 @@ class BaseParser(ABC):
             ... }
             >>> parser.to_csv(parsed, "https://example.com/article")
         """
-        if not parsed_data or not parsed_data.get("full_text"):
+        if not parsed_data or not parsed_data.full_text:
             return
 
         try:
-            full_text = parsed_data["full_text"]
+            full_text = parsed_data.full_text
             word_freqs = self.count_word_frequency(full_text)
 
             if not word_freqs:
@@ -448,7 +449,7 @@ class BaseParser(ABC):
             )
 
     @abstractmethod
-    def parse_article(self, soup: BeautifulSoup) -> Optional[Dict[str, Any]]:
+    def parse_article(self, soup: BeautifulSoup) -> Optional[ArticleData]:
         """
         Abstract method that must be implemented by subclasses.
 
@@ -456,6 +457,6 @@ class BaseParser(ABC):
             soup: BeautifulSoup object of the article page
 
         Returns:
-            Dictionary with article data or None if parsing fails
+            ArticleData with article data or None if parsing fails
         """
         pass

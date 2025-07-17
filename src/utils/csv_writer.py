@@ -20,6 +20,7 @@ import threading
 from datetime import datetime
 from typing import Optional
 
+from models import ArticleData
 from config.settings import DEBUG
 from utils.structured_logger import get_structured_logger
 
@@ -75,7 +76,7 @@ class DailyCSVWriter:
 
     def write_article(
         self,
-        parsed_data: dict,
+        parsed_data: ArticleData,
         url: str,
         word_freqs: dict,
         word_contexts: Optional[dict] = None,
@@ -83,7 +84,7 @@ class DailyCSVWriter:
         if not word_freqs or not isinstance(word_freqs, dict):
             self.logger.warning(
                 f"No valid word frequencies for "
-                f"{parsed_data.get('title', 'Unknown')}"
+                f"{parsed_data.title}"
             )
             return
 
@@ -101,16 +102,16 @@ class DailyCSVWriter:
         if not valid_freqs:
             self.logger.warning(
                 f"No valid word frequencies after validation for "
-                f"{parsed_data.get('title', 'Unknown')}"
+                f"{parsed_data.title}"
             )
             return
 
-        key = f"{parsed_data['title']}:{url}"
+        key = f"{parsed_data.title}:{url}"
 
         if key in self.existing_keys:
             if self.debug:
                 self.logger.warning(
-                    f"Skipping duplicate: '{parsed_data['title']}' from {url}"
+                    f"Skipping duplicate: '{parsed_data.title}' from {url}"
                 )
             return
 
@@ -147,9 +148,9 @@ class DailyCSVWriter:
                                         :500
                                     ],  # Truncate long contexts
                                     "source": str(url)[:500],
-                                    "article_date": parsed_data.get("article_date", ""),
-                                    "scraped_date": parsed_data.get("date_scraped", ""),
-                                    "title": str(parsed_data["title"])[
+                                    "article_date": parsed_data.article_date,
+                                    "scraped_date": parsed_data.date_scraped,
+                                    "title": str(parsed_data.title)[
                                         :200
                                     ],  # Truncate long titles
                                     "frequency": (
@@ -166,7 +167,7 @@ class DailyCSVWriter:
                 if self.debug:
                     self.logger.info(
                         f"Wrote {rows_written} word frequencies for "
-                        f"'{parsed_data['title']}'"
+                        f"'{parsed_data.title}'"
                     )
                 self.existing_keys.add(key)
 
@@ -184,7 +185,7 @@ class DailyCSVWriter:
                     self.logger.info("Restored backup file")
             except Exception as e:
                 self.logger.error(
-                    f"Error writing '{parsed_data['title']}' to CSV: " f"{e}"
+                    f"Error writing '{parsed_data.title}' to CSV: " f"{e}"
                 )
                 if os.path.exists(backup_filename):
                     import shutil

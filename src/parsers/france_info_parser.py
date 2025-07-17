@@ -4,6 +4,7 @@ from typing import Dict, Any, List, Optional
 
 from bs4 import BeautifulSoup, Tag
 
+from models import ArticleData
 from parsers.base_parser import BaseParser
 
 
@@ -11,7 +12,7 @@ class FranceInfoArticleParser(BaseParser):
     def __init__(self) -> None:
         super().__init__(site_domain="franceinfo.fr")
 
-    def parse_article(self, soup: BeautifulSoup) -> Optional[Dict[str, Any]]:
+    def parse_article(self, soup: BeautifulSoup) -> Optional[ArticleData]:
         try:
             content_div = soup.find("div", class_="c-body")
             if not content_div or not isinstance(content_div, Tag):
@@ -23,13 +24,13 @@ class FranceInfoArticleParser(BaseParser):
             if not full_text:
                 return None
 
-            return {
-                "full_text": full_text,
-                "num_paragraphs": len(paragraphs),
-                "title": self._extract_title(soup),
-                "article_date": self._extract_date(soup),
-                "date_scraped": datetime.now().strftime("%Y-%m-%d"),
-            }
+            return ArticleData(
+                full_text=full_text,
+                num_paragraphs=len(paragraphs),
+                title=self._extract_title(soup),
+                article_date=self._extract_date(soup),
+                date_scraped=datetime.now().strftime("%Y-%m-%d"),
+            )
 
         except Exception as e:
             self.logger.error(f"Error parsing FranceInfo article: {e}")

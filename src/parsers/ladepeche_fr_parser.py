@@ -10,11 +10,12 @@ articles.
 
 from datetime import datetime
 import re
-from typing import Dict, Any, List, Optional
+from typing import List, Optional
 
 from bs4 import BeautifulSoup
 
 from parsers.base_parser import BaseParser
+from models import ArticleData
 
 
 class LadepecheFrArticleParser(BaseParser):
@@ -32,7 +33,7 @@ class LadepecheFrArticleParser(BaseParser):
         super().__init__(site_domain="ladepeche.fr")
         self.logger.info("LadepecheFrArticleParser initialized.")
 
-    def parse_article(self, soup: BeautifulSoup) -> Optional[Dict[str, Any]]:
+    def parse_article(self, soup: BeautifulSoup) -> Optional[ArticleData]:
         """
         Parses the BeautifulSoup object to extract main article content and
         metadata.
@@ -41,9 +42,9 @@ class LadepecheFrArticleParser(BaseParser):
             soup (BeautifulSoup): The BeautifulSoup object of the article page.
 
         Returns:
-            Optional[Dict[str, Any]]: A dictionary containing extracted article
-                                      data, or None if the main content cannot
-                                      be found.
+            Optional[ArticleData]: An ArticleData object containing extracted article
+                                   data, or None if the main content cannot
+                                   be found.
         """
         try:
             # Look for the main article content area
@@ -82,14 +83,14 @@ class LadepecheFrArticleParser(BaseParser):
                 word_count = len(full_text.split())
                 self.logger.info(f"Ladepeche.fr text stats: total_words={word_count}")
 
-            return {
-                "full_text": full_text,
-                "num_paragraphs": len(paragraphs),
-                "title": self._extract_title(soup),
-                "article_date": self._extract_date(soup),
-                "date_scraped": datetime.now().strftime("%Y-%m-%d"),
-                "author": self._extract_author(soup),
-            }
+            return ArticleData(
+                full_text=full_text,
+                num_paragraphs=len(paragraphs),
+                title=self._extract_title(soup),
+                article_date=self._extract_date(soup),
+                date_scraped=datetime.now().strftime("%Y-%m-%d"),
+                author=self._extract_author(soup),
+            )
 
         except Exception as e:
             self.logger.error(f"Error parsing Ladepeche.fr article: {e}", exc_info=True)
