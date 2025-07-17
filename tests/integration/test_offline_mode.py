@@ -35,7 +35,7 @@ class TestOfflineMode:
             result = subprocess.run(
                 ['python3', '-m', 'main'],
                 env=env,
-                cwd=project_root,
+                cwd=project_root / 'src',
                 capture_output=True,
                 text=True,
                 timeout=120  # 2 minute timeout
@@ -73,7 +73,7 @@ class TestOfflineMode:
                 result = subprocess.run(
                     ['python3', '-m', 'main'],
                     env=env,
-                    cwd=project_root,
+                    cwd=project_root / 'src',
                     capture_output=True,
                     text=True,
                     timeout=120
@@ -113,7 +113,7 @@ class TestOfflineMode:
             result = subprocess.run(
                 ['python3', '-m', 'main'],
                 env=env,
-                cwd=project_root,
+                cwd=project_root / 'src',
                 capture_output=True,
                 text=True,
                 timeout=120
@@ -146,7 +146,7 @@ class TestOfflineMode:
             result = subprocess.run(
                 ['python3', '-m', 'main'],
                 env=env,
-                cwd=project_root,
+                cwd=project_root / 'src',
                 capture_output=True,
                 text=True,
                 timeout=60
@@ -175,7 +175,7 @@ class TestOfflineMode:
             result = subprocess.run(
                 ['python3', '-m', 'main'],
                 env=env,
-                cwd=project_root,
+                cwd=project_root / 'src',
                 capture_output=True,
                 text=True,
                 timeout=60
@@ -222,7 +222,7 @@ class TestOfflineMode:
             result = subprocess.run(
                 ['python3', '-m', 'main'],
                 env=env,
-                cwd=project_root,
+                cwd=project_root / 'src',
                 capture_output=True,
                 text=True,
                 timeout=180  # 3 minute timeout for performance test
@@ -264,7 +264,7 @@ class TestLiveMode:
             result = subprocess.run(
                 ['python3', '-m', 'main'],
                 env=env,
-                cwd=project_root,
+                cwd=project_root / 'src',
                 capture_output=True,
                 text=True,
                 timeout=120  # 2 minute timeout
@@ -297,7 +297,7 @@ class TestLiveMode:
             result = subprocess.run(
                 ['python3', '-m', 'main'],
                 env=env,
-                cwd=project_root,
+                cwd=project_root / 'src',
                 capture_output=True,
                 text=True,
                 timeout=60

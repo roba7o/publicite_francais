@@ -1,7 +1,7 @@
-import os
 import time
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, List, Tuple
+from pathlib import Path
+from typing import Dict, Optional, List, Tuple
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -277,9 +277,9 @@ class BaseParser(ABC):
         Returns:
             List of (soup, url) tuples with original URLs
         """
-        current_file_dir = os.path.dirname(os.path.abspath(__file__))
-        project_root_dir = os.path.abspath(os.path.join(current_file_dir, ".."))
-        test_data_dir = os.path.join(project_root_dir, "test_data", "raw_url_soup")
+        current_file_dir = Path(__file__).parent
+        project_root_dir = current_file_dir.parent
+        test_data_dir = project_root_dir / "test_data" / "raw_url_soup"
 
         # Map source names to directory names
         source_to_dir = {
@@ -291,9 +291,9 @@ class BaseParser(ABC):
         }
 
         dir_name = source_to_dir.get(source_name, source_name.lower().replace(" ", "_"))
-        source_dir = os.path.join(test_data_dir, dir_name)
+        source_dir = test_data_dir / dir_name
 
-        if not os.path.exists(source_dir):
+        if not source_dir.exists():
             self.logger.warning(
                 "Test directory not found",
                 extra_data={
@@ -320,9 +320,9 @@ class BaseParser(ABC):
 
         soup_sources: List[Tuple[Optional[BeautifulSoup], str]] = []
         try:
-            for filename in os.listdir(source_dir):
-                if filename.endswith((".html", ".php")):
-                    file_path = os.path.join(source_dir, filename)
+            for file_path in source_dir.iterdir():
+                if file_path.suffix in (".html", ".php"):
+                    filename = file_path.name
 
                     # Get original URL from mapping
                     original_url = URL_MAPPING.get(filename, f"test://{filename}")

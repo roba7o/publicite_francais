@@ -8,7 +8,7 @@ to specifically extract and process content from Slate.fr articles.
 """
 
 from datetime import datetime
-from typing import Dict, Any, List, Optional
+from typing import List, Optional
 
 from bs4 import BeautifulSoup, Tag
 

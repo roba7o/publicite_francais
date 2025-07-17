@@ -15,9 +15,9 @@ Example usage:
 """
 
 import csv
-import os
 import threading
 from datetime import datetime
+from pathlib import Path
 from typing import Optional
 
 from models import ArticleData
@@ -46,24 +46,24 @@ class DailyCSVWriter:
 
         # Set default output directory to src/output
         if output_dir is None:
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            output_dir = os.path.join(current_dir, "..", "output")
+            current_dir = Path(__file__).parent
+            output_dir = current_dir / ".." / "output"
 
-        self.output_dir = output_dir
-        os.makedirs(self.output_dir, exist_ok=True)
+        self.output_dir = Path(output_dir)
+        self.output_dir.mkdir(parents=True, exist_ok=True)
         self.filename = self._get_filename()
         self.existing_keys = self._load_existing_keys()
         self.debug = DEBUG if debug is None else debug
 
-    def _get_filename(self) -> str:
+    def _get_filename(self) -> Path:
         """Generate filename based on current date."""
         today = datetime.today().strftime("%Y-%m-%d")
-        return os.path.join(self.output_dir, f"{today}.csv")
+        return self.output_dir / f"{today}.csv"
 
     def _load_existing_keys(self) -> set:
         """Load existing article keys to prevent duplicates."""
         existing = set()
-        if os.path.isfile(self.filename):
+        if self.filename.is_file():
             try:
                 with open(self.filename, mode="r", newline="", encoding="utf-8") as f:
                     reader = csv.DictReader(f)
@@ -83,8 +83,7 @@ class DailyCSVWriter:
     ) -> None:
         if not word_freqs or not isinstance(word_freqs, dict):
             self.logger.warning(
-                f"No valid word frequencies for "
-                f"{parsed_data.title}"
+                f"No valid word frequencies for " f"{parsed_data.title}"
             )
             return
 
@@ -115,11 +114,11 @@ class DailyCSVWriter:
                 )
             return
 
-        backup_filename = f"{self.filename}.backup"
+        backup_filename = self.filename.with_suffix(".csv.backup")
 
         # Use class-level lock to prevent concurrent file access issues
         with self._write_lock:
-            file_exists = os.path.isfile(self.filename)
+            file_exists = self.filename.is_file()
 
             try:
                 if file_exists:
@@ -171,26 +170,26 @@ class DailyCSVWriter:
                     )
                 self.existing_keys.add(key)
 
-                if os.path.exists(backup_filename):
-                    os.remove(backup_filename)
+                if backup_filename.exists():
+                    backup_filename.unlink()
 
             except PermissionError:
                 self.logger.error(f"Permission denied writing to {self.filename}")
             except OSError as e:
                 self.logger.error(f"File system error writing CSV: {e}")
-                if os.path.exists(backup_filename):
+                if backup_filename.exists():
                     import shutil
 
-                    shutil.move(backup_filename, self.filename)
+                    shutil.move(str(backup_filename), str(self.filename))
                     self.logger.info("Restored backup file")
             except Exception as e:
                 self.logger.error(
                     f"Error writing '{parsed_data.title}' to CSV: " f"{e}"
                 )
-                if os.path.exists(backup_filename):
+                if backup_filename.exists():
                     import shutil
 
-                    shutil.move(backup_filename, self.filename)
+                    shutil.move(str(backup_filename), str(self.filename))
 
 
 # Alias for backward compatibility with tests

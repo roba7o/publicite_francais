@@ -1,12 +1,13 @@
-import os
 import requests
+from pathlib import Path
 
 
 def download_html(url, save_path, headers=None, overwrite=False):
     """
     Downloads an HTML page and saves it to a local file.
     """
-    if not overwrite and os.path.exists(save_path):
+    save_path = Path(save_path)
+    if not overwrite and save_path.exists():
         print(f"File already exists at: {save_path}")
         return False
 
@@ -92,13 +93,13 @@ if __name__ == "__main__":
     }
 
     for site_key, urls in test_urls.items():
-        site_dir = os.path.join(base_dir, site_key)
-        os.makedirs(site_dir, exist_ok=True)
+        site_dir = Path(base_dir) / site_key
+        site_dir.mkdir(parents=True, exist_ok=True)
         for url in urls:
             filename = url.split("/")[-1]
             if not filename.endswith(".html") and not filename.endswith(".php"):
                 filename += ".html"
-            save_path = os.path.join(site_dir, filename)
+            save_path = site_dir / filename
             success = download_html(url, save_path, headers=headers, overwrite=True)
             if success:
                 print(f"Downloaded: {url} -> {save_path}")

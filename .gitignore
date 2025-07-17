@@ -39,6 +39,7 @@ logs/
 
 # IDE
 .vscode/
+!.vscode/settings.json
 .idea/
 *.swp
 *.swo

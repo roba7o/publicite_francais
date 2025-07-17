@@ -1,6 +1,6 @@
 import re
 from datetime import datetime
-from typing import Optional, Dict, Any
+from typing import Optional
 from urllib.parse import urlparse
 
 from models import ArticleData
@@ -82,10 +82,10 @@ class DataValidator:
     def validate_article_data(data: ArticleData) -> Optional[ArticleData]:
         """
         Validate and normalize ArticleData.
-        
+
         Args:
             data: ArticleData instance to validate
-            
+
         Returns:
             Validated ArticleData instance or None if invalid
         """
@@ -118,5 +118,5 @@ class DataValidator:
             num_paragraphs=data.num_paragraphs,
             author=author,
             category=category,
-            summary=summary
+            summary=summary,
         )

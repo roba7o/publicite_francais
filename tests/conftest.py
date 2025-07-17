@@ -29,7 +29,7 @@ from core.processor import ArticleProcessor
 @pytest.fixture(scope="session")
 def test_data_dir():
     """Path to the test data directory."""
-    return os.path.join(os.path.dirname(__file__), '..', 'src', 'article_scrapers', 'test_data')
+    return os.path.join(os.path.dirname(__file__), '..', 'src', 'test_data')
 
 
 @pytest.fixture(scope="session") 

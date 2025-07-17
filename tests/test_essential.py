@@ -7,6 +7,7 @@ These tests verify core functionality is working correctly after development.
 import pytest
 import tempfile
 import os
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 from core.processor import ArticleProcessor
@@ -46,7 +47,7 @@ class TestEssential:
         """Test CSV writer can be initialized."""
         with tempfile.TemporaryDirectory() as temp_dir:
             writer = DailyCSVWriter(output_dir=temp_dir, debug=True)
-            assert writer.output_dir == temp_dir
+            assert str(writer.output_dir) == temp_dir
             assert writer.debug is True
 
     def test_csv_writer_filename_generation(self):
@@ -54,8 +55,8 @@ class TestEssential:
         with tempfile.TemporaryDirectory() as temp_dir:
             writer = DailyCSVWriter(output_dir=temp_dir)
             filename = writer._get_filename()
-            assert temp_dir in filename
-            assert filename.endswith('.csv')
+            assert temp_dir in str(filename)
+            assert str(filename).endswith('.csv')
 
     def test_csv_writer_basic_functionality(self):
         """Test basic CSV writing functionality."""
