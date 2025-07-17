@@ -1,8 +1,14 @@
 import requests
 from pathlib import Path
+from typing import Optional, Dict, Union
 
 
-def download_html(url, save_path, headers=None, overwrite=False):
+def download_html(
+    url: str,
+    save_path: Union[str, Path],
+    headers: Optional[Dict[str, str]] = None,
+    overwrite: bool = False,
+) -> bool:
     """
     Downloads an HTML page and saves it to a local file.
     """

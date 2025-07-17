@@ -52,7 +52,7 @@ def get_structured_logger(name: str) -> StructuredLogger:
 
 
 # Initialize basic logging
-def _initialize_logging():
+def _initialize_logging() -> None:
     """Initialize basic logging configuration."""
     root_logger = logging.getLogger()
     if not root_logger.handlers:

@@ -1,9 +1,10 @@
-from config.website_parser_scrapers_config import SCRAPER_CONFIGS
+from config.website_parser_scrapers_config import SCRAPER_CONFIGS, ScraperConfig
 from config.settings import OFFLINE, DEBUG
 from core.processor import ArticleProcessor
 from utils.logging_config_enhanced import setup_logging, configure_debug_mode
 from utils.structured_logger import get_structured_logger
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Tuple, Optional
 import time
 
 setup_logging()
@@ -15,7 +16,9 @@ if DEBUG:
     configure_debug_mode(enabled=True)
 
 
-def process_source_wrapper(config):
+def process_source_wrapper(
+    config: ScraperConfig,
+) -> Tuple[str, int, int, Optional[Exception]]:
     """Wrapper function for concurrent processing"""
     try:
         processed, attempted = ArticleProcessor.process_source(config)
@@ -26,10 +29,10 @@ def process_source_wrapper(config):
             extra_data={"source": config.name, "error": str(e)},
             exc_info=True,
         )
-        return config.name, 0, 0, str(e)
+        return config.name, 0, 0, e
 
 
-def main():
+def main() -> None:
     mode = "OFFLINE" if OFFLINE else "LIVE"
     start_time = time.time()
 

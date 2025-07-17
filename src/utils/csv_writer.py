@@ -18,7 +18,7 @@ import csv
 import threading
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 from models import ArticleData
 from config.settings import DEBUG
@@ -41,7 +41,11 @@ class DailyCSVWriter:
     # Class-level lock for thread safety during concurrent writes
     _write_lock = threading.Lock()
 
-    def __init__(self, output_dir=None, debug=None):
+    def __init__(
+        self,
+        output_dir: Optional[Union[str, Path]] = None,
+        debug: Optional[bool] = None,
+    ) -> None:
         self.logger = get_structured_logger(self.__class__.__name__)
 
         # Set default output directory to src/output
