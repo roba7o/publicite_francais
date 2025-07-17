@@ -50,10 +50,7 @@ def main():
             "max_workers": max_workers,
         },
     )
-    enabled_sources = [
-        config.name for config in SCRAPER_CONFIGS
-        if config.enabled
-    ]
+    enabled_sources = [config.name for config in SCRAPER_CONFIGS if config.enabled]
     logger.info(
         "Processing configuration",
         extra_data={
@@ -87,10 +84,7 @@ def main():
                     failed_sources.append(source_name)
                 elif attempted > 0 and processed / attempted < 0.3:
                     failed_sources.append(source_name)
-                    success_rate = (
-                        (processed / attempted * 100)
-                        if attempted > 0 else 0
-                    )
+                    success_rate = (processed / attempted * 100) if attempted > 0 else 0
                     logger.warning(
                         "Low success rate detected",
                         extra_data={
@@ -102,10 +96,7 @@ def main():
                         },
                     )
                 else:
-                    success_rate = (
-                        (processed / attempted * 100)
-                        if attempted > 0 else 0
-                    )
+                    success_rate = (processed / attempted * 100) if attempted > 0 else 0
                     logger.info(
                         "Source processing completed successfully",
                         extra_data={
@@ -132,7 +123,8 @@ def main():
     # Summary log for total articles processed
     if not OFFLINE:
         logger.info(
-            f"LIVE RUN SUMMARY: {total_processed}/{total_attempted} articles parsed successfully ({round(success_rate, 1)}%)",
+            f"LIVE RUN SUMMARY: {total_processed}/{total_attempted} articles "
+            f"parsed successfully ({round(success_rate, 1)}%)",
             extra_data={
                 "total_articles_successfully_parsed": total_processed,
                 "total_articles_attempted": total_attempted,
@@ -169,11 +161,7 @@ def main():
 
     logger.info(
         "Results saved",
-        extra_data={
-            "output_directory": "src/output",
-            "mode": mode,
-            "offline": OFFLINE
-        },
+        extra_data={"output_directory": "src/output", "mode": mode, "offline": OFFLINE},
     )
 
 

@@ -13,9 +13,7 @@ SITE_CONFIGS = {
         "max_word_length": 30,
     },
     "franceinfo.fr": {
-        "additional_stopwords": {
-            "franceinfo", "article", "abonnés", "premium"
-        },
+        "additional_stopwords": {"franceinfo", "article", "abonnés", "premium"},
         "min_word_frequency": 1,
         "min_word_length": 3,
         "max_word_length": 25,

@@ -98,9 +98,7 @@ class DataValidator:
         validated["article_date"] = DataValidator.validate_date(
             data.get("article_date", "")
         )
-        validated["date_scraped"] = datetime.now().strftime(
-            "%Y-%m-%d %H:%M:%S"
-        )
+        validated["date_scraped"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         # Clean and limit other fields
         for field in ["author", "category", "summary"]:

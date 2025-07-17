@@ -78,9 +78,7 @@ class LadepecheFrArticleParser(BaseParser):
             # Log basic text info for debugging
             if self.debug:
                 word_count = len(full_text.split())
-                self.logger.info(
-                    f"Ladepeche.fr text stats: total_words={word_count}"
-                )
+                self.logger.info(f"Ladepeche.fr text stats: total_words={word_count}")
 
             return {
                 "full_text": full_text,
@@ -92,9 +90,7 @@ class LadepecheFrArticleParser(BaseParser):
             }
 
         except Exception as e:
-            self.logger.error(
-                f"Error parsing Ladepeche.fr article: {e}", exc_info=True
-            )
+            self.logger.error(f"Error parsing Ladepeche.fr article: {e}", exc_info=True)
             return None
 
     def _extract_paragraphs(self, content_area: BeautifulSoup) -> List[str]:
@@ -176,8 +172,7 @@ class LadepecheFrArticleParser(BaseParser):
         for selector in title_selectors:
             if selector.startswith("meta"):
                 tag = soup.find(
-                    lambda tag: tag.name == "meta" and
-                    tag.get("property") == "og:title"
+                    lambda tag: tag.name == "meta" and tag.get("property") == "og:title"
                 )
                 if tag and tag.has_attr("content"):
                     return tag["content"].strip()
@@ -212,7 +207,7 @@ class LadepecheFrArticleParser(BaseParser):
             ".date-publication",
             ".published-date",
             "[data-time]",  # Added for robustness, covers the
-                            # "20250712190208" case
+            # "20250712190208" case
             'meta[property="article:published_time"]',
             'meta[itemprop="datePublished"]',
         ]
@@ -239,27 +234,20 @@ class LadepecheFrArticleParser(BaseParser):
                         try:
                             # Parse as datetime object first to ensure
                             # validity, then format
-                            dt_obj = datetime.strptime(
-                                date_str, "%Y%m%d%H%M%S"
-                            )
+                            dt_obj = datetime.strptime(date_str, "%Y%m%d%H%M%S")
                             return dt_obj.strftime("%Y-%m-%d")
                         except ValueError:
                             self.logger.debug(
-                                f"Failed to parse '{date_str}' as "
-                                "YYYYMMDDHHMMSS."
+                                f"Failed to parse '{date_str}' as " "YYYYMMDDHHMMSS."
                             )
                             # Continue to try other formats if this one fails
 
                     # ISO 8601 format (e.g., 2023-10-26T10:00:00+02:00)
                     try:
-                        dt_obj = datetime.fromisoformat(
-                            date_str.replace("Z", "+00:00")
-                        )
+                        dt_obj = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
                         return dt_obj.strftime("%Y-%m-%d")
                     except ValueError:
-                        self.logger.debug(
-                            f"Failed to parse '{date_str}' as ISO 8601."
-                        )
+                        self.logger.debug(f"Failed to parse '{date_str}' as ISO 8601.")
                         pass  # Try other parsing methods
 
                     # Simple date format (e.g., "12/07/2025" or

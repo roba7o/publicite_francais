@@ -15,15 +15,11 @@ class StructuredLogger:
         self.name = name
         self.logger = logging.getLogger(name)
 
-    def debug(
-        self, message: str, extra_data: Optional[Dict] = None, **kwargs
-    ) -> None:
+    def debug(self, message: str, extra_data: Optional[Dict] = None, **kwargs) -> None:
         """Log debug message with optional structured data."""
         self.logger.debug(message, **kwargs)
 
-    def info(
-        self, message: str, extra_data: Optional[Dict] = None, **kwargs
-    ) -> None:
+    def info(self, message: str, extra_data: Optional[Dict] = None, **kwargs) -> None:
         """Log info message with optional structured data."""
         self.logger.info(message, **kwargs)
 
@@ -33,9 +29,7 @@ class StructuredLogger:
         """Log warning message with optional structured data."""
         self.logger.warning(message, **kwargs)
 
-    def error(
-        self, message: str, extra_data: Optional[Dict] = None, **kwargs
-    ) -> None:
+    def error(self, message: str, extra_data: Optional[Dict] = None, **kwargs) -> None:
         """Log error message with optional structured data."""
         self.logger.error(message, **kwargs)
 

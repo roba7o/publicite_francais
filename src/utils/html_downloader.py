@@ -96,13 +96,10 @@ if __name__ == "__main__":
         os.makedirs(site_dir, exist_ok=True)
         for url in urls:
             filename = url.split("/")[-1]
-            if (not filename.endswith(".html") and
-                    not filename.endswith(".php")):
+            if not filename.endswith(".html") and not filename.endswith(".php"):
                 filename += ".html"
             save_path = os.path.join(site_dir, filename)
-            success = download_html(
-                url, save_path, headers=headers, overwrite=True
-            )
+            success = download_html(url, save_path, headers=headers, overwrite=True)
             if success:
                 print(f"Downloaded: {url} -> {save_path}")
             else:

@@ -138,9 +138,7 @@ class ArticleProcessor:
         sources = (
             cls._get_test_sources(parser, config.name)
             if OFFLINE
-            else cls._get_live_sources_with_recovery(
-                scraper, parser, config.name
-            )
+            else cls._get_live_sources_with_recovery(scraper, parser, config.name)
         )
 
         if not sources:
@@ -165,8 +163,7 @@ class ArticleProcessor:
 
         elapsed_time = time.time() - start_time
         success_rate = (
-            (processed_count / total_attempted * 100)
-            if total_attempted > 0 else 0
+            (processed_count / total_attempted * 100) if total_attempted > 0 else 0
         )
 
         logger.info(
@@ -178,8 +175,7 @@ class ArticleProcessor:
                 "success_rate_percent": round(success_rate, 1),
                 "processing_time_seconds": round(elapsed_time, 2),
                 "articles_per_second": round(
-                    processed_count / elapsed_time
-                    if elapsed_time > 0 else 0, 2
+                    processed_count / elapsed_time if elapsed_time > 0 else 0, 2
                 ),
             },
         )
@@ -235,11 +231,7 @@ class ArticleProcessor:
             except Exception as e:
                 logger.warning(
                     "URL processing error",
-                    extra_data={
-                        "url": url,
-                        "source": source_name,
-                        "error": str(e)
-                    },
+                    extra_data={"url": url, "source": source_name, "error": str(e)},
                     exc_info=True,
                 )
                 return None, url, str(e)
@@ -263,8 +255,7 @@ class ArticleProcessor:
                         failed_count += 1
 
                         # Early termination if too many failures
-                        if (failed_count >= 5 and
-                                failed_count / len(soup_sources) > 0.8):
+                        if failed_count >= 5 and failed_count / len(soup_sources) > 0.8:
                             current_failure_rate = (
                                 failed_count / len(soup_sources) * 100
                             )
@@ -295,10 +286,7 @@ class ArticleProcessor:
                     failed_count += 1
 
         if failed_count > 0:
-            failure_rate = (
-                (failed_count / len(urls) * 100)
-                if len(urls) > 0 else 0
-            )
+            failure_rate = (failed_count / len(urls) * 100) if len(urls) > 0 else 0
             logger.warning(
                 "URL fetching completed with failures",
                 extra_data={
@@ -321,26 +309,17 @@ class ArticleProcessor:
 
     @staticmethod
     def _process_article_with_recovery(
-        parser: Any,
-        soup: BeautifulSoup,
-        source_identifier: str,
-        source_name: str
+        parser: Any, soup: BeautifulSoup, source_identifier: str, source_name: str
     ) -> bool:
 
         def process_article():
             parsed_content = parser.parse_article(soup)
             if not parsed_content:
-                raise ValueError(
-                    f"No content extracted from {source_identifier}"
-                )
+                raise ValueError(f"No content extracted from {source_identifier}")
 
-            validated_content = DataValidator.validate_article_data(
-                parsed_content
-            )
+            validated_content = DataValidator.validate_article_data(parsed_content)
             if not validated_content:
-                raise ValueError(
-                    f"Article validation failed for {source_identifier}"
-                )
+                raise ValueError(f"Article validation failed for {source_identifier}")
 
             parser.to_csv(validated_content, source_identifier)
             return True

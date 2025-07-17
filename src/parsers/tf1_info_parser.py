@@ -23,15 +23,13 @@ class TF1InfoArticleParser(BaseParser):
     def parse_article(self, soup: BeautifulSoup) -> Optional[Dict[str, Any]]:
         try:
             content_div = soup.find(
-                "div",
-                class_=re.compile(r"article-body|content-body|main-content")
+                "div", class_=re.compile(r"article-body|content-body|main-content")
             )
             if not content_div:
                 content_div = soup.find("article")
             if not content_div or not isinstance(content_div, Tag):
                 self.logger.warning(
-                    "No main content div or article tag found for TF1 Info "
-                    "article."
+                    "No main content div or article tag found for TF1 Info " "article."
                 )
                 return None
 
@@ -81,8 +79,7 @@ class TF1InfoArticleParser(BaseParser):
         for selector in title_selectors:
             if selector.startswith("meta"):
                 tag = soup.find(
-                    lambda t: t.name == "meta" and
-                    t.get("property") == "og:title"
+                    lambda t: t.name == "meta" and t.get("property") == "og:title"
                 )
                 if tag and isinstance(tag, Tag) and tag.has_attr("content"):
                     return str(tag["content"]).strip()
@@ -115,9 +112,7 @@ class TF1InfoArticleParser(BaseParser):
 
                 if date_str:
                     try:
-                        dt_obj = datetime.fromisoformat(
-                            date_str.replace("Z", "+00:00")
-                        )
+                        dt_obj = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
                         return dt_obj.strftime("%Y-%m-%d")
                     except ValueError:
                         continue

@@ -58,8 +58,7 @@ class FranceInfoArticleParser(BaseParser):
 
     def _extract_date(self, soup: BeautifulSoup) -> str:
         time_tag = soup.find("time")
-        if (time_tag and isinstance(time_tag, Tag) and
-                time_tag.has_attr("datetime")):
+        if time_tag and isinstance(time_tag, Tag) and time_tag.has_attr("datetime"):
             date_str = str(time_tag["datetime"])
             try:
                 dt_obj = datetime.fromisoformat(date_str)

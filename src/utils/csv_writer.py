@@ -64,9 +64,7 @@ class DailyCSVWriter:
         existing = set()
         if os.path.isfile(self.filename):
             try:
-                with open(
-                    self.filename, mode="r", newline="", encoding="utf-8"
-                ) as f:
+                with open(self.filename, mode="r", newline="", encoding="utf-8") as f:
                     reader = csv.DictReader(f)
                     for row in reader:
                         key = f"{row['title']}:{row['source']}"
@@ -128,9 +126,7 @@ class DailyCSVWriter:
 
                     shutil.copy2(self.filename, backup_filename)
 
-                with open(
-                    self.filename, mode="a", newline="", encoding="utf-8"
-                ) as f:
+                with open(self.filename, mode="a", newline="", encoding="utf-8") as f:
                     writer = csv.DictWriter(f, fieldnames=CSV_FIELDS)
                     if not file_exists:
                         writer.writeheader()
@@ -141,26 +137,18 @@ class DailyCSVWriter:
                             # Get context for this word, or empty string if not
                             # available
                             context = (
-                                word_contexts.get(word, "")
-                                if word_contexts
-                                else ""
+                                word_contexts.get(word, "") if word_contexts else ""
                             )
 
                             writer.writerow(
                                 {
-                                    "word": str(word)[
-                                        :100
-                                    ],  # Truncate long words
+                                    "word": str(word)[:100],  # Truncate long words
                                     "context": str(context)[
                                         :500
                                     ],  # Truncate long contexts
                                     "source": str(url)[:500],
-                                    "article_date": parsed_data.get(
-                                        "article_date", ""
-                                    ),
-                                    "scraped_date": parsed_data.get(
-                                        "date_scraped", ""
-                                    ),
+                                    "article_date": parsed_data.get("article_date", ""),
+                                    "scraped_date": parsed_data.get("date_scraped", ""),
                                     "title": str(parsed_data["title"])[
                                         :200
                                     ],  # Truncate long titles
@@ -173,9 +161,7 @@ class DailyCSVWriter:
                             )
                             rows_written += 1
                         except (ValueError, TypeError) as e:
-                            self.logger.warning(
-                                f"Skipping invalid word '{word}': {e}"
-                            )
+                            self.logger.warning(f"Skipping invalid word '{word}': {e}")
 
                 if self.debug:
                     self.logger.info(
@@ -188,22 +174,17 @@ class DailyCSVWriter:
                     os.remove(backup_filename)
 
             except PermissionError:
-                self.logger.error(
-                    f"Permission denied writing to {self.filename}"
-                )
+                self.logger.error(f"Permission denied writing to {self.filename}")
             except OSError as e:
                 self.logger.error(f"File system error writing CSV: {e}")
                 if os.path.exists(backup_filename):
                     import shutil
 
                     shutil.move(backup_filename, self.filename)
-                    self.logger.info(
-                        "Restored backup file"
-                    )
+                    self.logger.info("Restored backup file")
             except Exception as e:
                 self.logger.error(
-                    f"Error writing '{parsed_data['title']}' to CSV: "
-                    f"{e}"
+                    f"Error writing '{parsed_data['title']}' to CSV: " f"{e}"
                 )
                 if os.path.exists(backup_filename):
                     import shutil

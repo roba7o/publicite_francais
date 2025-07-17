@@ -309,10 +309,7 @@ class FrenchTextProcessor:
                 continue
 
             # Skip if word is mostly numbers
-            if (
-                sum(c.isdigit() for c in word_clean) / max(1, len(word_clean))
-                > 0.6
-            ):
+            if sum(c.isdigit() for c in word_clean) / max(1, len(word_clean)) > 0.6:
                 continue
 
             # Skip junk words using external configuration
@@ -326,9 +323,7 @@ class FrenchTextProcessor:
             # Clean the word
             word_clean = re.sub(r"[^\w\s]", "", word_clean)
             word_clean = unicodedata.normalize("NFD", word_clean)
-            word_clean = "".join(
-                c for c in word_clean if not unicodedata.combining(c)
-            )
+            word_clean = "".join(c for c in word_clean if not unicodedata.combining(c))
 
             # Skip stopwords
             if word_clean in self.french_stopwords:
@@ -403,13 +398,9 @@ class FrenchTextProcessor:
             # Remove newlines and extra spaces
             clean_sentence = " ".join(sentence.split())
             # Remove hashtags and triple quotes
-            clean_sentence = clean_sentence.replace("##", "").replace(
-                '"""', ""
-            )
+            clean_sentence = clean_sentence.replace("##", "").replace('"""', "")
             # Remove leading/trailing punctuation and whitespace
-            clean_sentence = clean_sentence.strip(
-                string.punctuation + " \"'\n\t"
-            )
+            clean_sentence = clean_sentence.strip(string.punctuation + " \"'\n\t")
             if len(clean_sentence) < 10:
                 continue
             cleaned_for_match = self.clean_text(clean_sentence)
@@ -422,9 +413,7 @@ class FrenchTextProcessor:
                 ):
                     continue
                 if word in sentence_words and word not in word_contexts:
-                    word_contexts[word] = clean_sentence[
-                        :200
-                    ]  # Limit context length
+                    word_contexts[word] = clean_sentence[:200]  # Limit context length
         return word_contexts
 
     def count_word_frequency(self, text: str) -> Dict[str, int]:
@@ -462,15 +451,11 @@ class FrenchTextProcessor:
         cleaned_text = self.clean_text(validated_text)
         words = self.tokenize_french_text(cleaned_text)
 
-        if (
-            not words
-        ):
+        if not words:
             self.logger.debug(
                 "Word frequency analysis returned empty",
                 extra_data={
-                    "text_length": len(validated_text)
-                    if validated_text
-                    else 0,
+                    "text_length": len(validated_text) if validated_text else 0,
                     "reason": "no_valid_words_after_tokenization",
                 },
             )
@@ -480,14 +465,10 @@ class FrenchTextProcessor:
 
         # Remove words that appear suspiciously often (likely parsing errors)
         total_words = sum(word_counts.values())
-        max_frequency = max(
-            total_words * 0.1, 10
-        )  # Max 10% of total or 10 occurrences
+        max_frequency = max(total_words * 0.1, 10)  # Max 10% of total or 10 occurrences
 
         filtered_words = {
-            word: count
-            for word, count in word_counts.items()
-            if count <= max_frequency
+            word: count for word, count in word_counts.items() if count <= max_frequency
         }
 
         filtered_count = len(word_counts) - len(filtered_words)
@@ -551,9 +532,7 @@ class FrenchTextProcessor:
             ... )
             >>> # Returns {"word1": 5, "word3": 3}
         """
-        return {
-            word: freq for word, freq in word_freq.items() if freq >= min_freq
-        }
+        return {word: freq for word, freq in word_freq.items() if freq >= min_freq}
 
     def expand_stopwords(self, additional_stopwords: Set[str]) -> None:
         """
@@ -573,9 +552,7 @@ class FrenchTextProcessor:
         """
         self.french_stopwords.update(additional_stopwords)
 
-    def set_word_length_limits(
-        self, min_length: int = 3, max_length: int = 50
-    ) -> None:
+    def set_word_length_limits(self, min_length: int = 3, max_length: int = 50) -> None:
         """
         Set minimum and maximum word length filters.
 

@@ -38,7 +38,5 @@ class SlateFrURLScraper:
             return urls
 
         except Exception as e:
-            self.logger.error(
-                f"Failed to fetch URL: {self.base_url} | Error: {e}"
-            )
+            self.logger.error(f"Failed to fetch URL: {self.base_url} | Error: {e}")
             return None

@@ -37,9 +37,7 @@ class TF1InfoURLScraper:
             list: List of article URLs
         """
         try:
-            response = requests.get(
-                self.base_url, headers=self.headers, timeout=10
-            )
+            response = requests.get(self.base_url, headers=self.headers, timeout=10)
             response.raise_for_status()
 
             soup = BeautifulSoup(response.text, "html.parser")

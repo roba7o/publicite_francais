@@ -111,10 +111,7 @@ class BaseParser(ABC):
         return cls._session
 
     def __init__(
-        self,
-        site_domain: str,
-        debug: Optional[bool] = None,
-        delay: float = 1.0
+        self, site_domain: str, debug: Optional[bool] = None, delay: float = 1.0
     ):
         self.logger = get_structured_logger(self.__class__.__name__)
         self.site_domain = site_domain
@@ -172,11 +169,7 @@ class BaseParser(ABC):
         if OFFLINE:
             self.logger.warning(
                 "URL fetch attempted in offline mode",
-                extra_data={
-                    "url": url,
-                    "mode": "offline",
-                    "action": "skipped"
-                },
+                extra_data={"url": url, "mode": "offline", "action": "skipped"},
             )
             return None
 
@@ -198,9 +191,7 @@ class BaseParser(ABC):
                             "status_code": response.status_code,
                         },
                     )
-                    raise ValueError(
-                        "Response too short, likely blocked or empty"
-                    )
+                    raise ValueError("Response too short, likely blocked or empty")
 
                 return BeautifulSoup(response.content, "html.parser")
 
@@ -286,12 +277,8 @@ class BaseParser(ABC):
             List of (soup, url) tuples with original URLs
         """
         current_file_dir = os.path.dirname(os.path.abspath(__file__))
-        project_root_dir = os.path.abspath(
-            os.path.join(current_file_dir, "..")
-        )
-        test_data_dir = os.path.join(
-            project_root_dir, "test_data", "raw_url_soup"
-        )
+        project_root_dir = os.path.abspath(os.path.join(current_file_dir, ".."))
+        test_data_dir = os.path.join(project_root_dir, "test_data", "raw_url_soup")
 
         # Map source names to directory names
         source_to_dir = {
@@ -302,9 +289,7 @@ class BaseParser(ABC):
             "LeMonde.fr": "lemonde_fr",
         }
 
-        dir_name = source_to_dir.get(
-            source_name, source_name.lower().replace(" ", "_")
-        )
+        dir_name = source_to_dir.get(source_name, source_name.lower().replace(" ", "_"))
         source_dir = os.path.join(test_data_dir, dir_name)
 
         if not os.path.exists(source_dir):
@@ -339,9 +324,7 @@ class BaseParser(ABC):
                     file_path = os.path.join(source_dir, filename)
 
                     # Get original URL from mapping
-                    original_url = URL_MAPPING.get(
-                        filename, f"test://{filename}"
-                    )
+                    original_url = URL_MAPPING.get(filename, f"test://{filename}")
 
                     with open(file_path, "r", encoding="utf-8") as f:
                         soup = BeautifulSoup(f.read(), "html.parser")
