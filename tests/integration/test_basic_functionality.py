@@ -9,6 +9,7 @@ import pytest
 import tempfile
 import os
 from pathlib import Path
+from models import ArticleData
 from utils.french_text_processor import FrenchTextProcessor
 from utils.csv_writer import DailyCSVWriter
 from utils.logging_config_enhanced import setup_logging
@@ -57,12 +58,12 @@ class TestBasicFunctionality:
         assert str(tmp_path) in str(writer.output_dir)
         
         # Test writing an article
-        article_data = {
-            'title': 'Test Article français',
-            'full_text': 'Contenu de test français avec suffisamment de mots pour analyser.',
-            'article_date': '2025-07-13',
-            'date_scraped': '2025-07-13 17:00:00'
-        }
+        article_data = ArticleData(
+            title='Test Article français',
+            full_text='Contenu de test français avec suffisamment de mots pour analyser.',
+            article_date='2025-07-13',
+            date_scraped='2025-07-13 17:00:00'
+        )
         
         word_frequencies = {'français': 2, 'test': 3, 'contenu': 1, 'analyser': 1}
         word_contexts = {
@@ -96,12 +97,12 @@ class TestBasicFunctionality:
         Cette politique française modernise le système économique national actuel.
         """
         
-        article_data = {
-            'title': 'Mesures Économiques Françaises',
-            'full_text': article_text,
-            'article_date': '2025-07-13',
-            'date_scraped': '2025-07-13 17:00:00'
-        }
+        article_data = ArticleData(
+            title='Mesures Économiques Françaises',
+            full_text=article_text,
+            article_date='2025-07-13',
+            date_scraped='2025-07-13 17:00:00'
+        )
         
         # Process the text
         word_frequencies = processor.count_word_frequency(article_text)

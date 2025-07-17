@@ -1,7 +1,9 @@
 import re
 from datetime import datetime
-from typing import Optional, Dict, Any
+from typing import Optional
 from urllib.parse import urlparse
+
+from models import ArticleData
 
 
 class DataValidator:
@@ -77,33 +79,44 @@ class DataValidator:
         return datetime.now().strftime("%Y-%m-%d")
 
     @staticmethod
-    def validate_article_data(data: Dict[str, Any]) -> Dict[str, Any]:
-        if not isinstance(data, dict):
-            return {}
+    def validate_article_data(data: ArticleData) -> Optional[ArticleData]:
+        """
+        Validate and normalize ArticleData.
 
-        validated = {}
+        Args:
+            data: ArticleData instance to validate
+
+        Returns:
+            Validated ArticleData instance or None if invalid
+        """
+        if not isinstance(data, ArticleData):
+            return None  # type: ignore[unreachable]
 
         # Required fields with validation
-        title = DataValidator.validate_title(data.get("title", ""))
+        title = DataValidator.validate_title(data.title)
         if not title:
-            return {}  # Reject articles without valid titles
-        validated["title"] = title
+            return None  # Reject articles without valid titles
 
-        full_text = data.get("full_text", "")
+        full_text = data.full_text
         if not full_text or len(full_text.strip()) < 50:
-            return {}  # Reject articles with insufficient content
-        validated["full_text"] = full_text.strip()
+            return None  # Reject articles with insufficient content
 
         # Optional fields with defaults
-        validated["article_date"] = DataValidator.validate_date(
-            data.get("article_date", "")
-        )
-        validated["date_scraped"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        article_date = DataValidator.validate_date(data.article_date)
+        date_scraped = data.date_scraped or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         # Clean and limit other fields
-        for field in ["author", "category", "summary"]:
-            value = data.get(field, "")
-            if isinstance(value, str) and value.strip():
-                validated[field] = value.strip()[:200]  # Limit length
+        author = data.author[:200] if data.author else None
+        category = data.category[:200] if data.category else None
+        summary = data.summary[:200] if data.summary else None
 
-        return validated
+        return ArticleData(
+            title=title,
+            full_text=full_text.strip(),
+            article_date=article_date or "",
+            date_scraped=date_scraped,
+            num_paragraphs=data.num_paragraphs,
+            author=author,
+            category=category,
+            summary=summary,
+        )

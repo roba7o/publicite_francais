@@ -50,7 +50,7 @@ test-offline:  ## Run the offline mode integration test
 	PYTHONPATH=$(SRC) pytest -v tests/integration/test_offline_mode.py::TestOfflineMode::test_make_run_offline_integration
 
 lint:  ## Run flake8 on the src directory
-	flake8 $(SRC)
+	flake8 --max-line-length=88 $(SRC)
 
 format:  ## Auto-format code with black
 	black $(SRC)
@@ -61,9 +61,14 @@ check-format:  ## Check formatting without modifying files
 mypy:  ## Run static type checks
 	mypy $(SRC)
 
-clean:  ## Remove __pycache__ and .pyc files
-	find . -type d -name "__pycache__" -exec rm -r {} + ;
+clean:  ## Remove __pycache__, .pyc files, and test artifacts
+	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 	find . -name "*.pyc" -delete
+	find . -name "*.pyo" -delete
+	find . -name ".coverage*" -delete
+	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name "htmlcov" -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name ".mypy_cache" -exec rm -rf {} + 2>/dev/null || true
 
 # ========== Docker commands ==========
 

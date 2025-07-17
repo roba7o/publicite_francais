@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.12]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest flake8 black mypy
+
+    - name: Run linting
+      run: |
+        make lint
+
+    - name: Run type checking
+      run: |
+        make mypy
+
+    - name: Check code formatting
+      run: |
+        make check-format
+
+    - name: Run essential tests
+      run: |
+        make test-essential
+
+    - name: Run integration tests
+      run: |
+        make test-integration
+
+    - name: Run all tests
+      run: |
+        make test
+
+  test-offline-mode:
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.12
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest
+
+    - name: Test offline mode integration
+      run: |
+        make test-offline
+
+  security-check:
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.12
+
+    - name: Install security tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install bandit safety
+
+    - name: Run security scan with bandit
+      run: |
+        bandit -r src/ -f json -o bandit-report.json || true
+
+    - name: Check for known security vulnerabilities
+      run: |
+        safety check --json || true
+
+    - name: Upload security reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: security-reports
+        path: |
+          bandit-report.json

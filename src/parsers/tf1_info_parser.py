@@ -9,18 +9,19 @@ to specifically extract and process content from TF1Info.fr articles.
 
 from datetime import datetime
 import re
-from typing import Dict, Any, List, Optional
+from typing import List, Optional
 
 from bs4 import BeautifulSoup, Tag
 
 from parsers.base_parser import BaseParser
+from models import ArticleData
 
 
 class TF1InfoArticleParser(BaseParser):
     def __init__(self) -> None:
         super().__init__(site_domain="tf1info.fr")
 
-    def parse_article(self, soup: BeautifulSoup) -> Optional[Dict[str, Any]]:
+    def parse_article(self, soup: BeautifulSoup) -> Optional[ArticleData]:
         try:
             content_div = soup.find(
                 "div", class_=re.compile(r"article-body|content-body|main-content")
@@ -29,7 +30,7 @@ class TF1InfoArticleParser(BaseParser):
                 content_div = soup.find("article")
             if not content_div or not isinstance(content_div, Tag):
                 self.logger.warning(
-                    "No main content div or article tag found for TF1 Info article."
+                    "No main content div or article tag found for TF1 Info " "article."
                 )
                 return None
 
@@ -39,13 +40,13 @@ class TF1InfoArticleParser(BaseParser):
             if not full_text:
                 return None
 
-            return {
-                "full_text": full_text,
-                "num_paragraphs": len(paragraphs),
-                "title": self._extract_title(soup),
-                "article_date": self._extract_date(soup),
-                "date_scraped": datetime.now().strftime("%Y-%m-%d"),
-            }
+            return ArticleData(
+                full_text=full_text,
+                num_paragraphs=len(paragraphs),
+                title=self._extract_title(soup),
+                article_date=self._extract_date(soup),
+                date_scraped=datetime.now().strftime("%Y-%m-%d"),
+            )
 
         except Exception as e:
             self.logger.error(f"Error parsing TF1 Info article: {e}")

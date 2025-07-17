@@ -6,7 +6,7 @@ including the scraper and parser classes to use for each source.
 """
 
 from dataclasses import dataclass
-from typing import List, Dict, Optional
+from typing import Dict, Optional
 
 
 @dataclass

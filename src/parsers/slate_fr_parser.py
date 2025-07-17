@@ -8,10 +8,11 @@ to specifically extract and process content from Slate.fr articles.
 """
 
 from datetime import datetime
-from typing import Dict, Any, List, Optional
+from typing import List, Optional
 
 from bs4 import BeautifulSoup, Tag
 
+from models import ArticleData
 from parsers.base_parser import BaseParser
 
 
@@ -19,7 +20,7 @@ class SlateFrArticleParser(BaseParser):
     def __init__(self) -> None:
         super().__init__(site_domain="slate.fr")
 
-    def parse_article(self, soup: BeautifulSoup) -> Optional[Dict[str, Any]]:
+    def parse_article(self, soup: BeautifulSoup) -> Optional[ArticleData]:
         try:
             article_tag = soup.find("article")
             if not article_tag or not isinstance(article_tag, Tag):
@@ -31,13 +32,13 @@ class SlateFrArticleParser(BaseParser):
             if not full_text:
                 return None
 
-            return {
-                "full_text": full_text,
-                "num_paragraphs": len(paragraphs),
-                "title": self._extract_title(soup),
-                "article_date": self._extract_date(soup),
-                "date_scraped": datetime.now().strftime("%Y-%m-%d"),
-            }
+            return ArticleData(
+                full_text=full_text,
+                num_paragraphs=len(paragraphs),
+                title=self._extract_title(soup),
+                article_date=self._extract_date(soup),
+                date_scraped=datetime.now().strftime("%Y-%m-%d"),
+            )
 
         except Exception as e:
             self.logger.error(f"Error parsing Slate.fr article: {e}")

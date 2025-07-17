@@ -13,7 +13,10 @@ class FranceInfoURLScraper:
         self.debug = debug if debug is not None else DEBUG
         self.base_url = "https://www.franceinfo.fr/"
         self.headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                "(KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+            )
         }
 
     def get_article_urls(self, max_articles=8):
@@ -40,7 +43,11 @@ class FranceInfoURLScraper:
 
             # Remove duplicates while preserving order
             seen = set()
-            unique_urls = [url for url in urls if not (url in seen or seen.add(url))]
+            unique_urls = []
+            for url in urls:
+                if url not in seen:
+                    seen.add(url)
+                    unique_urls.append(url)
 
             self.logger.info(f"Found {len(unique_urls)} article URLs.")
             return unique_urls
