@@ -48,10 +48,10 @@ def setup_logging(
         log_directory: Directory for log files (defaults to "logs")
     """
     # Determine default log level based on configuration
-    if level is None:
-        level = logging.DEBUG if DEBUG else logging.INFO  # type: ignore[unreachable]
-    elif isinstance(level, str):
+    if isinstance(level, str):
         level = getattr(logging, level.upper())
+    elif level is None:
+        level = logging.DEBUG if DEBUG else logging.INFO
 
     # Setup basic logging
     logging.basicConfig(

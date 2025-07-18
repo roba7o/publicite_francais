@@ -15,6 +15,7 @@ Example usage:
 """
 
 import csv
+import shutil
 import threading
 from datetime import datetime
 from pathlib import Path
@@ -126,8 +127,6 @@ class DailyCSVWriter:
 
             try:
                 if file_exists:
-                    import shutil
-
                     shutil.copy2(self.filename, backup_filename)
 
                 with open(self.filename, mode="a", newline="", encoding="utf-8") as f:
@@ -182,8 +181,6 @@ class DailyCSVWriter:
             except OSError as e:
                 self.logger.error(f"File system error writing CSV: {e}")
                 if backup_filename.exists():
-                    import shutil
-
                     shutil.move(str(backup_filename), str(self.filename))
                     self.logger.info("Restored backup file")
             except Exception as e:
@@ -191,8 +188,6 @@ class DailyCSVWriter:
                     f"Error writing '{parsed_data.title}' to CSV: " f"{e}"
                 )
                 if backup_filename.exists():
-                    import shutil
-
                     shutil.move(str(backup_filename), str(self.filename))
 
 

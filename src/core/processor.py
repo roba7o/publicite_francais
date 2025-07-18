@@ -57,11 +57,9 @@ class ArticleProcessor:
             ...     'scrapers.slate_fr_scraper.SlateFrURLScraper')
             >>> scraper = cls(debug=True)
         """
-        from typing import Type, Any
-
         module_path, class_name = class_path.rsplit(".", 1)
         module = importlib.import_module(module_path)
-        cls: Type[Any] = getattr(module, class_name)
+        cls = getattr(module, class_name)
         return cls
 
     @classmethod

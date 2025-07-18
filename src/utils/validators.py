@@ -90,7 +90,7 @@ class DataValidator:
             Validated ArticleData instance or None if invalid
         """
         if not isinstance(data, ArticleData):
-            return None  # type: ignore[unreachable]
+            return None
 
         # Required fields with validation
         title = DataValidator.validate_title(data.title)
