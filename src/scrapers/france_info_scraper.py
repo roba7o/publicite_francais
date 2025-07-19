@@ -1,10 +1,12 @@
-import requests
-from bs4 import BeautifulSoup, Tag
-from urllib.parse import urljoin
-from config.settings import DEBUG
-from utils.structured_logger import get_structured_logger
 import random
 import time
+from urllib.parse import urljoin
+
+import requests
+from bs4 import BeautifulSoup, Tag
+
+from config.settings import DEBUG
+from utils.structured_logger import get_structured_logger
 
 
 class FranceInfoURLScraper:

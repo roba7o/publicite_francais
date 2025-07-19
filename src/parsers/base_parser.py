@@ -1,18 +1,18 @@
 import time
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Dict, Optional, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import requests
+from bs4 import BeautifulSoup
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
-from bs4 import BeautifulSoup
 
+from config.settings import DEBUG, OFFLINE
+from config.text_processing_config import SITE_CONFIGS
 from models import ArticleData
 from utils.csv_writer import DailyCSVWriter
 from utils.french_text_processor import FrenchTextProcessor
-from config.text_processing_config import SITE_CONFIGS
-from config.settings import DEBUG, OFFLINE
 from utils.structured_logger import get_structured_logger
 
 DEFAULT_SITE_CONFIG = {
@@ -327,7 +327,7 @@ class BaseParser(ABC):
                     # Get original URL from mapping
                     original_url = URL_MAPPING.get(filename, f"test://{filename}")
 
-                    with open(file_path, "r", encoding="utf-8") as f:
+                    with open(file_path, encoding="utf-8") as f:
                         soup = BeautifulSoup(f.read(), "html.parser")
                         soup_sources.append((soup, original_url))
                         self.logger.debug(

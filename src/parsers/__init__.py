@@ -6,10 +6,10 @@ All parsers extend the BaseParser class and return ArticleData objects.
 """
 
 from .base_parser import BaseParser
-from .slate_fr_parser import SlateFrArticleParser
 from .france_info_parser import FranceInfoArticleParser
-from .tf1_info_parser import TF1InfoArticleParser
 from .ladepeche_fr_parser import LadepecheFrArticleParser
+from .slate_fr_parser import SlateFrArticleParser
+from .tf1_info_parser import TF1InfoArticleParser
 
 __all__ = [
     "BaseParser",

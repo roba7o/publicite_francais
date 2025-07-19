@@ -1,5 +1,4 @@
 # requirements-dev.txt — dev-only tools
-black==24.4.2
-flake8==7.0.0
-mypy==1.10.0
-pytest==8.2.1
+ruff>=0.1.0
+mypy>=1.10.0
+pytest>=8.2.1

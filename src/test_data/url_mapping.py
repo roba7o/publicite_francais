@@ -76,10 +76,7 @@ URL_MAPPING = {
         "general-assimi-goita-promulgue-une-loi-lui-accordant-un-mandat-"
         "illimite-de-president_6620633_3212.html"
     ),
-    (
-        "la-chine-et-l-indonesie-renforcent-leurs-liens-economiques_"
-        "6182350_3210.html"
-    ): (
+    ("la-chine-et-l-indonesie-renforcent-leurs-liens-economiques_6182350_3210.html"): (
         "https://www.lemonde.fr/international/article/2025/07/13/la-chine-"
         "et-l-indonesie-renforcent-leurs-liens-economiques_6182350_3210.html"
     ),

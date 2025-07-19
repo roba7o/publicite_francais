@@ -7,14 +7,14 @@ This module provides the TF1InfoArticleParser class, which extends BaseParser
 to specifically extract and process content from TF1Info.fr articles.
 """
 
-from datetime import datetime
 import re
+from datetime import datetime
 from typing import List, Optional
 
 from bs4 import BeautifulSoup, Tag
 
-from parsers.base_parser import BaseParser
 from models import ArticleData
+from parsers.base_parser import BaseParser
 
 
 class TF1InfoArticleParser(BaseParser):
@@ -30,7 +30,7 @@ class TF1InfoArticleParser(BaseParser):
                 content_div = soup.find("article")
             if not content_div or not isinstance(content_div, Tag):
                 self.logger.warning(
-                    "No main content div or article tag found for TF1 Info " "article."
+                    "No main content div or article tag found for TF1 Info article."
                 )
                 return None
 

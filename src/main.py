@@ -1,9 +1,10 @@
-from config.website_parser_scrapers_config import SCRAPER_CONFIGS
-from config.settings import OFFLINE, DEBUG
-from core.processor import ArticleProcessor
-from utils.logging_config_enhanced import setup_logging, configure_debug_mode
-from utils.structured_logger import get_structured_logger
 import time
+
+from config.settings import DEBUG, OFFLINE
+from config.website_parser_scrapers_config import SCRAPER_CONFIGS
+from core.processor import ArticleProcessor
+from utils.logging_config_enhanced import configure_debug_mode, setup_logging
+from utils.structured_logger import get_structured_logger
 
 
 def main():

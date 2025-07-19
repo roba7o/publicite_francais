@@ -21,8 +21,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional, Union
 
-from models import ArticleData
 from config.settings import DEBUG
+from models import ArticleData
 from utils.structured_logger import get_structured_logger
 
 CSV_FIELDS = [
@@ -70,7 +70,7 @@ class DailyCSVWriter:
         existing = set()
         if self.filename.is_file():
             try:
-                with open(self.filename, mode="r", newline="", encoding="utf-8") as f:
+                with open(self.filename, newline="", encoding="utf-8") as f:
                     reader = csv.DictReader(f)
                     for row in reader:
                         key = f"{row['title']}:{row['source']}"
@@ -87,9 +87,7 @@ class DailyCSVWriter:
         word_contexts: Optional[dict] = None,
     ) -> None:
         if not word_freqs or not isinstance(word_freqs, dict):
-            self.logger.warning(
-                f"No valid word frequencies for " f"{parsed_data.title}"
-            )
+            self.logger.warning(f"No valid word frequencies for {parsed_data.title}")
             return
 
         # Validate word frequencies
@@ -105,8 +103,7 @@ class DailyCSVWriter:
 
         if not valid_freqs:
             self.logger.warning(
-                f"No valid word frequencies after validation for "
-                f"{parsed_data.title}"
+                f"No valid word frequencies after validation for {parsed_data.title}"
             )
             return
 
@@ -184,9 +181,7 @@ class DailyCSVWriter:
                     shutil.move(str(backup_filename), str(self.filename))
                     self.logger.info("Restored backup file")
             except Exception as e:
-                self.logger.error(
-                    f"Error writing '{parsed_data.title}' to CSV: " f"{e}"
-                )
+                self.logger.error(f"Error writing '{parsed_data.title}' to CSV: {e}")
                 if backup_filename.exists():
                     shutil.move(str(backup_filename), str(self.filename))
 

@@ -1,13 +1,14 @@
 import importlib
-from typing import Tuple, Optional, List, Any
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Any, List, Optional, Tuple, Type
 
-from config.website_parser_scrapers_config import ScraperConfig
+from bs4 import BeautifulSoup
+
 from config.settings import OFFLINE
+from config.website_parser_scrapers_config import ScraperConfig
 from utils.structured_logger import get_structured_logger
 from utils.validators import DataValidator
-from bs4 import BeautifulSoup
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import time
 
 logger = get_structured_logger(__name__)
 
@@ -33,7 +34,7 @@ class ArticleProcessor:
     """
 
     @staticmethod
-    def import_class(class_path: str) -> type:
+    def import_class(class_path: str) -> Type[Any]:
         """
         Dynamically import a class from a string path.
 
@@ -60,7 +61,7 @@ class ArticleProcessor:
         module_path, class_name = class_path.rsplit(".", 1)
         module = importlib.import_module(module_path)
         cls = getattr(module, class_name)
-        return cls
+        return cls  # type: ignore
 
     @classmethod
     def process_source(cls, config: ScraperConfig) -> Tuple[int, int]:
@@ -187,7 +188,6 @@ class ArticleProcessor:
     def _get_live_sources_with_recovery(
         scraper: Any, parser: Any, source_name: str
     ) -> List[Tuple[Optional[BeautifulSoup], str]]:
-
         def get_urls():
             return scraper.get_article_urls()
 
@@ -315,7 +315,6 @@ class ArticleProcessor:
     def _process_article_with_recovery(
         parser: Any, soup: BeautifulSoup, source_identifier: str, source_name: str
     ) -> bool:
-
         def process_article():
             parsed_content = parser.parse_article(soup)
             if not parsed_content:

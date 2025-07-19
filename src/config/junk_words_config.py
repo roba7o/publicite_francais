@@ -57,7 +57,6 @@ TRUNCATED_WORDS = {
     "imme",
     "diat",
     "pre",
-    "comple",
     "potentiellement",
     "jusqu",
 }
@@ -243,7 +242,7 @@ def get_category_patterns(category: str) -> set:
 
     if category not in categories:
         raise KeyError(
-            f"Unknown category: {category}. Available: " f"{list(categories.keys())}"
+            f"Unknown category: {category}. Available: {list(categories.keys())}"
         )
 
     return categories[category]
