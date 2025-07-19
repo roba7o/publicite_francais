@@ -1,6 +1,7 @@
-import requests
 from pathlib import Path
-from typing import Optional, Dict, Union
+from typing import Dict, Optional, Union
+
+import requests
 
 
 def download_html(

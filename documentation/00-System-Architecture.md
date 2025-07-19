@@ -164,12 +164,9 @@ sequenceDiagram
     participant Logger as Structured Logger
     
     User->>Main: Execute system
-    Main->>Config: Load all configurations
-    Config->>Config: Validate settings
-    Config->>Main: Return validated config
-    
-    Main->>Processor: Initialize with config
-    Processor->>Processor: Load enabled sources
+    Main->>Main: Setup logging and configuration
+    Main->>Processor: Call process_all_sources()
+    Processor->>Processor: Load enabled sources and setup concurrency
     
     loop For Each News Source
         Processor->>Config: Get source configuration

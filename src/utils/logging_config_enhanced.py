@@ -24,13 +24,13 @@ Usage:
 """
 
 import logging
-from typing import Union, Dict, Optional
+from typing import Dict, Optional, Union
 
 from config.settings import DEBUG
 
 
 def setup_logging(
-    level: Union[str, int] = logging.INFO,
+    level: Optional[Union[str, int]] = None,
     use_structured: bool = True,
     enable_file_logging: bool = True,
     console_format: str = "human",
@@ -49,7 +49,7 @@ def setup_logging(
     """
     # Determine default log level based on configuration
     if level is None:
-        level = logging.DEBUG if DEBUG else logging.INFO  # type: ignore[unreachable]
+        level = logging.DEBUG if DEBUG else logging.INFO
     elif isinstance(level, str):
         level = getattr(logging, level.upper())
 

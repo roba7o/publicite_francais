@@ -1,13 +1,12 @@
 import re
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 from urllib.parse import urlparse
 
 from models import ArticleData
 
 
 class DataValidator:
-
     @staticmethod
     def validate_url(url: str) -> Optional[str]:
         if not url or not isinstance(url, str):
@@ -79,7 +78,7 @@ class DataValidator:
         return datetime.now().strftime("%Y-%m-%d")
 
     @staticmethod
-    def validate_article_data(data: ArticleData) -> Optional[ArticleData]:
+    def validate_article_data(data: Any) -> Optional[ArticleData]:
         """
         Validate and normalize ArticleData.
 
@@ -90,7 +89,7 @@ class DataValidator:
             Validated ArticleData instance or None if invalid
         """
         if not isinstance(data, ArticleData):
-            return None  # type: ignore[unreachable]
+            return None
 
         # Required fields with validation
         title = DataValidator.validate_title(data.title)

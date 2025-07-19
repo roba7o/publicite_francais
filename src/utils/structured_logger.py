@@ -5,6 +5,7 @@ Simplified structured logging system for the French article scraper.
 import logging
 import sys
 from typing import Dict, Optional
+
 from config.settings import DEBUG
 
 

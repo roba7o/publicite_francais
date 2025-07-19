@@ -1,7 +1,9 @@
+from typing import List, Optional
+from urllib.parse import urljoin
+
 import requests
 from bs4 import BeautifulSoup, Tag
-from urllib.parse import urljoin
-from typing import List, Optional
+
 from config.settings import DEBUG
 from utils.structured_logger import get_structured_logger
 

@@ -1,5 +1,5 @@
-from datetime import datetime
 import re
+from datetime import datetime
 from typing import List, Optional
 
 from bs4 import BeautifulSoup, Tag

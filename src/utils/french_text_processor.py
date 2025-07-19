@@ -1,7 +1,7 @@
 import re
 import unicodedata
 from collections import Counter
-from typing import Dict, List, Set, Optional
+from typing import Dict, List, Optional, Set
 
 from config.junk_words_config import get_junk_patterns
 from utils.structured_logger import get_structured_logger
@@ -106,7 +106,6 @@ class FrenchTextProcessor:
             "déjà",
             "maintenant",
             "alors",
-            "un",
             "deux",
             "trois",
             "quatre",
