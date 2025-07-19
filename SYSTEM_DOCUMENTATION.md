@@ -550,7 +550,7 @@ make docker-run      # Run in container
 **Automatic CI/CD** runs on every commit:
 1. **Matrix testing**: Python 3.11 & 3.12
 2. **Full test suite**: All 23 tests
-3. **Code linting**: flake8 checks
+3. **Code linting**: ruff checks
 4. **Build validation**: Ensure system works
 
 ---

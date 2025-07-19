@@ -124,14 +124,9 @@ jobs:
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
     
-    - name: Run linting
+    - name: Run code quality checks
       run: |
-        ruff check src/
-        ruff format --check src/
-    
-    - name: Run type checking
-      run: |
-        mypy src/ --ignore-missing-imports
+        make fix
     
     - name: Run essential tests
       run: |
@@ -406,9 +401,7 @@ pip install -r requirements-dev.txt
 
 # 2. Code quality checks
 echo "2. Running code quality checks..."
-ruff check src/
-ruff format --check src/
-mypy src/ --ignore-missing-imports
+make fix
 
 # 3. Essential tests
 echo "3. Running essential tests..."
@@ -462,7 +455,7 @@ repos:
       - id: check-merge-conflict
   
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.6
+    rev: v0.1.0
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
@@ -563,19 +556,18 @@ chmod +x scripts/*.sh
 **Purpose**: Ensure code quality and consistency
 
 **Tools Used**:
-- `ruff` for linting and formatting
+- `ruff` for linting, formatting, and import sorting
 - `mypy` for type checking
-- `bandit` for security scanning
 
 **Quality Gates**:
 ```bash
-# Linting checks
-ruff check src/                    # Code style and errors
-ruff format --check src/           # Formatting consistency
-mypy src/ --ignore-missing-imports # Type checking
+# All-in-one code quality check
+make fix                           # Format, lint, and type check
 
-# Security scanning
-bandit -r src/ -f json -o security-report.json
+# Individual commands if needed
+ruff format src/                   # Code formatting
+ruff check src/                    # Linting and style checks
+mypy src/                          # Type checking
 ```
 
 **Common Issues**:
