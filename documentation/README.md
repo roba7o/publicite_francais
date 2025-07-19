@@ -101,6 +101,18 @@ Advanced topics for production deployment and system scaling.
     - Star schema design for analytics
     - Scaling opportunities and data enrichment
 
+15. **[14-Git-Strategy-and-Conflict-Resolution](14-Git-Strategy-and-Conflict-Resolution.md)**
+    - Comprehensive Git workflow strategy
+    - Real-world conflict resolution examples
+    - Advanced operations (cherry-pick, rebase, stash)
+    - Emergency recovery scenarios
+
+16. **[15-Django-Backend-Integration-Strategy](15-Django-Backend-Integration-Strategy.md)**
+    - Preparing scraper for Django web application
+    - Database integration and API design
+    - Authentication and security considerations
+    - Deployment and performance optimization
+
 ---
 
 ## 📋 **Documentation Usage Guide**
@@ -116,6 +128,12 @@ Check: `09-Troubleshooting` → `04-Testing` → `05-Utils` → `10-CI-CD`
 
 ### **For Production Deployment**
 Follow: `10-CI-CD` → `13-Cloud-Deployment-and-Scaling` → `11-Project-Maintenance`
+
+### **For Git Workflows**
+Reference: `14-Git-Strategy-and-Conflict-Resolution` → `10-CI-CD` → `11-Project-Maintenance`
+
+### **For Django Integration**
+Follow: `15-Django-Backend-Integration-Strategy` → `13-Cloud-Deployment-and-Scaling` → `10-CI-CD`
 
 ---
 
@@ -138,7 +156,7 @@ The documentation includes extensive cross-references between related sections:
 | **Core Implementation** | 5 | All major components covered |
 | **Development/Operations** | 4 | Complete development workflow |
 | **Production/Scaling** | 3 | Deployment and scaling strategies |
-| **Total** | **14** | **Comprehensive coverage** |
+| **Total** | **16** | **Comprehensive coverage** |
 
 ---
 
