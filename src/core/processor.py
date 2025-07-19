@@ -343,3 +343,85 @@ class ArticleProcessor:
                 exc_info=True,
             )
             return False
+
+    @classmethod
+    def process_all_sources(cls) -> Tuple[int, int]:
+        """
+        Process all configured sources concurrently.
+        
+        Returns:
+            Tuple of (total_processed, total_attempted) across all sources
+        """
+        from config.website_parser_scrapers_config import SCRAPER_CONFIGS
+        
+        total_processed = 0
+        total_attempted = 0
+        failed_sources = []
+        
+        # Process sources concurrently
+        max_workers = min(len(SCRAPER_CONFIGS), 4)
+        enabled_sources = [config for config in SCRAPER_CONFIGS if config.enabled]
+        
+        logger.info(
+            "Starting concurrent source processing",
+            extra_data={
+                "total_sources": len(SCRAPER_CONFIGS),
+                "enabled_sources": len(enabled_sources),
+                "max_workers": max_workers
+            }
+        )
+        
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            future_to_config = {
+                executor.submit(cls.process_source, config): config
+                for config in enabled_sources
+            }
+            
+            for future in as_completed(future_to_config):
+                config = future_to_config[future]
+                try:
+                    processed, attempted = future.result()
+                    total_processed += processed
+                    total_attempted += attempted
+                    
+                    success_rate = (processed / attempted * 100) if attempted > 0 else 0
+                    if success_rate < 30 and attempted > 0:
+                        failed_sources.append(config.name)
+                        logger.warning(
+                            "Low success rate detected",
+                            extra_data={
+                                "source": config.name,
+                                "success_rate": round(success_rate, 1),
+                                "processed": processed,
+                                "attempted": attempted
+                            }
+                        )
+                    else:
+                        logger.info(
+                            "Source completed successfully",
+                            extra_data={
+                                "source": config.name,
+                                "processed": processed,
+                                "attempted": attempted,
+                                "success_rate": round(success_rate, 1)
+                            }
+                        )
+                        
+                except Exception as e:
+                    failed_sources.append(config.name)
+                    logger.error(
+                        "Source processing failed",
+                        extra_data={"source": config.name, "error": str(e)},
+                        exc_info=True
+                    )
+        
+        if failed_sources:
+            logger.warning(
+                "Some sources failed processing",
+                extra_data={
+                    "failed_sources": failed_sources,
+                    "failed_count": len(failed_sources)
+                }
+            )
+        
+        return total_processed, total_attempted
