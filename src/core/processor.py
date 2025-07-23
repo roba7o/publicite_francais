@@ -1,12 +1,12 @@
-import importlib
+import importlib # allows for dynamic imports of scraper and parser classes as strings
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Any, List, Optional, Tuple, Type
+from concurrent.futures import ThreadPoolExecutor, as_completed #running multiple downsloads in parallel/concurrently
+from typing import Any, List, Optional, Tuple, Type #for type hinting and dynamic class imports
 
 from bs4 import BeautifulSoup
 
-from config.settings import OFFLINE
-from config.website_parser_scrapers_config import ScraperConfig
+from config.settings import OFFLINE # whether the application is running in offline mode
+from config.website_parser_scrapers_config import ScraperConfig  #refer to dataclass for scraper configuration info
 from utils.structured_logger import get_structured_logger
 from utils.validators import DataValidator
 
@@ -23,14 +23,18 @@ class ArticleProcessor:
     and CSV output.
 
     Features:
-    - Concurrent processing of multiple news sources
-    - Duplicate detection and prevention
-    - Both live and offline testing modes
+    - Dynamic class loading for scrapers and parsers based on configuration
+    - Concurrent processing of multiple sources for efficiency
+    - Comprehensive error handling and logging
+    - Support for both live scraping and offline testing modes
 
-    Example:
-        >>> config = ScraperConfig(name="test", enabled=True, ...)
-        >>> processed, attempted = ArticleProcessor.process_source(config)
-        >>> print(f"Processed {processed}/{attempted} articles")
+    How to add new sources:
+    1. Define a new `ScraperConfig` in `website_parser_scrapers_config.py`
+       with the appropriate scraper and parser class paths.
+    2. Ensure the scraper and parser classes implement the required methods
+       (`get_article_urls`, `get_soup_from_url`, `parse_article`, `to_csv`).
+    3. The `ArticleProcessor` will automatically discover and process the new source
+       based on the configuration.
     """
 
     @staticmethod
@@ -359,7 +363,7 @@ class ArticleProcessor:
 
         # Process sources concurrently
         max_workers = min(len(SCRAPER_CONFIGS), 4)
-        enabled_sources = [config for config in SCRAPER_CONFIGS if config.enabled]
+        enabled_sources = [config for config in SCRAPER_CONFIGS if config.enabled] # creates a list of ScreaperConfig objects for enabled sources
 
         logger.info(
             "Starting concurrent source processing",
@@ -371,10 +375,13 @@ class ArticleProcessor:
         )
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # creating a dictionary of futures (cls.function(*args) to track which config each future corresponds to
             future_to_config = {
                 executor.submit(cls.process_source, config): config
                 for config in enabled_sources
             }
+
+            # This dict then gets loopped through
 
             for future in as_completed(future_to_config):
                 config = future_to_config[future]

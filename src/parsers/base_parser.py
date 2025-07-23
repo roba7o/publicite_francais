@@ -277,21 +277,14 @@ class BaseParser(ABC):
         Returns:
             List of (soup, url) tuples with original URLs
         """
+        from pathlib import Path
+
         current_file_dir = Path(__file__).parent
         project_root_dir = current_file_dir.parent
         test_data_dir = project_root_dir / "test_data" / "raw_url_soup"
 
-        # Map source names to directory names
-        source_to_dir = {
-            "Slate.fr": "slate_fr",
-            "FranceInfo.fr": "france_info_fr",
-            "TF1 Info": "tf1_fr",
-            "Depeche.fr": "depeche_fr",
-            "LeMonde.fr": "lemonde_fr",
-        }
-
-        dir_name = source_to_dir.get(source_name, source_name.lower().replace(" ", "_"))
-        source_dir = test_data_dir / dir_name
+        # Use the source name directly as the directory name
+        source_dir = test_data_dir / source_name
 
         if not source_dir.exists():
             self.logger.warning(
@@ -299,7 +292,6 @@ class BaseParser(ABC):
                 extra_data={
                     "source_name": source_name,
                     "directory_path": source_dir,
-                    "mapped_dir_name": dir_name,
                 },
             )
             return []
