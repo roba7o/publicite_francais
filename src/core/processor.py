@@ -144,7 +144,7 @@ class ArticleProcessor:
         sources = (
             cls._get_test_sources(parser, config.name)
             if OFFLINE
-            else cls._get_live_sources_with_recovery(scraper, parser, config.name)
+            else cls._get_live_sources_with_recovery(scraper, parser, config.name)  #scraper needed as its live url discovery
         )
 
         if not sources:
@@ -193,7 +193,7 @@ class ArticleProcessor:
         scraper: Any, parser: Any, source_name: str
     ) -> List[Tuple[Optional[BeautifulSoup], str]]:
         def get_urls():
-            return scraper.get_article_urls()
+            return scraper.get_article_urls()   #simple function call to get urls from the scraper
 
         urls = get_urls()
         if not urls:
@@ -206,13 +206,11 @@ class ArticleProcessor:
             )
             return []
 
-        # Process URLs concurrently for better performance
-        # Limit concurrent requests per source
-        max_concurrent_urls = min(len(urls), 3)
-        base_delay = parser.delay if hasattr(parser, "delay") else 1.0
+        max_concurrent_urls = min(len(urls), 3) # Adjust as needed for performance
+        base_delay = parser.delay if hasattr(parser, "delay") else 1.0 # delay to not overload servers
 
         def fetch_single_url(url_info):
-            i, url = url_info
+            i, url = url_info   #i is created by enumerate and sole function is DELAY
             try:
                 validated_url = DataValidator.validate_url(url)
                 if not validated_url:
@@ -226,11 +224,10 @@ class ArticleProcessor:
                     )
                     return None, url, "invalid"
 
-                # Stagger requests to avoid overwhelming servers
-                if i > 0:
-                    time.sleep(base_delay * (i % 3))  # Spread delays
+                if i > 0: # Stagger requests 
+                    time.sleep(base_delay * (i % 3))
 
-                soup = parser.get_soup_from_url(validated_url)
+                soup = parser.get_soup_from_url(validated_url)  #class specific method
                 return soup, validated_url, "success" if soup else "failed"
 
             except Exception as e:
@@ -246,12 +243,20 @@ class ArticleProcessor:
 
         # Use ThreadPoolExecutor for concurrent URL fetching
         with ThreadPoolExecutor(max_workers=max_concurrent_urls) as executor:
+
+            """
+            This dict comprehension does 3 things: (too dense should change potentially)
+            1. creates an index i for each url (used only for delay)
+            2. submits task to executor to fetch each url
+            3. maps each future to its corresponding url
+            """
+
             future_to_url = {
                 executor.submit(fetch_single_url, (i, url)): url
                 for i, url in enumerate(urls)
             }
 
-            for future in as_completed(future_to_url):
+            for future in as_completed(future_to_url):  #this is a generator that yields futures as they complete
                 try:
                     soup, processed_url, status = future.result()
                     soup_sources.append((soup, processed_url))
@@ -259,7 +264,7 @@ class ArticleProcessor:
                     if status != "success":
                         failed_count += 1
 
-                        # Early termination if too many failures
+                        # Early termination if too many failures (ie on same SOURCE/website if theres more than 5 failed urls and more than 80% of urls failed)
                         if failed_count >= 5 and failed_count / len(soup_sources) > 0.8:
                             current_failure_rate = (
                                 failed_count / len(soup_sources) * 100
@@ -276,7 +281,7 @@ class ArticleProcessor:
                                     "threshold_percent": 80,
                                 },
                             )
-                            # Cancel remaining futures
+                            # Cancel remaining futures -> other urls in website page planned to be processed
                             for remaining_future in future_to_url:
                                 if not remaining_future.done():
                                     remaining_future.cancel()

@@ -283,7 +283,7 @@ class BaseParser(ABC):
         project_root_dir = current_file_dir.parent
         test_data_dir = project_root_dir / "test_data" / "raw_url_soup"
 
-        # Use the source name directly as the directory name
+        # Use the source name directly as the directory name (/ is a function of pathlib)
         source_dir = test_data_dir / source_name
 
         if not source_dir.exists():
@@ -310,14 +310,14 @@ class BaseParser(ABC):
             )
             return []
 
-        soup_sources: List[Tuple[Optional[BeautifulSoup], str]] = []
+        soup_sources: List[Tuple[Optional[BeautifulSoup], str]] = []    #this is what gets returned after the loop
         try:
             for file_path in source_dir.iterdir():
                 if file_path.suffix in (".html", ".php"):
-                    filename = file_path.name
+                    filename = file_path.name   # fil_path = Path(".../article1.html") whilst filename= "article1.html" (just a fucntion of Path object)
 
                     # Get original URL from mapping
-                    original_url = URL_MAPPING.get(filename, f"test://{filename}")
+                    original_url = URL_MAPPING.get(filename, f"test://{filename}")  #refers to manual config created to match urls with data i manually took from website source using inspect
 
                     with open(file_path, encoding="utf-8") as f:
                         soup = BeautifulSoup(f.read(), "html.parser")
