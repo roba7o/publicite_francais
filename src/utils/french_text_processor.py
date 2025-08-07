@@ -198,7 +198,7 @@ class FrenchTextProcessor:
             )
             return None
 
-        # Check for excessive non-alphabetic content aka symbols like emojis, numbers, $£@$%$£@ 
+        # Check for excessive non-alphabetic content aka symbols like emojis, numbers, $£@$%$£@
         alpha_chars = sum(1 for c in text if c.isalpha())
         alpha_ratio = alpha_chars / len(text)
         if alpha_ratio < 0.5:  # Less than 50% alphabetic
@@ -461,14 +461,15 @@ class FrenchTextProcessor:
             )
             return {}
 
-
         # counter class converted to dict for simplicity (note this counter object could be returned
         # directly and used for count_word_frequency -> counter.most_common(n) etc). Same O(n) complexity
         word_counts = dict(Counter(words))
 
         # Remove words that appear suspiciously often (likely parsing errors)
         total_words = sum(word_counts.values())
-        max_frequency = max(total_words * 0.1, 10)  # threshpold for number of times a word can appear
+        max_frequency = max(
+            total_words * 0.1, 10
+        )  # threshpold for number of times a word can appear
 
         # brutal dict comprehension to filter out words that appear too often lol
         filtered_words = {

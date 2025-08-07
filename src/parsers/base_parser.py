@@ -90,12 +90,14 @@ class BaseParser(ABC):
             for all requests to that site domain (all artciles stem from the same site domain).
         """
         if cls._session is None:
-            cls._session = requests.Session()   #makes sure that the session is only created once
+            cls._session = (
+                requests.Session()
+            )  # makes sure that the session is only created once
 
             # Configure retry strategy based on common HTTP errors
             retry_strategy = Retry(
-                total=3, # Total number of retries
-                backoff_factor=1, # Exponential backoff factor
+                total=3,  # Total number of retries
+                backoff_factor=1,  # Exponential backoff factor
                 status_forcelist=[429, 500, 502, 503, 504],
             )
 
@@ -104,16 +106,16 @@ class BaseParser(ABC):
                 max_retries=retry_strategy,
                 pool_connections=10,  # Number of connection pools aka site domains
                 pool_maxsize=20,  # Max connections per pool
-                pool_block=False, # if pool is full, do not block, just raise an error and create temporary conn
+                pool_block=False,  # if pool is full, do not block, just raise an error and create temporary conn
             )
             # Mount the adapter for both HTTP and HTTPS
             cls._session.mount("http://", adapter)
             cls._session.mount("https://", adapter)
 
-            #applies the User-Agent header (defined earlier) to all requests made with this session. (mimics a browser)
+            # applies the User-Agent header (defined earlier) to all requests made with this session. (mimics a browser)
             cls._session.headers.update(cls.HEADERS)
 
-            #debug logging for session creation
+            # debug logging for session creation
             # get_structured_logger("BaseParser").info(
             #     f"Created single session for all parsers (Session ID: {id(cls._session)})"
             # )
@@ -125,7 +127,7 @@ class BaseParser(ABC):
     ):
         self.logger = get_structured_logger(self.__class__.__name__)
         self.site_domain = site_domain  # assigned in subclass super init call
-        self.debug = debug if debug is not None else DEBUG  #config level
+        self.debug = debug if debug is not None else DEBUG  # config level
         self.delay = delay  # hardcoded in init
 
         # CSV writer now handles output directory automatically
@@ -287,11 +289,17 @@ class BaseParser(ABC):
             List of (soup, url) tuples with original URLs
         """
 
-        current_file_dir = Path(__file__).parent    #__file__ is current file path. Path() turns to path object which can then get the dir path with .parent e.g. /Users/robertmatthew/Documents/programmingSelfStudy/projects/publicite_francais/src/parsers/ for this file
-        project_root_dir = current_file_dir.parent # goes up one level to the project root directory
-        test_data_dir = project_root_dir / "test_data" / "raw_url_soup" # constructs the path to the test data directory
+        current_file_dir = Path(
+            __file__
+        ).parent  # __file__ is current file path. Path() turns to path object which can then get the dir path with .parent e.g. /Users/robertmatthew/Documents/programmingSelfStudy/projects/publicite_francais/src/parsers/ for this file
+        project_root_dir = (
+            current_file_dir.parent
+        )  # goes up one level to the project root directory
+        test_data_dir = (
+            project_root_dir / "test_data" / "raw_url_soup"
+        )  # constructs the path to the test data directory
 
-        # 
+        #
         source_dir = test_data_dir / source_name
 
         if not source_dir.exists():
@@ -318,14 +326,18 @@ class BaseParser(ABC):
             )
             return []
 
-        soup_sources: List[Tuple[Optional[BeautifulSoup], str]] = []    #this is what gets returned after the loop
+        soup_sources: List[
+            Tuple[Optional[BeautifulSoup], str]
+        ] = []  # this is what gets returned after the loop
         try:
             for file_path in source_dir.iterdir():
                 if file_path.suffix in (".html", ".php"):
-                    filename = file_path.name   #  fil_path = Path(".../article1.html") whilst filename= "article1.html" (just a fucntion of Path object)
+                    filename = file_path.name  #  fil_path = Path(".../article1.html") whilst filename= "article1.html" (just a fucntion of Path object)
 
                     # Get original URL from mapping
-                    original_url = URL_MAPPING.get(filename, f"test://{filename}")  #refers to manual config created to match urls with data i manually took from website source using inspect
+                    original_url = URL_MAPPING.get(
+                        filename, f"test://{filename}"
+                    )  # refers to manual config created to match urls with data i manually took from website source using inspect
 
                     with open(file_path, encoding="utf-8") as f:
                         soup = BeautifulSoup(f.read(), "html.parser")

@@ -1,12 +1,25 @@
-import importlib # allows for dynamic imports of scraper and parser classes as strings
+import importlib  # allows for dynamic imports of scraper and parser classes as strings
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed #running multiple downsloads in parallel/concurrently
-from typing import Any, List, Optional, Tuple, Type #for type hinting and dynamic class imports
+from concurrent.futures import (
+    ThreadPoolExecutor,
+    as_completed,
+)  # running multiple downsloads in parallel/concurrently
+from typing import (
+    Any,
+    List,
+    Optional,
+    Tuple,
+    Type,
+)  # for type hinting and dynamic class imports
 
 from bs4 import BeautifulSoup
 
-from config.settings import OFFLINE # whether the application is running in offline mode
-from config.website_parser_scrapers_config import ScraperConfig  #refer to dataclass for scraper configuration info
+from config.settings import (
+    OFFLINE,
+)  # whether the application is running in offline mode
+from config.website_parser_scrapers_config import (
+    ScraperConfig,
+)  # refer to dataclass for scraper configuration info
 from utils.structured_logger import get_structured_logger
 from utils.validators import DataValidator
 
@@ -144,7 +157,9 @@ class ArticleProcessor:
         sources = (
             cls._get_test_sources(parser, config.name)
             if OFFLINE
-            else cls._get_live_sources_with_recovery(scraper, parser, config.name)  #scraper needed as its live url discovery
+            else cls._get_live_sources_with_recovery(
+                scraper, parser, config.name
+            )  # scraper needed as its live url discovery
         )
 
         if not sources:
@@ -193,7 +208,9 @@ class ArticleProcessor:
         scraper: Any, parser: Any, source_name: str
     ) -> List[Tuple[Optional[BeautifulSoup], str]]:
         def get_urls():
-            return scraper.get_article_urls()   #simple function call to get urls from the scraper
+            return (
+                scraper.get_article_urls()
+            )  # simple function call to get urls from the scraper
 
         urls = get_urls()
         if not urls:
@@ -206,11 +223,13 @@ class ArticleProcessor:
             )
             return []
 
-        max_concurrent_urls = min(len(urls), 3) # Adjust as needed for performance
-        base_delay = parser.delay if hasattr(parser, "delay") else 1.0 # delay to not overload servers
+        max_concurrent_urls = min(len(urls), 3)  # Adjust as needed for performance
+        base_delay = (
+            parser.delay if hasattr(parser, "delay") else 1.0
+        )  # delay to not overload servers
 
         def fetch_single_url(url_info):
-            i, url = url_info   #i is created by enumerate and sole function is DELAY
+            i, url = url_info  # i is created by enumerate and sole function is DELAY
             try:
                 validated_url = DataValidator.validate_url(url)
                 if not validated_url:
@@ -224,10 +243,10 @@ class ArticleProcessor:
                     )
                     return None, url, "invalid"
 
-                if i > 0: # Stagger requests 
+                if i > 0:  # Stagger requests
                     time.sleep(base_delay * (i % 3))
 
-                soup = parser.get_soup_from_url(validated_url)  #class specific method
+                soup = parser.get_soup_from_url(validated_url)  # class specific method
                 return soup, validated_url, "success" if soup else "failed"
 
             except Exception as e:
@@ -243,7 +262,6 @@ class ArticleProcessor:
 
         # Use ThreadPoolExecutor for concurrent URL fetching
         with ThreadPoolExecutor(max_workers=max_concurrent_urls) as executor:
-
             """
             This dict comprehension does 3 things: (too dense should change potentially)
             1. creates an index i for each url (used only for delay)
@@ -256,7 +274,9 @@ class ArticleProcessor:
                 for i, url in enumerate(urls)
             }
 
-            for future in as_completed(future_to_url):  #this is a generator that yields futures as they complete
+            for future in as_completed(
+                future_to_url
+            ):  # this is a generator that yields futures as they complete
                 try:
                     soup, processed_url, status = future.result()
                     soup_sources.append((soup, processed_url))
@@ -368,7 +388,9 @@ class ArticleProcessor:
 
         # Process sources concurrently
         max_workers = min(len(SCRAPER_CONFIGS), 4)
-        enabled_sources = [config for config in SCRAPER_CONFIGS if config.enabled] # creates a list of ScreaperConfig objects for enabled sources
+        enabled_sources = [
+            config for config in SCRAPER_CONFIGS if config.enabled
+        ]  # creates a list of ScreaperConfig objects for enabled sources
 
         logger.info(
             "Starting concurrent source processing",

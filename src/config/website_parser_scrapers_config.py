@@ -20,7 +20,8 @@ class ScraperConfig:
     scraper_kwargs: Optional[Dict] = None  # Arguments to pass to scraper
     parser_kwargs: Optional[Dict] = None  # Arguments to pass to parser
 
-#exmapls of kwargs are delay time for concurrency...
+
+# exmapls of kwargs are delay time for concurrency...
 
 
 # List of all configured news sources

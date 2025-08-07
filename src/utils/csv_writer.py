@@ -56,8 +56,10 @@ class DailyCSVWriter:
 
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        self.filename = self._get_filename()    # generates filename based on current date
-        self.existing_keys = self._load_existing_keys() # loads existing article keys to prevent duplicates
+        self.filename = self._get_filename()  # generates filename based on current date
+        self.existing_keys = (
+            self._load_existing_keys()
+        )  # loads existing article keys to prevent duplicates
         self.debug = DEBUG if debug is None else debug
 
     def _get_filename(self) -> Path:
