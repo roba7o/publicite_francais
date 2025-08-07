@@ -39,12 +39,12 @@ CSV_FIELDS = [
 class DailyCSVWriter:
     """Handles writing article word frequency data to daily CSV files."""
 
-    # Class-level lock for thread safety during concurrent writes
+    # lock object -> only one thread can access the file writing methods at a time
     _write_lock = threading.Lock()
 
     def __init__(
         self,
-        output_dir: Optional[Union[str, Path]] = None,
+        output_dir: Optional[Union[str, Path]] = None,  # can be str oath or Path object
         debug: Optional[bool] = None,
     ) -> None:
         self.logger = get_structured_logger(self.__class__.__name__)
@@ -56,8 +56,8 @@ class DailyCSVWriter:
 
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        self.filename = self._get_filename()
-        self.existing_keys = self._load_existing_keys()
+        self.filename = self._get_filename()    # generates filename based on current date
+        self.existing_keys = self._load_existing_keys() # loads existing article keys to prevent duplicates
         self.debug = DEBUG if debug is None else debug
 
     def _get_filename(self) -> Path:

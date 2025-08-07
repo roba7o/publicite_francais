@@ -84,30 +84,39 @@ class BaseParser(ABC):
             requests.Session: Configured session ready for HTTP requests
 
         Note:
-            The session is shared across all parser instances to maximize
-            connection reuse and improve overall scraping performance.
+            the session is shared across the same instance of a subclass of BaseParser.
+            For example, slatefr parser is only instantiated once, but will make multiple requests
+            to the same site domain from urls grabbed by the scraper. So it will use the same session
+            for all requests to that site domain (all artciles stem from the same site domain).
         """
         if cls._session is None:
-            cls._session = requests.Session()
+            cls._session = requests.Session()   #makes sure that the session is only created once
 
-            # Configure retry strategy
+            # Configure retry strategy based on common HTTP errors
             retry_strategy = Retry(
-                total=3,
-                backoff_factor=1,
+                total=3, # Total number of retries
+                backoff_factor=1, # Exponential backoff factor
                 status_forcelist=[429, 500, 502, 503, 504],
             )
 
             # Configure HTTP adapter with connection pooling
             adapter = HTTPAdapter(
                 max_retries=retry_strategy,
-                pool_connections=10,  # Number of connection pools
+                pool_connections=10,  # Number of connection pools aka site domains
                 pool_maxsize=20,  # Max connections per pool
-                pool_block=False,
+                pool_block=False, # if pool is full, do not block, just raise an error and create temporary conn
             )
-
+            # Mount the adapter for both HTTP and HTTPS
             cls._session.mount("http://", adapter)
             cls._session.mount("https://", adapter)
+
+            #applies the User-Agent header (defined earlier) to all requests made with this session. (mimics a browser)
             cls._session.headers.update(cls.HEADERS)
+
+            #debug logging for session creation
+            # get_structured_logger("BaseParser").info(
+            #     f"Created single session for all parsers (Session ID: {id(cls._session)})"
+            # )
 
         return cls._session
 
@@ -115,9 +124,9 @@ class BaseParser(ABC):
         self, site_domain: str, debug: Optional[bool] = None, delay: float = 1.0
     ):
         self.logger = get_structured_logger(self.__class__.__name__)
-        self.site_domain = site_domain
-        self.debug = debug if debug is not None else DEBUG
-        self.delay = delay
+        self.site_domain = site_domain  # assigned in subclass super init call
+        self.debug = debug if debug is not None else DEBUG  #config level
+        self.delay = delay  # hardcoded in init
 
         # CSV writer now handles output directory automatically
         self.csv_writer = DailyCSVWriter(debug=self.debug)
@@ -269,7 +278,7 @@ class BaseParser(ABC):
         self, source_name: str
     ) -> List[Tuple[Optional[BeautifulSoup], str]]:
         """
-        Auto-discover and load test files from the test_data directory.
+        Gets the soups from the test data directory using url mappings and source name.
 
         Args:
             source_name: Name of the news source to map to directory
@@ -277,13 +286,12 @@ class BaseParser(ABC):
         Returns:
             List of (soup, url) tuples with original URLs
         """
-        from pathlib import Path
 
-        current_file_dir = Path(__file__).parent
-        project_root_dir = current_file_dir.parent
-        test_data_dir = project_root_dir / "test_data" / "raw_url_soup"
+        current_file_dir = Path(__file__).parent    #__file__ is current file path. Path() turns to path object which can then get the dir path with .parent e.g. /Users/robertmatthew/Documents/programmingSelfStudy/projects/publicite_francais/src/parsers/ for this file
+        project_root_dir = current_file_dir.parent # goes up one level to the project root directory
+        test_data_dir = project_root_dir / "test_data" / "raw_url_soup" # constructs the path to the test data directory
 
-        # Use the source name directly as the directory name (/ is a function of pathlib)
+        # 
         source_dir = test_data_dir / source_name
 
         if not source_dir.exists():
@@ -314,7 +322,7 @@ class BaseParser(ABC):
         try:
             for file_path in source_dir.iterdir():
                 if file_path.suffix in (".html", ".php"):
-                    filename = file_path.name   # fil_path = Path(".../article1.html") whilst filename= "article1.html" (just a fucntion of Path object)
+                    filename = file_path.name   #  fil_path = Path(".../article1.html") whilst filename= "article1.html" (just a fucntion of Path object)
 
                     # Get original URL from mapping
                     original_url = URL_MAPPING.get(filename, f"test://{filename}")  #refers to manual config created to match urls with data i manually took from website source using inspect
