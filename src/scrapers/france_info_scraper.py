@@ -1,29 +1,22 @@
-import requests
-from bs4 import BeautifulSoup, Tag
-from urllib.parse import urljoin
-from config.settings import DEBUG
-from utils.structured_logger import get_structured_logger
 import random
 import time
+from typing import List
+from urllib.parse import urljoin
+
+from bs4 import BeautifulSoup, Tag
+
+from scrapers.base_scraper import BaseScraper
 
 
-class FranceInfoURLScraper:
+class FranceInfoURLScraper(BaseScraper):
     def __init__(self, debug=None):
-        self.logger = get_structured_logger(self.__class__.__name__)
-        self.debug = debug if debug is not None else DEBUG
+        super().__init__(debug)
         self.base_url = "https://www.franceinfo.fr/"
-        self.headers = {
-            "User-Agent": (
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                "(KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-            )
-        }
 
-    def get_article_urls(self, max_articles=8):
+    def get_article_urls(self, max_articles=8) -> List[str]:
         try:
             time.sleep(random.uniform(1, 3))
-            response = requests.get(self.base_url, headers=self.headers, timeout=10)
-            response.raise_for_status()
+            response = self._make_request(self.base_url)
 
             soup = BeautifulSoup(response.content, "html.parser")
             article_cards = soup.find_all("article", {"data-cy": "card-article-m"})
@@ -49,7 +42,7 @@ class FranceInfoURLScraper:
                     seen.add(url)
                     unique_urls.append(url)
 
-            self.logger.info(f"Found {len(unique_urls)} article URLs.")
+            self._log_results(unique_urls)
             return unique_urls
 
         except Exception as e:

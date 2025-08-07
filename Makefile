@@ -13,7 +13,7 @@ IMAGE := my-scraper
 .DEFAULT_GOAL := help
 
 # Declare phony targets to avoid conflicts with files/directories
-.PHONY: run run-live run-offline test tests test-essential test-integration test-offline lint format check-format mypy clean docker-build docker-run help tree
+.PHONY: run run-live run-offline test tests test-essential test-integration test-offline lint format check-format mypy fix clean docker-build docker-run help tree
 
 # ========== Local venv commands ==========
 
@@ -49,17 +49,26 @@ test-integration:  ## Run integration tests only
 test-offline:  ## Run the offline mode integration test
 	PYTHONPATH=$(SRC) pytest -v tests/integration/test_offline_mode.py::TestOfflineMode::test_make_run_offline_integration
 
-lint:  ## Run flake8 on the src directory
-	flake8 --max-line-length=88 $(SRC)
+lint:  ## Run ruff linting
+	ruff check $(SRC)
 
-format:  ## Auto-format code with black
-	black $(SRC)
+format:  ## Auto-format code with ruff
+	ruff format $(SRC)
 
 check-format:  ## Check formatting without modifying files
-	black --check $(SRC)
+	ruff format --check $(SRC)
 
 mypy:  ## Run static type checks
 	mypy $(SRC)
+
+fix:  ## Auto-format code and run all checks
+	@echo "🔧 Formatting code with ruff..."
+	ruff format $(SRC)
+	@echo "🔍 Running ruff linting..."
+	ruff check --fix $(SRC)
+	@echo "🔍 Running mypy type checks..."
+	mypy $(SRC)
+	@echo "✅ All checks passed!"
 
 clean:  ## Remove __pycache__, .pyc files, and test artifacts
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true

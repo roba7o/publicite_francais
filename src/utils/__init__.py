@@ -9,11 +9,11 @@ This module contains utility functions and classes for:
 - HTML downloading
 """
 
+from .csv_writer import CSVWriter, DailyCSVWriter
 from .french_text_processor import FrenchTextProcessor
-from .csv_writer import DailyCSVWriter, CSVWriter
-from .validators import DataValidator
-from .structured_logger import get_structured_logger
 from .html_downloader import download_html
+from .structured_logger import get_structured_logger
+from .validators import DataValidator
 
 __all__ = [
     "FrenchTextProcessor",

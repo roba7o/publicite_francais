@@ -24,8 +24,10 @@
 
 ```mermaid
 graph TD
-    A[Main Entry Point] --> B[ArticleProcessor.process_source]
-    B --> C[Configuration Loading]
+    A[Main Entry Point] --> B[ArticleProcessor.process_all_sources]
+    B --> B1[Concurrent Source Processing]
+    B1 --> B2[ArticleProcessor.process_source]
+    B2 --> C[Configuration Loading]
     C --> D[Dynamic Class Import]
     D --> E[Component Initialization]
     E --> F[Content Acquisition Mode]
@@ -84,7 +86,10 @@ sequenceDiagram
     participant Validator as Data Validator
     participant Writer as CSV Writer
     
-    Main->>Processor: process_source(config)
+    Main->>Processor: process_all_sources()
+    Processor->>Processor: Setup concurrent processing
+    loop For Each Source
+        Processor->>Processor: process_source(config)
     Processor->>Processor: Validate config
     Processor->>ClassLoader: import_class(scraper_class)
     ClassLoader->>Processor: Return scraper class
@@ -139,6 +144,15 @@ class ArticleProcessor:
     @staticmethod
     def import_class(class_path: str) -> type:
         """Dynamically import a class from a string path."""
+        
+    @classmethod
+    def process_all_sources(cls) -> Tuple[int, int]:
+        """
+        Main entry point - processes all configured sources concurrently.
+        
+        Returns:
+            Tuple of (total_processed, total_attempted) across all sources
+        """
         
     @classmethod
     def process_source(cls, config: ScraperConfig) -> Tuple[int, int]:

@@ -2,37 +2,25 @@
 Grabbing top 8 articles from ladepeche.fr which are then passed on to parser
 """
 
-import requests
-from bs4 import BeautifulSoup
+from typing import List
 from urllib.parse import urljoin
-from config.settings import DEBUG
 
-from utils.structured_logger import get_structured_logger
+from bs4 import BeautifulSoup
+
+from scrapers.base_scraper import BaseScraper
 
 
-class LadepecheFrURLScraper:
+class LadepecheFrURLScraper(BaseScraper):
     def __init__(self, debug=None):
-        self.logger = get_structured_logger(self.__class__.__name__)
-
-        self.debug = debug if debug is not None else DEBUG
+        super().__init__(debug)
         self.base_url = "https://www.ladepeche.fr"
-        self.headers = {
-            "User-Agent": (
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                "(KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
-            )
-        }
 
-    def get_article_urls(self):
+    def get_article_urls(self) -> List[str]:
         """
         Get the URLs of the top 8 articles from the Ladepeche.fr homepage.
         """
         try:
-            if self.debug:
-                self.logger.info(f"Fetching homepage URL: {self.base_url}")
-
-            response = requests.get(self.base_url, headers=self.headers)
-            response.raise_for_status()
+            response = self._make_request(self.base_url)
             soup = BeautifulSoup(response.content, "html.parser")
 
             # Look for article links in the news section
@@ -60,13 +48,9 @@ class LadepecheFrURLScraper:
                     seen.add(url)
                     unique_urls.append(url)
 
-            self.logger.info(f"Found {len(unique_urls)} article URLs.")
-            if self.debug:
-                for url in unique_urls:
-                    self.logger.debug(f"Article URL: {url}")
-
+            self._log_results(unique_urls)
             return unique_urls
 
-        except requests.exceptions.RequestException as e:
+        except Exception as e:
             self.logger.error(f"Failed to fetch URL: {self.base_url} | Error: {e}")
-            return None
+            return []

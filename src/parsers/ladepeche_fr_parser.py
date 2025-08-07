@@ -8,14 +8,14 @@ BaseParser to specifically extract and process content from Ladepeche.fr
 articles.
 """
 
-from datetime import datetime
 import re
+from datetime import datetime
 from typing import List, Optional
 
 from bs4 import BeautifulSoup
 
-from parsers.base_parser import BaseParser
 from models import ArticleData
+from parsers.base_parser import BaseParser
 
 
 class LadepecheFrArticleParser(BaseParser):
@@ -53,8 +53,7 @@ class LadepecheFrArticleParser(BaseParser):
             )
             if not article_content_area:
                 self.logger.warning(
-                    "No main article content area found (article or "
-                    ".article-content)."
+                    "No main article content area found (article or .article-content)."
                 )
                 # Attempt a more general fallback if specific elements
                 # aren't found
@@ -255,7 +254,7 @@ class LadepecheFrArticleParser(BaseParser):
                             return dt_obj.strftime("%Y-%m-%d")
                         except ValueError:
                             self.logger.debug(
-                                f"Failed to parse '{date_str}' as " "YYYYMMDDHHMMSS."
+                                f"Failed to parse '{date_str}' as YYYYMMDDHHMMSS."
                             )
                             # Continue to try other formats if this one fails
 

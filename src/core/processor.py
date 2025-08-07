@@ -1,13 +1,27 @@
-import importlib
-from typing import Tuple, Optional, List, Any
+import importlib  # allows for dynamic imports of scraper and parser classes as strings
+import time
+from concurrent.futures import (
+    ThreadPoolExecutor,
+    as_completed,
+)  # running multiple downsloads in parallel/concurrently
+from typing import (
+    Any,
+    List,
+    Optional,
+    Tuple,
+    Type,
+)  # for type hinting and dynamic class imports
 
-from config.website_parser_scrapers_config import ScraperConfig
-from config.settings import OFFLINE
+from bs4 import BeautifulSoup
+
+from config.settings import (
+    OFFLINE,
+)  # whether the application is running in offline mode
+from config.website_parser_scrapers_config import (
+    ScraperConfig,
+)  # refer to dataclass for scraper configuration info
 from utils.structured_logger import get_structured_logger
 from utils.validators import DataValidator
-from bs4 import BeautifulSoup
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import time
 
 logger = get_structured_logger(__name__)
 
@@ -22,18 +36,22 @@ class ArticleProcessor:
     and CSV output.
 
     Features:
-    - Concurrent processing of multiple news sources
-    - Duplicate detection and prevention
-    - Both live and offline testing modes
+    - Dynamic class loading for scrapers and parsers based on configuration
+    - Concurrent processing of multiple sources for efficiency
+    - Comprehensive error handling and logging
+    - Support for both live scraping and offline testing modes
 
-    Example:
-        >>> config = ScraperConfig(name="test", enabled=True, ...)
-        >>> processed, attempted = ArticleProcessor.process_source(config)
-        >>> print(f"Processed {processed}/{attempted} articles")
+    How to add new sources:
+    1. Define a new `ScraperConfig` in `website_parser_scrapers_config.py`
+       with the appropriate scraper and parser class paths.
+    2. Ensure the scraper and parser classes implement the required methods
+       (`get_article_urls`, `get_soup_from_url`, `parse_article`, `to_csv`).
+    3. The `ArticleProcessor` will automatically discover and process the new source
+       based on the configuration.
     """
 
     @staticmethod
-    def import_class(class_path: str) -> type:
+    def import_class(class_path: str) -> Type[Any]:
         """
         Dynamically import a class from a string path.
 
@@ -57,12 +75,10 @@ class ArticleProcessor:
             ...     'scrapers.slate_fr_scraper.SlateFrURLScraper')
             >>> scraper = cls(debug=True)
         """
-        from typing import Type, Any
-
         module_path, class_name = class_path.rsplit(".", 1)
         module = importlib.import_module(module_path)
-        cls: Type[Any] = getattr(module, class_name)
-        return cls
+        cls = getattr(module, class_name)
+        return cls  # type: ignore
 
     @classmethod
     def process_source(cls, config: ScraperConfig) -> Tuple[int, int]:
@@ -141,7 +157,9 @@ class ArticleProcessor:
         sources = (
             cls._get_test_sources(parser, config.name)
             if OFFLINE
-            else cls._get_live_sources_with_recovery(scraper, parser, config.name)
+            else cls._get_live_sources_with_recovery(
+                scraper, parser, config.name
+            )  # scraper needed as its live url discovery
         )
 
         if not sources:
@@ -189,9 +207,10 @@ class ArticleProcessor:
     def _get_live_sources_with_recovery(
         scraper: Any, parser: Any, source_name: str
     ) -> List[Tuple[Optional[BeautifulSoup], str]]:
-
         def get_urls():
-            return scraper.get_article_urls()
+            return (
+                scraper.get_article_urls()
+            )  # simple function call to get urls from the scraper
 
         urls = get_urls()
         if not urls:
@@ -204,13 +223,13 @@ class ArticleProcessor:
             )
             return []
 
-        # Process URLs concurrently for better performance
-        # Limit concurrent requests per source
-        max_concurrent_urls = min(len(urls), 3)
-        base_delay = parser.delay if hasattr(parser, "delay") else 1.0
+        max_concurrent_urls = min(len(urls), 3)  # Adjust as needed for performance
+        base_delay = (
+            parser.delay if hasattr(parser, "delay") else 1.0
+        )  # delay to not overload servers
 
         def fetch_single_url(url_info):
-            i, url = url_info
+            i, url = url_info  # i is created by enumerate and sole function is DELAY
             try:
                 validated_url = DataValidator.validate_url(url)
                 if not validated_url:
@@ -224,11 +243,10 @@ class ArticleProcessor:
                     )
                     return None, url, "invalid"
 
-                # Stagger requests to avoid overwhelming servers
-                if i > 0:
-                    time.sleep(base_delay * (i % 3))  # Spread delays
+                if i > 0:  # Stagger requests
+                    time.sleep(base_delay * (i % 3))
 
-                soup = parser.get_soup_from_url(validated_url)
+                soup = parser.get_soup_from_url(validated_url)  # class specific method
                 return soup, validated_url, "success" if soup else "failed"
 
             except Exception as e:
@@ -244,12 +262,21 @@ class ArticleProcessor:
 
         # Use ThreadPoolExecutor for concurrent URL fetching
         with ThreadPoolExecutor(max_workers=max_concurrent_urls) as executor:
+            """
+            This dict comprehension does 3 things: (too dense should change potentially)
+            1. creates an index i for each url (used only for delay)
+            2. submits task to executor to fetch each url
+            3. maps each future to its corresponding url
+            """
+
             future_to_url = {
                 executor.submit(fetch_single_url, (i, url)): url
                 for i, url in enumerate(urls)
             }
 
-            for future in as_completed(future_to_url):
+            for future in as_completed(
+                future_to_url
+            ):  # this is a generator that yields futures as they complete
                 try:
                     soup, processed_url, status = future.result()
                     soup_sources.append((soup, processed_url))
@@ -257,7 +284,7 @@ class ArticleProcessor:
                     if status != "success":
                         failed_count += 1
 
-                        # Early termination if too many failures
+                        # Early termination if too many failures (ie on same SOURCE/website if theres more than 5 failed urls and more than 80% of urls failed)
                         if failed_count >= 5 and failed_count / len(soup_sources) > 0.8:
                             current_failure_rate = (
                                 failed_count / len(soup_sources) * 100
@@ -274,7 +301,7 @@ class ArticleProcessor:
                                     "threshold_percent": 80,
                                 },
                             )
-                            # Cancel remaining futures
+                            # Cancel remaining futures -> other urls in website page planned to be processed
                             for remaining_future in future_to_url:
                                 if not remaining_future.done():
                                     remaining_future.cancel()
@@ -317,7 +344,6 @@ class ArticleProcessor:
     def _process_article_with_recovery(
         parser: Any, soup: BeautifulSoup, source_identifier: str, source_name: str
     ) -> bool:
-
         def process_article():
             parsed_content = parser.parse_article(soup)
             if not parsed_content:
@@ -345,3 +371,90 @@ class ArticleProcessor:
                 exc_info=True,
             )
             return False
+
+    @classmethod
+    def process_all_sources(cls) -> Tuple[int, int]:
+        """
+        Process all configured sources concurrently.
+
+        Returns:
+            Tuple of (total_processed, total_attempted) across all sources
+        """
+        from config.website_parser_scrapers_config import SCRAPER_CONFIGS
+
+        total_processed = 0
+        total_attempted = 0
+        failed_sources = []
+
+        # Process sources concurrently
+        max_workers = min(len(SCRAPER_CONFIGS), 4)
+        enabled_sources = [
+            config for config in SCRAPER_CONFIGS if config.enabled
+        ]  # creates a list of ScreaperConfig objects for enabled sources
+
+        logger.info(
+            "Starting concurrent source processing",
+            extra_data={
+                "total_sources": len(SCRAPER_CONFIGS),
+                "enabled_sources": len(enabled_sources),
+                "max_workers": max_workers,
+            },
+        )
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # creating a dictionary of futures (cls.function(*args) to track which config each future corresponds to
+            future_to_config = {
+                executor.submit(cls.process_source, config): config
+                for config in enabled_sources
+            }
+
+            # This dict then gets loopped through
+
+            for future in as_completed(future_to_config):
+                config = future_to_config[future]
+                try:
+                    processed, attempted = future.result()
+                    total_processed += processed
+                    total_attempted += attempted
+
+                    success_rate = (processed / attempted * 100) if attempted > 0 else 0
+                    if success_rate < 30 and attempted > 0:
+                        failed_sources.append(config.name)
+                        logger.warning(
+                            "Low success rate detected",
+                            extra_data={
+                                "source": config.name,
+                                "success_rate": round(success_rate, 1),
+                                "processed": processed,
+                                "attempted": attempted,
+                            },
+                        )
+                    else:
+                        logger.info(
+                            "Source completed successfully",
+                            extra_data={
+                                "source": config.name,
+                                "processed": processed,
+                                "attempted": attempted,
+                                "success_rate": round(success_rate, 1),
+                            },
+                        )
+
+                except Exception as e:
+                    failed_sources.append(config.name)
+                    logger.error(
+                        "Source processing failed",
+                        extra_data={"source": config.name, "error": str(e)},
+                        exc_info=True,
+                    )
+
+        if failed_sources:
+            logger.warning(
+                "Some sources failed processing",
+                extra_data={
+                    "failed_sources": failed_sources,
+                    "failed_count": len(failed_sources),
+                },
+            )
+
+        return total_processed, total_attempted
