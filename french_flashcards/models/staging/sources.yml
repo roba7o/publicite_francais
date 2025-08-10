@@ -1,0 +1,40 @@
+version: 2
+
+sources:
+  - name: news_data
+    description: Raw news data from Python scraper
+    schema: news_data
+    tables:
+      - name: articles
+        description: Raw article data scraped from French news sites
+        columns:
+          - name: id
+            description: Unique article identifier
+            tests:
+              - unique
+              - not_null
+          - name: source_id  
+            description: News source identifier
+            tests:
+              - not_null
+          - name: title
+            description: Article title
+            tests:
+              - not_null
+          - name: url
+            description: Original article URL
+            tests:
+              - unique
+              - not_null
+          - name: full_text
+            description: Complete article text content
+            tests:
+              - not_null
+          - name: article_date
+            description: Date article was published
+          - name: scraped_at
+            description: Timestamp when article was scraped
+            tests:
+              - not_null
+          - name: num_paragraphs
+            description: Number of paragraphs in article
