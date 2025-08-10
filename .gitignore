@@ -43,3 +43,7 @@ logs/
 .idea/
 *.swp
 *.swo
+
+
+#claude 
+CLAUDE.md
