@@ -32,21 +32,33 @@ def create_database_configs():
     Create database-focused source configurations.
     
     Uses your existing scraper classes but Database parsers.
+    All 4 sources now have Database parsers implemented.
     """
     return [
         {
             "name": "Slate.fr",
             "enabled": True,
-            "scraper_class": "scrapers.slate_fr_scraper.SlateFrURLScraper",  # Your existing scraper
+            "scraper_class": "scrapers.slate_fr_scraper.SlateFrURLScraper",
             "scraper_kwargs": {"debug": DEBUG}
         },
-        # Add other sources as you create database parsers for them
-        # {
-        #     "name": "FranceInfo.fr", 
-        #     "enabled": False,
-        #     "scraper_class": "scrapers.france_info_scraper.FranceInfoURLScraper",
-        #     "scraper_kwargs": {"debug": DEBUG}
-        # },
+        {
+            "name": "FranceInfo.fr", 
+            "enabled": True,
+            "scraper_class": "scrapers.france_info_scraper.FranceInfoURLScraper",
+            "scraper_kwargs": {"debug": DEBUG}
+        },
+        {
+            "name": "TF1 Info",
+            "enabled": True,
+            "scraper_class": "scrapers.tf1_info_scraper.TF1InfoURLScraper",
+            "scraper_kwargs": {"debug": DEBUG}
+        },
+        {
+            "name": "Depeche.fr",
+            "enabled": True,
+            "scraper_class": "scrapers.ladepeche_fr_scraper.LadepecheFrURLScraper",
+            "scraper_kwargs": {"debug": DEBUG}
+        },
     ]
 
 

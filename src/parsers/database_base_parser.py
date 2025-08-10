@@ -213,6 +213,49 @@ class DatabaseBaseParser(ABC):
         """
         pass
 
+    def _parse_article_date(self, date_str: str) -> Optional[str]:
+        """
+        Parse article date string to valid YYYY-MM-DD format or None.
+        
+        Args:
+            date_str: Date string from parser (could be "Unknown date", "2025-01-01", etc.)
+            
+        Returns:
+            Valid date string in YYYY-MM-DD format or None for invalid dates
+        """
+        if not date_str or date_str.lower() in ["unknown date", "no date found", "unknown", ""]:
+            return None
+            
+        # If already in YYYY-MM-DD format, validate and return
+        if len(date_str) == 10 and date_str.count('-') == 2:
+            try:
+                datetime.strptime(date_str, "%Y-%m-%d")
+                return date_str
+            except ValueError:
+                pass
+                
+        # Try to parse other common formats
+        date_formats = [
+            "%Y-%m-%d",
+            "%d/%m/%Y", 
+            "%m/%d/%Y",
+            "%Y-%m-%d %H:%M:%S",
+            "%Y-%m-%dT%H:%M:%S",
+        ]
+        
+        for fmt in date_formats:
+            try:
+                # Split on T and space to handle datetime strings
+                clean_date = date_str.split('T')[0].split(' ')[0]
+                dt = datetime.strptime(clean_date, fmt)
+                return dt.strftime("%Y-%m-%d")
+            except ValueError:
+                continue
+                
+        # If we can't parse it, log a warning and return None
+        self.logger.warning(f"Could not parse article date: '{date_str}', storing as NULL")
+        return None
+
     def to_database(self, article_data: ArticleData, url: str) -> bool:
         """
         Store raw article data directly to database.
@@ -236,11 +279,14 @@ class DatabaseBaseParser(ABC):
             return False
 
         try:
+            # Parse article date to valid format or None
+            parsed_article_date = self._parse_article_date(article_data.article_date)
+            
             with self.db.get_session() as session:
                 from sqlalchemy import text
 
-                # Check for duplicate
-                existing = session.execute(
+                # Check for duplicates on both unique constraints
+                existing_url = session.execute(
                     text("""
                     SELECT id FROM news_data.articles
                     WHERE source_id = :source_id AND url = :url
@@ -248,14 +294,35 @@ class DatabaseBaseParser(ABC):
                     {"source_id": self.source_id, "url": url},
                 ).fetchone()
 
-                if existing:
+                if existing_url:
                     self.logger.debug(
-                        "Article already exists",
-                        extra_data={"url": url, "existing_id": str(existing[0])},
+                        "Article already exists (duplicate URL)",
+                        extra_data={"url": url, "existing_id": str(existing_url[0])},
                     )
                     return False
 
-                # Insert raw article data
+                # Check for duplicate title+date combination
+                if parsed_article_date:  # Only check if we have a valid date
+                    existing_title_date = session.execute(
+                        text("""
+                        SELECT id FROM news_data.articles
+                        WHERE source_id = :source_id AND title = :title AND article_date = :article_date
+                    """),
+                        {"source_id": self.source_id, "title": article_data.title, "article_date": parsed_article_date},
+                    ).fetchone()
+
+                    if existing_title_date:
+                        self.logger.debug(
+                            "Article already exists (duplicate title+date)",
+                            extra_data={
+                                "title": article_data.title[:50] + "..." if len(article_data.title) > 50 else article_data.title,
+                                "article_date": parsed_article_date,
+                                "existing_id": str(existing_title_date[0])
+                            },
+                        )
+                        return False
+
+                # Insert raw article data (duplicates already handled above)
                 article_id = uuid4()
                 session.execute(
                     text("""
@@ -268,12 +335,14 @@ class DatabaseBaseParser(ABC):
                         "source_id": self.source_id,
                         "title": article_data.title,
                         "url": url,
-                        "article_date": article_data.article_date,
-                        "scraped_at": datetime.now(),
+                        "article_date": parsed_article_date,  # Now properly parsed or NULL
+                        "scraped_at": datetime.now(),  # When we scraped it (current timestamp)
                         "full_text": article_data.full_text,
                         "num_paragraphs": article_data.num_paragraphs,
                     },
                 )
+                
+                session.commit()  # Commit the transaction explicitly
 
                 self.logger.info(
                     "Raw article stored successfully",

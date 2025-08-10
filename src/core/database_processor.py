@@ -188,8 +188,9 @@ class DatabaseProcessor:
         # Map source names to database parsers
         parser_map = {
             "Slate.fr": "parsers.database_slate_fr_parser.DatabaseSlateFrParser",
-            # Add other database parsers as you create them
-            # "FranceInfo.fr": "parsers.database_france_info_parser.DatabaseFranceInfoParser",
+            "FranceInfo.fr": "parsers.database_france_info_parser.DatabaseFranceInfoParser",
+            "TF1 Info": "parsers.database_tf1_info_parser.DatabaseTF1InfoParser",
+            "Depeche.fr": "parsers.database_ladepeche_fr_parser.DatabaseLadepecheFrParser",
         }
 
         parser_class_path = parser_map.get(source_name)

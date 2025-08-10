@@ -1,7 +1,7 @@
 # ========= Makefile for article_scrapers project =========
 
 # Python interpreter (uses virtualenv by default)
-PYTHON := python3
+PYTHON := ./venv/bin/python
 SRC := src
 MAIN_MODULE := main
 SETTINGS_FILE := $(SRC)/config/settings.py
@@ -18,25 +18,25 @@ IMAGE := my-scraper
 # ========== Local venv commands ==========
 
 run:  ## Run main script locally (must be inside venv)
-	cd $(SRC) && $(PYTHON) -m $(MAIN_MODULE)
+	cd $(SRC) && ../venv/bin/python -m $(MAIN_MODULE)
 
 run-live:  ## Run script in live mode (OFFLINE = False)
 	@echo "Setting OFFLINE = False and running in live mode..."
 	@sed -i.bak 's/OFFLINE = True/OFFLINE = False/' $(SETTINGS_FILE)
-	cd $(SRC) && $(PYTHON) -m $(MAIN_MODULE)
+	cd $(SRC) && ../venv/bin/python -m $(MAIN_MODULE)
 	@sed -i.bak 's/OFFLINE = False/OFFLINE = True/' $(SETTINGS_FILE)
 	@rm -f $(SETTINGS_FILE).bak
 
 run-offline:  ## Run script in offline mode (OFFLINE = True)
 	@echo "Setting OFFLINE = True and running in offline mode..."
 	@sed -i.bak 's/OFFLINE = False/OFFLINE = True/' $(SETTINGS_FILE)
-	cd $(SRC) && $(PYTHON) -m $(MAIN_MODULE)
+	cd $(SRC) && ../venv/bin/python -m $(MAIN_MODULE)
 	@sed -i.bak 's/OFFLINE = True/OFFLINE = False/' $(SETTINGS_FILE)
 	@rm -f $(SETTINGS_FILE).bak
 
 test:  ## Run all tests + pipeline test
 	@echo "\033[33m◆ Running Python tests...\033[0m"
-	PYTHONPATH=$(SRC) pytest -v
+	PATH=./venv/bin:$$PATH PYTHONPATH=$(SRC) ./venv/bin/pytest -v
 	@echo "\033[33m◆ Running pipeline integration test...\033[0m"
 	$(MAKE) test-pipeline
 
@@ -44,13 +44,13 @@ tests:  ## Run all tests (alias for test)
 	$(MAKE) test
 
 test-essential:  ## Run essential working tests only
-	PYTHONPATH=$(SRC) pytest -v tests/test_essential.py
+	PATH=./venv/bin:$$PATH PYTHONPATH=$(SRC) ./venv/bin/pytest -v tests/test_essential.py
 
 test-integration:  ## Run integration tests only
-	PYTHONPATH=$(SRC) pytest -v tests/integration/
+	PATH=./venv/bin:$$PATH PYTHONPATH=$(SRC) ./venv/bin/pytest -v tests/integration/
 
 test-offline:  ## Run the offline mode integration test
-	PYTHONPATH=$(SRC) pytest -v tests/integration/test_offline_mode.py::TestOfflineMode::test_make_run_offline_integration
+	PATH=./venv/bin:$$PATH PYTHONPATH=$(SRC) ./venv/bin/pytest -v tests/integration/test_offline_mode.py::TestOfflineMode::test_make_run_offline_integration
 
 lint:  ## Run ruff linting
 	ruff check $(SRC)
@@ -95,20 +95,24 @@ dbt-debug:  ## Test dbt database connection
 
 pipeline:  ## Run full pipeline: scrape articles + process with dbt
 	@echo "\033[34m■ Step 1: Scraping articles...\033[0m"
-	$(PYTHON) database_main.py
+	./venv/bin/python database_main.py
 	@echo "\033[35m■ Step 2: Processing with dbt...\033[0m"
 	cd french_flashcards && ../venv/bin/dbt run
 	@echo "\033[32m✓ Pipeline complete! Check database for word frequencies.\033[0m"
 
 test-pipeline:  ## Run pipeline test with fresh database (clears data first)
 	@echo "\033[33m◆ Running pipeline test with fresh data...\033[0m"
-	@echo "\033[31m× Step 1: Clearing database...\033[0m"
-	@docker compose exec postgres psql -U news_user -d french_news -c "TRUNCATE news_data.articles CASCADE;" > /dev/null 2>&1 || echo "Database not running - will start fresh"
-	@echo "\033[34m■ Step 2: Scraping test articles...\033[0m"
-	$(PYTHON) database_main.py
-	@echo "\033[35m■ Step 3: Processing with dbt...\033[0m"
+	@echo "\033[34m□ Step 1: Ensuring database is ready...\033[0m"
+	@docker compose up -d postgres
+	@docker compose exec postgres sh -c 'until pg_isready -U news_user -d french_news; do sleep 1; done' > /dev/null 2>&1
+	@echo "\033[31m× Step 2: Clearing database tables...\033[0m"
+	@docker compose exec postgres psql -U news_user -d french_news -c "TRUNCATE news_data.articles CASCADE;"
+	@echo "\033[32m  ✓ Database cleared - $(shell docker compose exec postgres psql -U news_user -d french_news -t -c 'SELECT COUNT(*) FROM news_data.articles;' | xargs) articles remaining\033[0m"
+	@echo "\033[34m■ Step 3: Scraping test articles...\033[0m"
+	./venv/bin/python database_main.py
+	@echo "\033[35m■ Step 4: Processing with dbt...\033[0m"
 	cd french_flashcards && ../venv/bin/dbt run
-	@echo "\033[36m▶ Step 4: Verifying results...\033[0m"
+	@echo "\033[36m▶ Step 5: Verifying results...\033[0m"
 	@docker compose exec postgres psql -U news_user -d french_news -c "SELECT COUNT(*) as articles FROM dbt_staging.cleaned_articles; SELECT COUNT(*) as words FROM dbt_staging.word_frequency_overall;"
 	@echo "\033[32m✓ Pipeline test complete!\033[0m"
 
