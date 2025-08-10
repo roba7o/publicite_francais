@@ -50,11 +50,10 @@ class DatabaseProcessor:
         try:
             with db.get_session() as session:
                 from sqlalchemy import text
-                from config.settings import DATABASE_SCHEMA
 
                 result = session.execute(
-                    text(f"""
-                    SELECT id FROM {DATABASE_SCHEMA}.news_sources
+                    text("""
+                    SELECT id FROM news_data.news_sources
                     WHERE name = :name
                 """),
                     {"name": source_name},

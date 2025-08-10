@@ -285,13 +285,10 @@ class DatabaseBaseParser(ABC):
             with self.db.get_session() as session:
                 from sqlalchemy import text
 
-                # Get the current schema
-                from config.settings import DATABASE_SCHEMA
-                
                 # Check for duplicates on both unique constraints
                 existing_url = session.execute(
-                    text(f"""
-                    SELECT id FROM {DATABASE_SCHEMA}.articles
+                    text("""
+                    SELECT id FROM news_data.articles
                     WHERE source_id = :source_id AND url = :url
                 """),
                     {"source_id": self.source_id, "url": url},
@@ -307,8 +304,8 @@ class DatabaseBaseParser(ABC):
                 # Check for duplicate title+date combination
                 if parsed_article_date:  # Only check if we have a valid date
                     existing_title_date = session.execute(
-                        text(f"""
-                        SELECT id FROM {DATABASE_SCHEMA}.articles
+                        text("""
+                        SELECT id FROM news_data.articles
                         WHERE source_id = :source_id AND title = :title AND article_date = :article_date
                     """),
                         {"source_id": self.source_id, "title": article_data.title, "article_date": parsed_article_date},
@@ -328,8 +325,8 @@ class DatabaseBaseParser(ABC):
                 # Insert raw article data (duplicates already handled above)
                 article_id = uuid4()
                 session.execute(
-                    text(f"""
-                    INSERT INTO {DATABASE_SCHEMA}.articles
+                    text("""
+                    INSERT INTO news_data.articles
                     (id, source_id, title, url, article_date, scraped_at, full_text, num_paragraphs)
                     VALUES (:id, :source_id, :title, :url, :article_date, :scraped_at, :full_text, :num_paragraphs)
                 """),
