@@ -3,7 +3,7 @@ Database-focused processor that stores raw article data to PostgreSQL.
 
 This is the database equivalent of ArticleProcessor that:
 - Uses your existing scrapers (unchanged)
-- Uses Database parsers (extends DatabaseBaseParser)  
+- Uses Database parsers (extends DatabaseBaseParser)
 - Stores raw data directly to database via to_database()
 - NO CSV output, NO word frequencies, NO text analysis
 
@@ -12,16 +12,14 @@ All text processing is moved to dbt/SQL.
 
 import importlib
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, List, Tuple, Type
 
 from bs4 import BeautifulSoup
 
-from config.settings import OFFLINE, DATABASE_ENABLED
+from config.settings import DATABASE_ENABLED, OFFLINE
 from database import get_database_manager
 from utils.structured_logger import get_structured_logger
 from utils.validators import DataValidator
-
 
 logger = get_structured_logger(__name__)
 
@@ -29,7 +27,7 @@ logger = get_structured_logger(__name__)
 class DatabaseProcessor:
     """
     Database-focused processor for raw data collection only.
-    
+
     This replaces the complex ArticleProcessor with:
     - Raw data extraction only
     - Direct database storage via DatabaseBaseParser
@@ -43,7 +41,7 @@ class DatabaseProcessor:
         module_path, class_name = class_path.rsplit(".", 1)
         module = importlib.import_module(module_path)
         cls = getattr(module, class_name)
-        return cls
+        return cls  # type: ignore
 
     @classmethod
     def get_source_id(cls, source_name: str) -> str:
@@ -52,40 +50,44 @@ class DatabaseProcessor:
         try:
             with db.get_session() as session:
                 from sqlalchemy import text
-                result = session.execute(text("""
-                    SELECT id FROM news_data.news_sources 
+
+                result = session.execute(
+                    text("""
+                    SELECT id FROM news_data.news_sources
                     WHERE name = :name
-                """), {"name": source_name})
-                
+                """),
+                    {"name": source_name},
+                )
+
                 row = result.fetchone()
                 if row:
                     return str(row[0])
                 else:
                     logger.error(f"Source not found in database: {source_name}")
                     return ""
-                    
+
         except Exception as e:
             logger.error(f"Failed to get source ID: {e}")
             return ""
 
-    @classmethod 
+    @classmethod
     def process_source(cls, config: dict) -> Tuple[int, int]:
         """
         Process a single source - database version.
-        
+
         Uses your existing scraper but Database parser + database storage.
         """
         if not config.get("enabled", True):
             logger.info(
                 "Source processing skipped",
-                extra_data={"source": config["name"], "reason": "disabled"}
+                extra_data={"source": config["name"], "reason": "disabled"},
             )
             return 0, 0
 
         if not DATABASE_ENABLED:
             logger.warning(
                 "Database not enabled - skipping source",
-                extra_data={"source": config["name"]}
+                extra_data={"source": config["name"]},
             )
             return 0, 0
 
@@ -94,7 +96,7 @@ class DatabaseProcessor:
             extra_data={
                 "source": config["name"],
                 "scraper_class": config["scraper_class"],
-            }
+            },
         )
         start_time = time.time()
 
@@ -102,13 +104,13 @@ class DatabaseProcessor:
             # Use your existing scraper (unchanged)
             ScraperClass = cls.import_class(config["scraper_class"])
             scraper = ScraperClass(**(config.get("scraper_kwargs", {})))
-            
+
             # Get source ID from database
             source_id = cls.get_source_id(config["name"])
             if not source_id:
                 logger.error(f"Could not get source ID for {config['name']}")
                 return 0, 0
-            
+
             # Create database parser
             database_parser = cls._create_database_parser(config["name"], source_id)
             if not database_parser:
@@ -118,11 +120,8 @@ class DatabaseProcessor:
         except Exception as e:
             logger.error(
                 "Component initialization failed",
-                extra_data={
-                    "source": config["name"],
-                    "error": str(e)
-                },
-                exc_info=True
+                extra_data={"source": config["name"], "error": str(e)},
+                exc_info=True,
             )
             return 0, 0
 
@@ -133,15 +132,17 @@ class DatabaseProcessor:
             else cls._get_live_sources(scraper, database_parser, config["name"])
         )
 
-        logger.info(f"Found {len(sources)} sources for {config['name']} (mode: {'offline' if OFFLINE else 'live'})")
+        logger.info(
+            f"Found {len(sources)} sources for {config['name']} (mode: {'offline' if OFFLINE else 'live'})"
+        )
 
         if not sources:
             logger.warning(
                 "No content sources found",
                 extra_data={
                     "source": config["name"],
-                    "mode": "offline" if OFFLINE else "live"
-                }
+                    "mode": "offline" if OFFLINE else "live",
+                },
             )
             return 0, 0
 
@@ -151,12 +152,16 @@ class DatabaseProcessor:
         # Process each article (database storage instead of CSV)
         for soup, source_identifier in sources:
             if soup:
-                success = cls._process_article(database_parser, soup, source_identifier, config["name"])
+                success = cls._process_article(
+                    database_parser, soup, source_identifier, config["name"]
+                )
                 if success:
                     processed_count += 1
 
         elapsed_time = time.time() - start_time
-        success_rate = (processed_count / total_attempted * 100) if total_attempted > 0 else 0
+        success_rate = (
+            (processed_count / total_attempted * 100) if total_attempted > 0 else 0
+        )
 
         logger.info(
             "Database source processing completed",
@@ -165,8 +170,8 @@ class DatabaseProcessor:
                 "articles_stored": processed_count,
                 "articles_attempted": total_attempted,
                 "success_rate_percent": round(success_rate, 1),
-                "processing_time_seconds": round(elapsed_time, 2)
-            }
+                "processing_time_seconds": round(elapsed_time, 2),
+            },
         )
 
         return processed_count, total_attempted
@@ -180,12 +185,12 @@ class DatabaseProcessor:
             # Add other database parsers as you create them
             # "FranceInfo.fr": "parsers.database_france_info_parser.DatabaseFranceInfoParser",
         }
-        
+
         parser_class_path = parser_map.get(source_name)
         if not parser_class_path:
             logger.error(f"No database parser found for source: {source_name}")
             return None
-            
+
         try:
             ParserClass = cls.import_class(parser_class_path)
             return ParserClass(source_id)
@@ -196,21 +201,22 @@ class DatabaseProcessor:
     @staticmethod
     def _get_test_sources(parser, source_name: str) -> List[Tuple[BeautifulSoup, str]]:
         """Get test sources for offline mode."""
-        return parser.get_test_sources_from_directory(source_name)
+        return parser.get_test_sources_from_directory(source_name)  # type: ignore
 
     @staticmethod
-    def _get_live_sources(scraper: Any, parser, source_name: str) -> List[Tuple[BeautifulSoup, str]]:
+    def _get_live_sources(
+        scraper: Any, parser, source_name: str
+    ) -> List[Tuple[BeautifulSoup, str]]:
         """Get live sources (simplified - no complex concurrency for now)."""
         urls = scraper.get_article_urls()
         if not urls:
             logger.warning(
-                "URL discovery returned no results",
-                extra_data={"source": source_name}
+                "URL discovery returned no results", extra_data={"source": source_name}
             )
             return []
 
         sources = []
-        
+
         # Process first 5 URLs for testing (can expand later)
         for url in urls[:5]:
             try:
@@ -225,14 +231,16 @@ class DatabaseProcessor:
             except Exception as e:
                 logger.warning(
                     "URL processing error",
-                    extra_data={"url": url, "source": source_name, "error": str(e)}
+                    extra_data={"url": url, "source": source_name, "error": str(e)},
                 )
                 continue
 
         return sources
 
     @staticmethod
-    def _process_article(parser, soup: BeautifulSoup, url: str, source_name: str) -> bool:
+    def _process_article(
+        parser, soup: BeautifulSoup, url: str, source_name: str
+    ) -> bool:
         """Process single article - database version."""
         try:
             # Parse article (no text processing)
@@ -241,17 +249,13 @@ class DatabaseProcessor:
                 return False
 
             # Store raw data directly to database (replaces CSV)
-            return parser.to_database(article_data, url)
+            return parser.to_database(article_data, url)  # type: ignore
 
         except Exception as e:
             logger.error(
                 "Article processing failed",
-                extra_data={
-                    "source": source_name,
-                    "url": url,
-                    "error": str(e)
-                },
-                exc_info=True
+                extra_data={"source": source_name, "url": url, "error": str(e)},
+                exc_info=True,
             )
             return False
 
@@ -263,7 +267,9 @@ class DatabaseProcessor:
         total_processed = 0
         total_attempted = 0
 
-        enabled_sources = [config for config in source_configs if config.get("enabled", True)]
+        enabled_sources = [
+            config for config in source_configs if config.get("enabled", True)
+        ]
 
         logger.info(
             "Starting database processing",
@@ -271,8 +277,8 @@ class DatabaseProcessor:
                 "total_sources": len(source_configs),
                 "enabled_sources": len(enabled_sources),
                 "database_enabled": DATABASE_ENABLED,
-                "mode": "offline" if OFFLINE else "live"
-            }
+                "mode": "offline" if OFFLINE else "live",
+            },
         )
 
         # Process sources sequentially for now (simpler)
@@ -281,14 +287,16 @@ class DatabaseProcessor:
             total_processed += processed
             total_attempted += attempted
 
-        success_rate = (total_processed / total_attempted * 100) if total_attempted > 0 else 0
+        success_rate = (
+            (total_processed / total_attempted * 100) if total_attempted > 0 else 0
+        )
         logger.info(
             "Database processing completed",
             extra_data={
                 "total_articles_stored": total_processed,
                 "total_articles_attempted": total_attempted,
-                "success_rate_percent": round(success_rate, 1)
-            }
+                "success_rate_percent": round(success_rate, 1),
+            },
         )
 
         return total_processed, total_attempted

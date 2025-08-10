@@ -19,17 +19,17 @@ from parsers.database_base_parser import DatabaseBaseParser
 class DatabaseSlateFrParser(DatabaseBaseParser):
     """
     Database-focused Slate.fr parser that stores raw data only.
-    
+
     This mirrors SlateFrArticleParser exactly but extends DatabaseBaseParser
     instead of BaseParser, so it stores to PostgreSQL instead of CSV.
-    
+
     The HTML parsing logic is identical to your existing parser.
     """
-    
+
     def __init__(self, source_id: str) -> None:
         """
         Initialize with source ID from database.
-        
+
         Args:
             source_id: UUID of Slate.fr source from news_sources table
         """
@@ -38,7 +38,7 @@ class DatabaseSlateFrParser(DatabaseBaseParser):
     def parse_article(self, soup: BeautifulSoup) -> Optional[ArticleData]:
         """
         Parse Slate.fr article - identical logic to SlateFrArticleParser.
-        
+
         The only difference: uses DatabaseBaseParser instead of BaseParser.
         """
         try:
