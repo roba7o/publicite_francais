@@ -139,7 +139,7 @@ test-pipeline:  ## Run pipeline test with fresh database (clears data first)
 	@cd french_flashcards && ../venv/bin/dbt run --target test > /dev/null 2>&1 || (echo "\033[31m✗ dbt processing failed\033[0m" && exit 1)
 	@echo "\033[32m  ✓ dbt processing successful\033[0m"
 	@echo "\033[36m▶ Step 5: Verifying results...\033[0m"
-	@docker compose exec postgres psql -U news_user -d french_news -c "SELECT COUNT(*) as articles FROM dbt_test.cleaned_articles; SELECT COUNT(*) as words FROM dbt_test.word_frequency_overall;" 2>/dev/null
+	@docker compose exec postgres psql -U news_user -d french_news -c "SELECT COUNT(*) as sentences FROM dbt_test.sentences; SELECT COUNT(*) as vocabulary_words FROM dbt_test.vocabulary_for_flashcards;" 2>/dev/null
 	@echo "\033[32m✓ Pipeline test complete!\033[0m"
 
 test-workflow:  ## Complete test workflow with HTML test files
