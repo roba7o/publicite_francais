@@ -31,11 +31,16 @@ clean-targets:         # directories to be removed by `dbt clean`
 # files using the `{{ config(...) }}` macro.
 models:
   french_flashcards:
-    # Staging models - views that select from raw data
-    staging:
+    # Simple models - clean processing pipeline
+    cleaned_articles:
       +materialized: view
-    # Intermediate models - business logic transformations
-    intermediate:
+    sentences:
+      +materialized: table
+    words:
+      +materialized: table
+    word_frequency_by_article:
+      +materialized: table
+    word_frequency_overall:
       +materialized: table
     # Example models to be removed later
     example:

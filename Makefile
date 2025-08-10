@@ -13,7 +13,7 @@ IMAGE := my-scraper
 .DEFAULT_GOAL := help
 
 # Declare phony targets to avoid conflicts with files/directories
-.PHONY: run run-live run-offline test tests test-essential test-integration test-offline lint format check-format mypy fix clean docker-build docker-run help tree
+.PHONY: run run-live run-offline test tests test-essential test-integration test-offline lint format check-format mypy fix clean docker-build docker-run dbt-run dbt-test dbt-debug help tree
 
 # ========== Local venv commands ==========
 
@@ -78,6 +78,24 @@ clean:  ## Remove __pycache__, .pyc files, and test artifacts
 	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name "htmlcov" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name ".mypy_cache" -exec rm -rf {} + 2>/dev/null || true
+
+# ========== dbt commands ==========
+
+dbt-run:  ## Run dbt models (text processing pipeline)
+	cd french_flashcards && ../venv/bin/dbt run
+
+dbt-test:  ## Run dbt tests  
+	cd french_flashcards && ../venv/bin/dbt test
+
+dbt-debug:  ## Test dbt database connection
+	cd french_flashcards && ../venv/bin/dbt debug
+
+pipeline:  ## Run full pipeline: scrape articles + process with dbt
+	@echo "🗞️  Step 1: Scraping articles..."
+	$(PYTHON) database_main.py
+	@echo "⚡ Step 2: Processing with dbt..."
+	cd french_flashcards && ../venv/bin/dbt run
+	@echo "🎉 Pipeline complete! Check database for word frequencies."
 
 # ========== Docker commands ==========
 
