@@ -5,6 +5,6 @@ This module contains the main article processing logic,
 including coordination between scrapers and parsers.
 """
 
-from .processor import ArticleProcessor
+from .database_processor import DatabaseProcessor
 
-__all__ = ["ArticleProcessor"]
+__all__ = ["DatabaseProcessor"]

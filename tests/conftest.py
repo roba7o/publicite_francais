@@ -23,7 +23,7 @@ from utils.structured_logger import get_structured_logger
 from utils.french_text_processor import FrenchTextProcessor
 from utils.csv_writer import DailyCSVWriter
 from config.website_parser_scrapers_config import ScraperConfig
-from core.processor import ArticleProcessor
+from core.database_processor import DatabaseProcessor
 
 
 @pytest.fixture(scope="session")

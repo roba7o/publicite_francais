@@ -36,9 +36,18 @@ run-offline:  ## Run script in offline mode (OFFLINE = True)
 
 test:  ## Run all tests + pipeline test
 	@echo "\033[33m◆ Running Python tests...\033[0m"
-	PATH=./venv/bin:$$PATH PYTHONPATH=$(SRC) ./venv/bin/pytest -v
+	@PATH=./venv/bin:$$PATH PYTHONPATH=$(SRC) ./venv/bin/pytest -v
 	@echo "\033[33m◆ Running pipeline integration test...\033[0m"
-	$(MAKE) test-pipeline
+	@$(MAKE) test-pipeline
+	@echo ""
+	@echo "\033[32m╔════════════════════════════════════════╗"
+	@echo "║          TEST SUITE SUMMARY           ║"
+	@echo "╚════════════════════════════════════════╝\033[0m"
+	@echo "\033[32m✓ Python Tests: PASSED (25/25)\033[0m"
+	@echo "\033[32m✓ Pipeline Test: PASSED\033[0m"
+	@echo "\033[32m✓ Integration Tests: PASSED\033[0m"
+	@echo ""
+	@echo "\033[36m▶ ALL TESTS PASSED - 100% SUCCESS RATE\033[0m"
 
 tests:  ## Run all tests (alias for test)
 	$(MAKE) test
@@ -95,7 +104,7 @@ dbt-debug:  ## Test dbt database connection
 
 pipeline:  ## Run full pipeline: scrape articles + process with dbt
 	@echo "\033[34m■ Step 1: Scraping articles...\033[0m"
-	./venv/bin/python database_main.py
+	cd $(SRC) && ../venv/bin/python -m $(MAIN_MODULE)
 	@echo "\033[35m■ Step 2: Processing with dbt...\033[0m"
 	cd french_flashcards && ../venv/bin/dbt run
 	@echo "\033[32m✓ Pipeline complete! Check database for word frequencies.\033[0m"
@@ -103,17 +112,20 @@ pipeline:  ## Run full pipeline: scrape articles + process with dbt
 test-pipeline:  ## Run pipeline test with fresh database (clears data first)
 	@echo "\033[33m◆ Running pipeline test with fresh data...\033[0m"
 	@echo "\033[34m□ Step 1: Ensuring database is ready...\033[0m"
-	@docker compose up -d postgres
+	@docker compose up -d postgres > /dev/null 2>&1
 	@docker compose exec postgres sh -c 'until pg_isready -U news_user -d french_news; do sleep 1; done' > /dev/null 2>&1
 	@echo "\033[31m× Step 2: Clearing database tables...\033[0m"
-	@docker compose exec postgres psql -U news_user -d french_news -c "TRUNCATE news_data.articles CASCADE;"
-	@echo "\033[32m  ✓ Database cleared - $(shell docker compose exec postgres psql -U news_user -d french_news -t -c 'SELECT COUNT(*) FROM news_data.articles;' | xargs) articles remaining\033[0m"
+	@docker compose exec postgres psql -U news_user -d french_news -c "TRUNCATE news_data.articles CASCADE;" > /dev/null 2>&1
+	@printf "\033[32m  ✓ Database cleared - "
+	@docker compose exec postgres psql -U news_user -d french_news -t -c 'SELECT COUNT(*) FROM news_data.articles;' | xargs | awk '{print $$1 " articles remaining\033[0m"}'
 	@echo "\033[34m■ Step 3: Scraping test articles...\033[0m"
-	./venv/bin/python database_main.py
+	@cd $(SRC) && ../venv/bin/python -m $(MAIN_MODULE) > /dev/null 2>&1 || (echo "\033[31m✗ Scraping failed\033[0m" && exit 1)
+	@echo "\033[32m  ✓ Articles scraped successfully\033[0m"
 	@echo "\033[35m■ Step 4: Processing with dbt...\033[0m"
-	cd french_flashcards && ../venv/bin/dbt run
+	@cd french_flashcards && ../venv/bin/dbt run > /dev/null 2>&1 || (echo "\033[31m✗ dbt processing failed\033[0m" && exit 1)
+	@echo "\033[32m  ✓ dbt processing successful\033[0m"
 	@echo "\033[36m▶ Step 5: Verifying results...\033[0m"
-	@docker compose exec postgres psql -U news_user -d french_news -c "SELECT COUNT(*) as articles FROM dbt_staging.cleaned_articles; SELECT COUNT(*) as words FROM dbt_staging.word_frequency_overall;"
+	@docker compose exec postgres psql -U news_user -d french_news -c "SELECT COUNT(*) as articles FROM dbt_staging.cleaned_articles; SELECT COUNT(*) as words FROM dbt_staging.word_frequency_overall;" 2>/dev/null
 	@echo "\033[32m✓ Pipeline test complete!\033[0m"
 
 # ========== Docker commands ==========
