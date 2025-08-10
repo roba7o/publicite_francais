@@ -60,17 +60,17 @@ def main():
     logger = get_structured_logger(__name__)
     mode = "OFFLINE" if OFFLINE else "LIVE"
     
-    logger.info(f"🚀 Starting DATABASE French news collection ({mode} mode)")
+    logger.info(f"\033[35m▲ Starting DATABASE French news collection ({mode} mode)\033[0m")
 
     # Check database is enabled and connected
     if not DATABASE_ENABLED:
-        logger.error("❌ Database not enabled - set DATABASE_ENABLED=true")
-        print("❌ Database not enabled. Set DATABASE_ENABLED=true in config.")
+        logger.error("\033[31m× Database not enabled - set DATABASE_ENABLED=true\033[0m")
+        print("\033[31m× Database not enabled. Set DATABASE_ENABLED=true in config.\033[0m")
         return 1
 
     if not initialize_database():
-        logger.error("❌ Database initialization failed")
-        print("❌ Database connection failed. Check PostgreSQL is running.")
+        logger.error("\033[31m× Database initialization failed\033[0m")
+        print("\033[31m× Database connection failed. Check PostgreSQL is running.\033[0m")
         return 1
 
     # Create source configurations
@@ -95,7 +95,7 @@ def main():
     success_rate = (total_stored / total_attempted * 100) if total_attempted > 0 else 0
     
     logger.info(
-        "🎉 Database collection completed",
+        "\033[32m✓ Database collection completed\033[0m",
         extra_data={
             "articles_stored": total_stored,
             "articles_attempted": total_attempted,
@@ -104,14 +104,20 @@ def main():
         }
     )
 
-    print(f"\n✅ Database Collection Results:")
-    print(f"   📰 Raw articles stored: {total_stored}")
-    print(f"   🎯 Success rate: {success_rate:.1f}%") 
-    print(f"   ⏱️  Time taken: {elapsed_time:.1f}s")
-    print(f"\n🔍 Check database:")
+    # ASCII art for completion
+    print(f"""
+\033[32m┌─────────────────────────────────────────────┐
+│              COLLECTION COMPLETE            │
+└─────────────────────────────────────────────┘\033[0m""")
+    
+    print(f"\n\033[32m✓ Database Collection Results:\033[0m")
+    print(f"   \033[34m■ Raw articles stored: {total_stored}\033[0m")
+    print(f"   \033[33m▶ Success rate: {success_rate:.1f}%\033[0m") 
+    print(f"   \033[36m⧗ Time taken: {elapsed_time:.1f}s\033[0m")
+    print(f"\n\033[36m▶ Check database:\033[0m")
     print(f"   docker compose exec postgres psql -U news_user -d french_news -c")
     print(f"   \"SELECT title, LENGTH(full_text), scraped_at FROM news_data.articles ORDER BY scraped_at DESC LIMIT 3;\"")
-    print(f"\n💡 Next: Gradually migrate other parsers to Database* versions!")
+    print(f"\n\033[35m◆ Next: Gradually migrate other parsers to Database* versions!\033[0m")
 
     return 0 if total_stored > 0 else 1
 

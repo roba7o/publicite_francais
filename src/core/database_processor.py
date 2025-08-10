@@ -163,6 +163,12 @@ class DatabaseProcessor:
             (processed_count / total_attempted * 100) if total_attempted > 0 else 0
         )
 
+        # ASCII art for source completion
+        print(f"""
+\033[34m┌──────────────────────────────────────┐
+│        SOURCE PROCESSING DONE       │  \033[32m{config["name"]}\033[34m
+└──────────────────────────────────────┘\033[0m""")
+        
         logger.info(
             "Database source processing completed",
             extra_data={
@@ -290,6 +296,14 @@ class DatabaseProcessor:
         success_rate = (
             (total_processed / total_attempted * 100) if total_attempted > 0 else 0
         )
+        # ASCII art for overall completion
+        print(f"""
+\033[35m╔══════════════════════════════════════════════════════════════╗
+║                    DATABASE PROCESSING COMPLETE             ║
+║                                                              ║
+║  \033[32m✓ {total_processed:3d} articles stored    \033[33m◆ {round(success_rate, 1):5.1f}% success rate\033[35m     ║
+╚══════════════════════════════════════════════════════════════╝\033[0m""")
+        
         logger.info(
             "Database processing completed",
             extra_data={

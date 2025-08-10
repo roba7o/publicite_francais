@@ -28,25 +28,25 @@ from utils.structured_logger import get_structured_logger
 
 def test_basic_connection():
     """Test basic database connectivity."""
-    print("🔌 Testing basic database connection...")
+    print("\033[34m■ Testing basic database connection...\033[0m")
     
     db = DatabaseManager()
     
     if not db.initialize():
-        print("❌ Failed to initialize database manager")
+        print("\033[31m× Failed to initialize database manager\033[0m")
         return False
     
     if db.test_connection():
-        print("✅ Database connection successful!")
+        print("\033[32m✓ Database connection successful!\033[0m")
         return True
     else:
-        print("❌ Database connection failed")
+        print("\033[31m× Database connection failed\033[0m")
         return False
 
 
 def test_raw_connection():
     """Test raw psycopg2 connection."""
-    print("\n🔧 Testing raw psycopg2 connection...")
+    print("\n\033[35m■ Testing raw psycopg2 connection...\033[0m")
     
     try:
         db = get_database_manager()
@@ -58,22 +58,22 @@ def test_raw_connection():
             cursor.execute("SELECT current_database(), current_user, version()")
             result = cursor.fetchone()
             
-            print(f"✅ Connected to database: {result[0]}")
-            print(f"✅ Connected as user: {result[1]}")
-            print(f"✅ PostgreSQL version: {result[2].split(',')[0]}")
+            print(f"\033[32m✓ Connected to database: {result[0]}\033[0m")
+            print(f"\033[32m✓ Connected as user: {result[1]}\033[0m")
+            print(f"\033[32m✓ PostgreSQL version: {result[2].split(',')[0]}\033[0m")
             
             cursor.close()
             
         return True
         
     except Exception as e:
-        print(f"❌ Raw connection failed: {e}")
+        print(f"\033[31m× Raw connection failed: {e}\033[0m")
         return False
 
 
 def test_sqlalchemy_connection():
     """Test SQLAlchemy connection."""
-    print("\n⚡ Testing SQLAlchemy connection...")
+    print("\n\033[36m■ Testing SQLAlchemy connection...\033[0m")
     
     try:
         db = get_database_manager()
@@ -90,20 +90,20 @@ def test_sqlalchemy_connection():
             """))
             
             tables = [row[0] for row in result]
-            print(f"✅ Found {len(tables)} tables in news_data schema:")
+            print(f"\033[32m✓ Found {len(tables)} tables in news_data schema:\033[0m")
             for table in tables:
                 print(f"   - {table}")
                 
         return True
         
     except Exception as e:
-        print(f"❌ SQLAlchemy connection failed: {e}")
+        print(f"\033[31m× SQLAlchemy connection failed: {e}\033[0m")
         return False
 
 
 def test_news_sources_data():
     """Test querying news sources data."""
-    print("\n📰 Testing news sources data...")
+    print("\n\033[34m■ Testing news sources data...\033[0m")
     
     try:
         db = get_database_manager()
@@ -118,41 +118,41 @@ def test_news_sources_data():
             """))
             
             sources = list(result)
-            print(f"✅ Found {len(sources)} news sources:")
+            print(f"\033[32m✓ Found {len(sources)} news sources:\033[0m")
             
             for name, base_url, enabled in sources:
-                status = "🟢 enabled" if enabled else "🔴 disabled"
+                status = "\033[32m● enabled\033[0m" if enabled else "\033[31m● disabled\033[0m"
                 print(f"   - {name}: {base_url} ({status})")
                 
         return True
         
     except Exception as e:
-        print(f"❌ News sources query failed: {e}")
+        print(f"\033[31m× News sources query failed: {e}\033[0m")
         return False
 
 
 def test_health_check():
     """Test comprehensive health check."""
-    print("\n🏥 Running database health check...")
+    print("\n\033[33m◆ Running database health check...\033[0m")
     
     try:
         db = get_database_manager()
         health = db.health_check()
         
-        print(f"✅ Health status: {health['status']}")
-        print(f"✅ Connection pool: {health['connection_pool_status']}")
-        print(f"✅ SQLAlchemy: {health['sqlalchemy_status']}")
-        print(f"✅ News sources count: {health['news_sources_count']}")
+        print(f"\033[32m✓ Health status: {health['status']}\033[0m")
+        print(f"\033[32m✓ Connection pool: {health['connection_pool_status']}\033[0m")
+        print(f"\033[32m✓ SQLAlchemy: {health['sqlalchemy_status']}\033[0m")
+        print(f"\033[32m✓ News sources count: {health['news_sources_count']}\033[0m")
         
         if health['errors']:
-            print("⚠️  Errors found:")
+            print("\033[33m⚠ Errors found:\033[0m")
             for error in health['errors']:
                 print(f"   - {error}")
                 
         return health['status'] in ['healthy', 'degraded']
         
     except Exception as e:
-        print(f"❌ Health check failed: {e}")
+        print(f"\033[31m× Health check failed: {e}\033[0m")
         return False
 
 
@@ -160,13 +160,13 @@ def main():
     """Run all database connection tests."""
     logger = get_structured_logger("DatabaseConnectionTest")
     
-    print("🧪 French News Scraper - Database Connection Test")
-    print("=" * 50)
+    print("\033[36m▲ French News Scraper - Database Connection Test\033[0m")
+    print("\033[36m" + "=" * 50 + "\033[0m")
     
     logger.info("Starting database connection tests")
     
     # Check if PostgreSQL container is running
-    print("📋 Prerequisites:")
+    print("\033[33m◆ Prerequisites:\033[0m")
     print("   - PostgreSQL container should be running")
     print("   - Run: docker compose up -d postgres")
     print("   - Dependencies installed: pip install -r requirements.txt")
@@ -189,22 +189,25 @@ def main():
         test_results.append((test_name, result))
     
     # Summary
-    print("\n" + "="*50)
-    print("📊 Test Summary:")
+    # ASCII art for completion
+    print(f"""
+\033[32m╭─────────────────────────────────────────────────╮
+│                 TEST SUMMARY                  │
+╰─────────────────────────────────────────────────╯\033[0m""")
     
     passed = 0
     for test_name, result in test_results:
-        status = "✅ PASS" if result else "❌ FAIL"
+        status = "\033[32m✓ PASS\033[0m" if result else "\033[31m× FAIL\033[0m"
         print(f"   {status} - {test_name}")
         if result:
             passed += 1
     
-    print(f"\n🎯 Overall: {passed}/{len(test_results)} tests passed")
+    print(f"\n\033[33m◆ Overall: {passed}/{len(test_results)} tests passed\033[0m")
     
     if passed == len(test_results):
-        print("🎉 All tests passed! Database infrastructure is ready.")
-        print("💡 Your existing CSV scraper continues to work unchanged.")
-        print("🚀 Database is ready for your future refactor steps.")
+        print("\n\033[32m✓ All tests passed! Database infrastructure is ready.\033[0m")
+        print("\033[35m◆ Your existing CSV scraper continues to work unchanged.\033[0m")
+        print("\033[34m▲ Database is ready for your future refactor steps.\033[0m")
         logger.info(
             "Database connection tests completed successfully",
             extra_data={
@@ -215,8 +218,8 @@ def main():
         )
         return 0
     else:
-        print("❌ Some tests failed. Check your PostgreSQL container and configuration.")
-        print("💡 Try: docker compose up -d postgres")
+        print("\033[31m× Some tests failed. Check your PostgreSQL container and configuration.\033[0m")
+        print("\033[35m◆ Try: docker compose up -d postgres\033[0m")
         logger.error(
             "Database connection tests failed",
             extra_data={

@@ -35,9 +35,9 @@ run-offline:  ## Run script in offline mode (OFFLINE = True)
 	@rm -f $(SETTINGS_FILE).bak
 
 test:  ## Run all tests + pipeline test
-	@echo "🧪 Running Python tests..."
+	@echo "\033[33m◆ Running Python tests...\033[0m"
 	PYTHONPATH=$(SRC) pytest -v
-	@echo "🧪 Running pipeline integration test..."
+	@echo "\033[33m◆ Running pipeline integration test...\033[0m"
 	$(MAKE) test-pipeline
 
 tests:  ## Run all tests (alias for test)
@@ -65,13 +65,13 @@ mypy:  ## Run static type checks
 	mypy $(SRC)
 
 fix:  ## Auto-format code and run all checks
-	@echo "🔧 Formatting code with ruff..."
+	@echo "\033[36m▶ Formatting code with ruff...\033[0m"
 	ruff format $(SRC)
-	@echo "🔍 Running ruff linting..."
+	@echo "\033[33m▶ Running ruff linting...\033[0m"
 	ruff check --fix $(SRC)
-	@echo "🔍 Running mypy type checks..."
+	@echo "\033[33m▶ Running mypy type checks...\033[0m"
 	mypy $(SRC)
-	@echo "✅ All checks passed!"
+	@echo "\033[32m✓ All checks passed!\033[0m"
 
 clean:  ## Remove __pycache__, .pyc files, and test artifacts
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
@@ -94,23 +94,23 @@ dbt-debug:  ## Test dbt database connection
 	cd french_flashcards && ../venv/bin/dbt debug
 
 pipeline:  ## Run full pipeline: scrape articles + process with dbt
-	@echo "🗞️  Step 1: Scraping articles..."
+	@echo "\033[34m■ Step 1: Scraping articles...\033[0m"
 	$(PYTHON) database_main.py
-	@echo "⚡ Step 2: Processing with dbt..."
+	@echo "\033[35m■ Step 2: Processing with dbt...\033[0m"
 	cd french_flashcards && ../venv/bin/dbt run
-	@echo "🎉 Pipeline complete! Check database for word frequencies."
+	@echo "\033[32m✓ Pipeline complete! Check database for word frequencies.\033[0m"
 
 test-pipeline:  ## Run pipeline test with fresh database (clears data first)
-	@echo "🧪 Running pipeline test with fresh data..."
-	@echo "🗑️  Step 1: Clearing database..."
+	@echo "\033[33m◆ Running pipeline test with fresh data...\033[0m"
+	@echo "\033[31m× Step 1: Clearing database...\033[0m"
 	@docker compose exec postgres psql -U news_user -d french_news -c "TRUNCATE news_data.articles CASCADE;" > /dev/null 2>&1 || echo "Database not running - will start fresh"
-	@echo "🗞️  Step 2: Scraping test articles..."
+	@echo "\033[34m■ Step 2: Scraping test articles...\033[0m"
 	$(PYTHON) database_main.py
-	@echo "⚡ Step 3: Processing with dbt..."
+	@echo "\033[35m■ Step 3: Processing with dbt...\033[0m"
 	cd french_flashcards && ../venv/bin/dbt run
-	@echo "📊 Step 4: Verifying results..."
+	@echo "\033[36m▶ Step 4: Verifying results...\033[0m"
 	@docker compose exec postgres psql -U news_user -d french_news -c "SELECT COUNT(*) as articles FROM dbt_staging.cleaned_articles; SELECT COUNT(*) as words FROM dbt_staging.word_frequency_overall;"
-	@echo "✅ Pipeline test complete!"
+	@echo "\033[32m✓ Pipeline test complete!\033[0m"
 
 # ========== Docker commands ==========
 
@@ -118,32 +118,32 @@ docker-build:  ## Build all Docker images
 	docker compose build
 
 docker-pipeline:  ## Run full containerized pipeline (scraper + dbt)
-	@echo "🚀 Starting full Docker pipeline..."
-	@echo "📦 Step 1: Starting database..."
+	@echo "\033[35m▲ Starting full Docker pipeline...\033[0m"
+	@echo "\033[34m□ Step 1: Starting database...\033[0m"
 	docker compose up -d postgres
-	@echo "⏳ Waiting for database to be ready..."
+	@echo "\033[33m⧗ Waiting for database to be ready...\033[0m"
 	docker compose exec postgres sh -c 'until pg_isready -U news_user -d french_news; do sleep 1; done'
-	@echo "🗞️  Step 2: Running scraper..."
+	@echo "\033[34m■ Step 2: Running scraper...\033[0m"
 	docker compose run --rm scraper
-	@echo "⚡ Step 3: Running dbt transformations..."
+	@echo "\033[35m■ Step 3: Running dbt transformations...\033[0m"
 	docker compose run --rm dbt
-	@echo "🎉 Pipeline complete! Check database for results."
+	@echo "\033[32m✓ Pipeline complete! Check database for results.\033[0m"
 
 docker-test-pipeline:  ## Run pipeline test in Docker with fresh data
-	@echo "🧪 Running Docker pipeline test with fresh data..."
-	@echo "📦 Step 1: Starting database..."
+	@echo "\033[35m◆ Running Docker pipeline test with fresh data...\033[0m"
+	@echo "\033[34m□ Step 1: Starting database...\033[0m"
 	docker compose up -d postgres
-	@echo "⏳ Waiting for database..."
+	@echo "\033[33m⧗ Waiting for database...\033[0m"
 	docker compose exec postgres sh -c 'until pg_isready -U news_user -d french_news; do sleep 1; done'
-	@echo "🗑️  Step 2: Clearing database..."
+	@echo "\033[31m× Step 2: Clearing database...\033[0m"
 	docker compose exec postgres psql -U news_user -d french_news -c "TRUNCATE news_data.articles CASCADE;"
-	@echo "🗞️  Step 3: Running scraper..."
+	@echo "\033[34m■ Step 3: Running scraper...\033[0m"
 	docker compose run --rm scraper
-	@echo "⚡ Step 4: Running dbt..."
+	@echo "\033[35m■ Step 4: Running dbt...\033[0m"
 	docker compose run --rm dbt
-	@echo "📊 Step 5: Verifying results..."
+	@echo "\033[36m▶ Step 5: Verifying results...\033[0m"
 	@docker compose exec postgres psql -U news_user -d french_news -c "SELECT COUNT(*) as articles FROM dbt_staging.cleaned_articles; SELECT COUNT(*) as words FROM dbt_staging.word_frequency_overall;"
-	@echo "✅ Docker pipeline test complete!"
+	@echo "\033[32m✓ Docker pipeline test complete!\033[0m"
 
 docker-clean:  ## Stop and remove all containers
 	docker compose down

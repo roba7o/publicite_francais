@@ -209,7 +209,7 @@ def invalid_html_content():
         "<html><body>",  # Incomplete HTML
         "Not HTML at all",  # Plain text
         "<html><body>" + "x" * 10000 + "</body></html>",  # Very large content
-        "<html><body>🚫💥⚠️</body></html>",  # Special characters
+        "<html><body>×※⚠</body></html>",  # Special characters
     ]
 
 
