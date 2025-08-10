@@ -34,6 +34,9 @@ models:
     # Staging models - views that select from raw data
     staging:
       +materialized: view
+    # Intermediate models - business logic transformations
+    intermediate:
+      +materialized: table
     # Example models to be removed later
     example:
       +materialized: view
