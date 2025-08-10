@@ -96,11 +96,25 @@ clean:  ## Remove __pycache__, .pyc files, and test artifacts
 dbt-run:  ## Run dbt models (text processing pipeline)
 	cd french_flashcards && ../venv/bin/dbt run
 
+dbt-run-test:  ## Run dbt models with test data (uses HTML test files)
+	@echo "\033[33m◆ Processing test data with dbt...\033[0m"
+	cd french_flashcards && ../venv/bin/dbt run --target test
+	@echo "\033[32m✓ Test data processed! Check dbt_test schema.\033[0m"
+
 dbt-test:  ## Run dbt tests  
 	cd french_flashcards && ../venv/bin/dbt test
 
+dbt-test-target:  ## Run dbt tests on test target
+	cd french_flashcards && ../venv/bin/dbt test --target test
+
 dbt-debug:  ## Test dbt database connection
 	cd french_flashcards && ../venv/bin/dbt debug
+
+dbt-clean-test:  ## Clean test schema when done
+	@echo "\033[31m× Dropping test schema...\033[0m"
+	@docker compose exec postgres psql -U news_user -d french_news -c "DROP SCHEMA IF EXISTS dbt_test CASCADE;"
+	@docker compose exec postgres psql -U news_user -d french_news -c "CREATE SCHEMA dbt_test; GRANT ALL ON SCHEMA dbt_test TO news_user;"
+	@echo "\033[32m✓ Test schema cleaned\033[0m"
 
 pipeline:  ## Run full pipeline: scrape articles + process with dbt
 	@echo "\033[34m■ Step 1: Scraping articles...\033[0m"
@@ -115,18 +129,25 @@ test-pipeline:  ## Run pipeline test with fresh database (clears data first)
 	@docker compose up -d postgres > /dev/null 2>&1
 	@docker compose exec postgres sh -c 'until pg_isready -U news_user -d french_news; do sleep 1; done' > /dev/null 2>&1
 	@echo "\033[31m× Step 2: Clearing database tables...\033[0m"
-	@docker compose exec postgres psql -U news_user -d french_news -c "TRUNCATE news_data.articles CASCADE;" > /dev/null 2>&1
+	@docker compose exec postgres psql -U news_user -d french_news -c "TRUNCATE news_data_test.articles CASCADE;" > /dev/null 2>&1
 	@printf "\033[32m  ✓ Database cleared - "
-	@docker compose exec postgres psql -U news_user -d french_news -t -c 'SELECT COUNT(*) FROM news_data.articles;' | xargs | awk '{print $$1 " articles remaining\033[0m"}'
+	@docker compose exec postgres psql -U news_user -d french_news -t -c 'SELECT COUNT(*) FROM news_data_test.articles;' | xargs | awk '{print $$1 " articles remaining\033[0m"}'
 	@echo "\033[34m■ Step 3: Scraping test articles...\033[0m"
 	@cd $(SRC) && ../venv/bin/python -m $(MAIN_MODULE) > /dev/null 2>&1 || (echo "\033[31m✗ Scraping failed\033[0m" && exit 1)
 	@echo "\033[32m  ✓ Articles scraped successfully\033[0m"
-	@echo "\033[35m■ Step 4: Processing with dbt...\033[0m"
-	@cd french_flashcards && ../venv/bin/dbt run > /dev/null 2>&1 || (echo "\033[31m✗ dbt processing failed\033[0m" && exit 1)
+	@echo "\033[35m■ Step 4: Processing with dbt (test target)...\033[0m"
+	@cd french_flashcards && ../venv/bin/dbt run --target test > /dev/null 2>&1 || (echo "\033[31m✗ dbt processing failed\033[0m" && exit 1)
 	@echo "\033[32m  ✓ dbt processing successful\033[0m"
 	@echo "\033[36m▶ Step 5: Verifying results...\033[0m"
-	@docker compose exec postgres psql -U news_user -d french_news -c "SELECT COUNT(*) as articles FROM dbt_staging.cleaned_articles; SELECT COUNT(*) as words FROM dbt_staging.word_frequency_overall;" 2>/dev/null
+	@docker compose exec postgres psql -U news_user -d french_news -c "SELECT COUNT(*) as articles FROM dbt_test.cleaned_articles; SELECT COUNT(*) as words FROM dbt_test.word_frequency_overall;" 2>/dev/null
 	@echo "\033[32m✓ Pipeline test complete!\033[0m"
+
+test-workflow:  ## Complete test workflow with HTML test files
+	@echo "\033[33m◆ Running complete test workflow...\033[0m"
+	$(MAKE) test-pipeline
+	@echo "\033[33m◆ Running dbt tests on test data...\033[0m"
+	cd french_flashcards && ../venv/bin/dbt test --target test
+	@echo "\033[36m▶ Test workflow complete! Clean with: make dbt-clean-test\033[0m"
 
 # ========== Docker commands ==========
 
@@ -152,7 +173,7 @@ docker-test-pipeline:  ## Run pipeline test in Docker with fresh data
 	@echo "\033[33m⧗ Waiting for database...\033[0m"
 	docker compose exec postgres sh -c 'until pg_isready -U news_user -d french_news; do sleep 1; done'
 	@echo "\033[31m× Step 2: Clearing database...\033[0m"
-	docker compose exec postgres psql -U news_user -d french_news -c "TRUNCATE news_data.articles CASCADE;"
+	docker compose exec postgres psql -U news_user -d french_news -c "TRUNCATE news_data_test.articles CASCADE;"
 	@echo "\033[34m■ Step 3: Running scraper...\033[0m"
 	docker compose run --rm scraper
 	@echo "\033[35m■ Step 4: Running dbt...\033[0m"

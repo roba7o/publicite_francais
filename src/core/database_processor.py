@@ -16,7 +16,7 @@ from typing import Any, List, Tuple, Type
 
 from bs4 import BeautifulSoup
 
-from config.settings import DATABASE_ENABLED, OFFLINE
+from config.settings import DATABASE_ENABLED, OFFLINE, DATABASE_ENV
 from database import get_database_manager
 from utils.structured_logger import get_structured_logger
 from utils.validators import DataValidator
@@ -47,13 +47,15 @@ class DatabaseProcessor:
     def get_source_id(cls, source_name: str) -> str:
         """Get source ID from database."""
         db = get_database_manager()
+        # Use appropriate schema based on environment
+        schema_name = f"news_data_{DATABASE_ENV}"
         try:
             with db.get_session() as session:
                 from sqlalchemy import text
 
                 result = session.execute(
-                    text("""
-                    SELECT id FROM news_data.news_sources
+                    text(f"""
+                    SELECT id FROM {schema_name}.news_sources
                     WHERE name = :name
                 """),
                     {"name": source_name},

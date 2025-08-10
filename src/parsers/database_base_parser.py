@@ -22,7 +22,7 @@ from bs4 import BeautifulSoup
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from config.settings import DATABASE_ENABLED, DEBUG, OFFLINE
+from config.settings import DATABASE_ENABLED, DEBUG, OFFLINE, DATABASE_ENV
 from database import get_database_manager
 from models import ArticleData
 from utils.structured_logger import get_structured_logger
@@ -281,14 +281,16 @@ class DatabaseBaseParser(ABC):
         try:
             # Parse article date to valid format or None
             parsed_article_date = self._parse_article_date(article_data.article_date)
+            # Use appropriate schema based on environment
+            schema_name = f"news_data_{DATABASE_ENV}"
             
             with self.db.get_session() as session:
                 from sqlalchemy import text
 
                 # Check for duplicates on both unique constraints
                 existing_url = session.execute(
-                    text("""
-                    SELECT id FROM news_data.articles
+                    text(f"""
+                    SELECT id FROM {schema_name}.articles
                     WHERE source_id = :source_id AND url = :url
                 """),
                     {"source_id": self.source_id, "url": url},
@@ -304,8 +306,8 @@ class DatabaseBaseParser(ABC):
                 # Check for duplicate title+date combination
                 if parsed_article_date:  # Only check if we have a valid date
                     existing_title_date = session.execute(
-                        text("""
-                        SELECT id FROM news_data.articles
+                        text(f"""
+                        SELECT id FROM {schema_name}.articles
                         WHERE source_id = :source_id AND title = :title AND article_date = :article_date
                     """),
                         {"source_id": self.source_id, "title": article_data.title, "article_date": parsed_article_date},
@@ -325,8 +327,8 @@ class DatabaseBaseParser(ABC):
                 # Insert raw article data (duplicates already handled above)
                 article_id = uuid4()
                 session.execute(
-                    text("""
-                    INSERT INTO news_data.articles
+                    text(f"""
+                    INSERT INTO {schema_name}.articles
                     (id, source_id, title, url, article_date, scraped_at, full_text, num_paragraphs)
                     VALUES (:id, :source_id, :title, :url, :article_date, :scraped_at, :full_text, :num_paragraphs)
                 """),

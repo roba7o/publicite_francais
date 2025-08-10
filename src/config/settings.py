@@ -36,3 +36,10 @@ DATABASE_CONFIG = {
 # True: Use PostgreSQL database for future features
 # False: Continue using CSV files only (current behavior)
 DATABASE_ENABLED = os.getenv("DATABASE_ENABLED", "true").lower() == "true"
+
+# Database schema environment
+# This determines which schema to use for articles and sources:
+# - "test": Uses news_data_test schema (for integration testing with HTML files)
+# - "dev": Uses news_data_dev schema (for development with real/live data)
+# - "prod": Uses news_data_prod schema (for production)
+DATABASE_ENV = os.getenv("DATABASE_ENV", "test" if OFFLINE else "dev")

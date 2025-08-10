@@ -1,0 +1,25 @@
+french_flashcards:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: localhost
+      user: news_user
+      password: dev_password_123
+      port: 5432
+      dbname: french_news
+      schema: dbt_staging
+      threads: 4
+      keepalives_idle: 0
+      search_path: "dbt_staging"
+    test:
+      type: postgres
+      host: localhost
+      user: news_user
+      password: dev_password_123
+      port: 5432
+      dbname: french_news
+      schema: dbt_test
+      threads: 4
+      keepalives_idle: 0
+      search_path: "dbt_test"
