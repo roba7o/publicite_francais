@@ -13,7 +13,7 @@ IMAGE := my-scraper
 .DEFAULT_GOAL := help
 
 # Declare phony targets to avoid conflicts with files/directories
-.PHONY: run run-live run-offline test tests test-essential test-integration test-offline lint format check-format mypy fix clean docker-build docker-run dbt-run dbt-test dbt-debug help tree
+.PHONY: run run-live run-offline test tests test-essential test-integration test-offline lint format check-format mypy fix clean docker-build docker-pipeline docker-clean dbt-run dbt-test dbt-debug pipeline help tree
 
 # ========== Local venv commands ==========
 
@@ -34,11 +34,14 @@ run-offline:  ## Run script in offline mode (OFFLINE = True)
 	@sed -i.bak 's/OFFLINE = True/OFFLINE = False/' $(SETTINGS_FILE)
 	@rm -f $(SETTINGS_FILE).bak
 
-test:  ## Run all tests
+test:  ## Run all tests + pipeline test
+	@echo "🧪 Running Python tests..."
 	PYTHONPATH=$(SRC) pytest -v
+	@echo "🧪 Running pipeline integration test..."
+	$(MAKE) test-pipeline
 
 tests:  ## Run all tests (alias for test)
-	PYTHONPATH=$(SRC) pytest -v
+	$(MAKE) test
 
 test-essential:  ## Run essential working tests only
 	PYTHONPATH=$(SRC) pytest -v tests/test_essential.py
@@ -97,16 +100,54 @@ pipeline:  ## Run full pipeline: scrape articles + process with dbt
 	cd french_flashcards && ../venv/bin/dbt run
 	@echo "🎉 Pipeline complete! Check database for word frequencies."
 
+test-pipeline:  ## Run pipeline test with fresh database (clears data first)
+	@echo "🧪 Running pipeline test with fresh data..."
+	@echo "🗑️  Step 1: Clearing database..."
+	@docker compose exec postgres psql -U news_user -d french_news -c "TRUNCATE news_data.articles CASCADE;" > /dev/null 2>&1 || echo "Database not running - will start fresh"
+	@echo "🗞️  Step 2: Scraping test articles..."
+	$(PYTHON) database_main.py
+	@echo "⚡ Step 3: Processing with dbt..."
+	cd french_flashcards && ../venv/bin/dbt run
+	@echo "📊 Step 4: Verifying results..."
+	@docker compose exec postgres psql -U news_user -d french_news -c "SELECT COUNT(*) as articles FROM dbt_staging.cleaned_articles; SELECT COUNT(*) as words FROM dbt_staging.word_frequency_overall;"
+	@echo "✅ Pipeline test complete!"
+
 # ========== Docker commands ==========
 
-docker-build:  ## Build Docker image
-	docker build -t $(IMAGE) .
+docker-build:  ## Build all Docker images
+	docker compose build
 
-docker-run:  ## Run app using Docker
-	docker run --rm \
-	  -v ${PWD}/src:/app/src \
-	  -v ${PWD}/output:/app/output \
-	  $(IMAGE)
+docker-pipeline:  ## Run full containerized pipeline (scraper + dbt)
+	@echo "🚀 Starting full Docker pipeline..."
+	@echo "📦 Step 1: Starting database..."
+	docker compose up -d postgres
+	@echo "⏳ Waiting for database to be ready..."
+	docker compose exec postgres sh -c 'until pg_isready -U news_user -d french_news; do sleep 1; done'
+	@echo "🗞️  Step 2: Running scraper..."
+	docker compose run --rm scraper
+	@echo "⚡ Step 3: Running dbt transformations..."
+	docker compose run --rm dbt
+	@echo "🎉 Pipeline complete! Check database for results."
+
+docker-test-pipeline:  ## Run pipeline test in Docker with fresh data
+	@echo "🧪 Running Docker pipeline test with fresh data..."
+	@echo "📦 Step 1: Starting database..."
+	docker compose up -d postgres
+	@echo "⏳ Waiting for database..."
+	docker compose exec postgres sh -c 'until pg_isready -U news_user -d french_news; do sleep 1; done'
+	@echo "🗑️  Step 2: Clearing database..."
+	docker compose exec postgres psql -U news_user -d french_news -c "TRUNCATE news_data.articles CASCADE;"
+	@echo "🗞️  Step 3: Running scraper..."
+	docker compose run --rm scraper
+	@echo "⚡ Step 4: Running dbt..."
+	docker compose run --rm dbt
+	@echo "📊 Step 5: Verifying results..."
+	@docker compose exec postgres psql -U news_user -d french_news -c "SELECT COUNT(*) as articles FROM dbt_staging.cleaned_articles; SELECT COUNT(*) as words FROM dbt_staging.word_frequency_overall;"
+	@echo "✅ Docker pipeline test complete!"
+
+docker-clean:  ## Stop and remove all containers
+	docker compose down
+	docker compose rm -f
 
 # ========== Utilities ==========
 

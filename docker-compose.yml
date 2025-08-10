@@ -19,6 +19,33 @@ services:
       timeout: 5s
       retries: 5
 
+  scraper:
+    build:
+      context: .
+      dockerfile: Dockerfile.scraper
+    container_name: french_news_scraper
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - DATABASE_ENABLED=true
+      - OFFLINE=true
+      - DEBUG=true
+      - DB_HOST=postgres
+    volumes:
+      - ./src:/app/src  # Mount source for development
+    profiles: ["scraper"]
+
+  dbt:
+    build:
+      context: .
+      dockerfile: Dockerfile.dbt
+    container_name: french_news_dbt
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles: ["dbt"]
+
 volumes:
   postgres_data:
     driver: local
