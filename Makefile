@@ -34,9 +34,9 @@ run-offline:  ## Run script in offline mode (OFFLINE = True)
 	@sed -i.bak 's/OFFLINE = True/OFFLINE = False/' $(SETTINGS_FILE)
 	@rm -f $(SETTINGS_FILE).bak
 
-test:  ## Run all tests + pipeline test
+test:  ## Run all tests + pipeline test (uses test database)
 	@echo "\033[33m◆ Running Python tests...\033[0m"
-	@PATH=./venv/bin:$$PATH PYTHONPATH=$(SRC) ./venv/bin/pytest -v
+	@ENVIRONMENT=test PATH=./venv/bin:$$PATH PYTHONPATH=$(SRC) ./venv/bin/pytest -v
 	@echo "\033[33m◆ Running pipeline integration test...\033[0m"
 	@$(MAKE) test-pipeline
 	@echo ""
@@ -102,30 +102,38 @@ dbt-test:  ## Run dbt tests
 dbt-debug:  ## Test dbt database connection
 	cd french_flashcards && ../venv/bin/dbt debug
 
-pipeline:  ## Run full pipeline: scrape articles + process with dbt
-	@echo "\033[34m■ Step 1: Scraping articles...\033[0m"
-	cd $(SRC) && ../venv/bin/python -m $(MAIN_MODULE)
-	@echo "\033[35m■ Step 2: Processing with dbt...\033[0m"
-	cd french_flashcards && ../venv/bin/dbt run
+pipeline:  ## Run full pipeline: scrape articles + process with dbt (development)
+	@echo "\033[34m■ Step 1: Scraping articles (dev environment)...\033[0m"
+	cd $(SRC) && ENVIRONMENT=dev ../venv/bin/python -m $(MAIN_MODULE)
+	@echo "\033[35m■ Step 2: Processing with dbt (dev environment)...\033[0m"
+	cd french_flashcards && ../venv/bin/dbt run --target dev
 	@echo "\033[32m✓ Pipeline complete! Check database for word frequencies.\033[0m"
 
-test-pipeline:  ## Run pipeline test with fresh database (clears data first)
+pipeline-prod:  ## Run full pipeline in production mode
+	@echo "\033[31m⚠️  Running PRODUCTION pipeline...\033[0m"
+	@echo "\033[34m■ Step 1: Scraping articles (prod environment)...\033[0m"
+	cd $(SRC) && ENVIRONMENT=prod OFFLINE=False ../venv/bin/python -m $(MAIN_MODULE)
+	@echo "\033[35m■ Step 2: Processing with dbt (prod environment)...\033[0m"
+	cd french_flashcards && ../venv/bin/dbt run --target prod
+	@echo "\033[32m✓ Production pipeline complete!\033[0m"
+
+test-pipeline:  ## Run pipeline test with fresh database (uses test environment)
 	@echo "\033[33m◆ Running pipeline test with fresh data...\033[0m"
 	@echo "\033[34m□ Step 1: Ensuring database is ready...\033[0m"
 	@docker compose up -d postgres > /dev/null 2>&1
 	@docker compose exec postgres sh -c 'until pg_isready -U news_user -d french_news; do sleep 1; done' > /dev/null 2>&1
-	@echo "\033[31m× Step 2: Clearing database tables...\033[0m"
-	@docker compose exec postgres psql -U news_user -d french_news -c "TRUNCATE news_data.articles CASCADE;" > /dev/null 2>&1
-	@printf "\033[32m  ✓ Database cleared - "
-	@docker compose exec postgres psql -U news_user -d french_news -t -c 'SELECT COUNT(*) FROM news_data.articles;' | xargs | awk '{print $$1 " articles remaining\033[0m"}'
+	@echo "\033[31m× Step 2: Clearing test database tables...\033[0m"
+	@docker compose exec postgres psql -U news_user -d french_news -c "TRUNCATE news_data_test.articles CASCADE;" > /dev/null 2>&1
+	@printf "\033[32m  ✓ Test database cleared - "
+	@docker compose exec postgres psql -U news_user -d french_news -t -c 'SELECT COUNT(*) FROM news_data_test.articles;' | xargs | awk '{print $$1 " articles remaining\033[0m"}'
 	@echo "\033[34m■ Step 3: Scraping test articles...\033[0m"
-	@cd $(SRC) && ../venv/bin/python -m $(MAIN_MODULE) > /dev/null 2>&1 || (echo "\033[31m✗ Scraping failed\033[0m" && exit 1)
+	@cd $(SRC) && ENVIRONMENT=test ../venv/bin/python -m $(MAIN_MODULE) > /dev/null 2>&1 || (echo "\033[31m✗ Scraping failed\033[0m" && exit 1)
 	@echo "\033[32m  ✓ Articles scraped successfully\033[0m"
-	@echo "\033[35m■ Step 4: Processing with dbt...\033[0m"
-	@cd french_flashcards && ../venv/bin/dbt run > /dev/null 2>&1 || (echo "\033[31m✗ dbt processing failed\033[0m" && exit 1)
+	@echo "\033[35m■ Step 4: Processing with dbt (test environment)...\033[0m"
+	@cd french_flashcards && ENVIRONMENT=test ../venv/bin/dbt run --target test > /dev/null 2>&1 || (echo "\033[31m✗ dbt processing failed\033[0m" && exit 1)
 	@echo "\033[32m  ✓ dbt processing successful\033[0m"
 	@echo "\033[36m▶ Step 5: Verifying results...\033[0m"
-	@docker compose exec postgres psql -U news_user -d french_news -c "SELECT COUNT(*) as articles FROM dbt_staging.cleaned_articles; SELECT COUNT(*) as words FROM dbt_staging.word_frequency_overall;" 2>/dev/null
+	@docker compose exec postgres psql -U news_user -d french_news -c "SELECT COUNT(*) as articles FROM dbt_test.cleaned_articles; SELECT COUNT(*) as words FROM dbt_test.word_frequency_overall;" 2>/dev/null
 	@echo "\033[32m✓ Pipeline test complete!\033[0m"
 
 # ========== Docker commands ==========

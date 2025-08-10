@@ -36,3 +36,12 @@ DATABASE_CONFIG = {
 # True: Use PostgreSQL database for future features
 # False: Continue using CSV files only (current behavior)
 DATABASE_ENABLED = os.getenv("DATABASE_ENABLED", "true").lower() == "true"
+
+# Environment-based schema selection
+ENVIRONMENT = os.getenv('ENVIRONMENT', 'dev')  # dev, test, prod
+SCHEMA_MAPPING = {
+    'dev': 'news_data_dev',
+    'test': 'news_data_test', 
+    'prod': 'news_data_prod'
+}
+DATABASE_SCHEMA = SCHEMA_MAPPING.get(ENVIRONMENT, 'news_data_dev')

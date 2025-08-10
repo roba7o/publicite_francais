@@ -2,7 +2,7 @@ version: 2
 
 sources:
   - name: news_data
-    schema: news_data
+    schema: "{% if target.name == 'test' %}news_data_test{% elif target.name == 'prod' %}news_data_prod{% else %}news_data_dev{% endif %}"
     tables:
       - name: articles
         description: Raw scraped French articles
