@@ -32,7 +32,7 @@ DATABASE_CONFIG = {
     "connection_timeout": int(os.getenv("DB_TIMEOUT", 30)),
 }
 
-# Enable database functionality  
+# Enable database functionality
 # True: Use PostgreSQL database (current behavior)
 # False: Disable database storage
 DATABASE_ENABLED = os.getenv("DATABASE_ENABLED", "true").lower() == "true"

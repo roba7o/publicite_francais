@@ -6,14 +6,14 @@ No complex singleton patterns or enterprise health checks - just what you need.
 
 Usage:
     from database import get_database_manager
-    
+
     db = get_database_manager()
     with db.get_session() as session:
         result = session.execute(text("SELECT * FROM news_data.articles"))
 """
 
 from contextlib import contextmanager
-from typing import Generator
+from typing import Generator, Optional
 
 from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.orm import Session, sessionmaker
@@ -24,12 +24,12 @@ from utils.structured_logger import get_structured_logger
 class DatabaseManager:
     """
     Simple database manager for personal project.
-    
+
     Provides SQLAlchemy sessions with basic error handling and logging.
     No connection pooling, health checks, or other enterprise features.
     """
 
-    def __init__(self, config: dict = None):
+    def __init__(self, config: Optional[dict] = None):
         """Initialize with database configuration."""
         self.logger = get_structured_logger(self.__class__.__name__)
 
@@ -37,16 +37,16 @@ class DatabaseManager:
         from config.settings import DATABASE_CONFIG
 
         self.config = {**DATABASE_CONFIG, **(config or {})}
-        
+
         # Initialize SQLAlchemy components
-        self._engine: Engine = None
-        self._session_local: sessionmaker = None
+        self._engine: Optional[Engine] = None
+        self._session_local: Optional[sessionmaker] = None
         self._initialized = False
 
     def initialize(self) -> bool:
         """
         Initialize database connection.
-        
+
         Returns:
             True if successful, False otherwise
         """
@@ -61,33 +61,31 @@ class DatabaseManager:
 
             self._engine = create_engine(
                 database_url,
-                pool_timeout=self.config['connection_timeout'],
+                pool_timeout=self.config["connection_timeout"],
                 pool_recycle=3600,  # Recycle connections after 1 hour
                 echo=False,  # Set to True for SQL query logging
             )
 
             self._session_local = sessionmaker(
-                autocommit=False, 
-                autoflush=False, 
-                bind=self._engine
+                autocommit=False, autoflush=False, bind=self._engine
             )
 
             self._initialized = True
-            
+
             self.logger.info(
                 "Database initialized",
                 extra_data={
                     "host": self.config["host"],
                     "database": self.config["database"],
-                }
+                },
             )
             return True
 
         except Exception as e:
             self.logger.error(
-                "Database initialization failed", 
-                extra_data={"error": str(e)}, 
-                exc_info=True
+                "Database initialization failed",
+                extra_data={"error": str(e)},
+                exc_info=True,
             )
             return False
 
@@ -110,7 +108,9 @@ class DatabaseManager:
             session.commit()
         except Exception as e:
             session.rollback()
-            self.logger.error("Database error", extra_data={"error": str(e)}, exc_info=True)
+            self.logger.error(
+                "Database error", extra_data={"error": str(e)}, exc_info=True
+            )
             raise
         finally:
             session.close()
@@ -123,7 +123,9 @@ class DatabaseManager:
             self.logger.info("Database connection test successful")
             return True
         except Exception as e:
-            self.logger.error("Database connection test failed", extra_data={"error": str(e)})
+            self.logger.error(
+                "Database connection test failed", extra_data={"error": str(e)}
+            )
             return False
 
     def close(self) -> None:
@@ -135,7 +137,7 @@ class DatabaseManager:
 
 
 # Simple global instance - no complex singleton pattern
-_db_manager: DatabaseManager = None
+_db_manager: Optional[DatabaseManager] = None
 
 
 def get_database_manager() -> DatabaseManager:

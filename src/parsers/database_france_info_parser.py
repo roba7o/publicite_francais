@@ -34,7 +34,7 @@ class DatabaseFranceInfoParser(DatabaseBaseParser):
     def parse_article(self, soup: BeautifulSoup) -> Optional[ArticleData]:
         """
         Parse FranceInfo article from BeautifulSoup object.
-        
+
         This method is identical to FranceInfoArticleParser.parse_article()
         to ensure consistent parsing behavior.
         """
@@ -96,10 +96,10 @@ class DatabaseFranceInfoParser(DatabaseBaseParser):
                     return dt.strftime("%Y-%m-%d")
                 except (ValueError, AttributeError):
                     pass
-            
+
             # Fallback to text content
             date_text = date_tag.get_text(strip=True)
             if date_text:
                 return date_text
-                
+
         return "No date found"

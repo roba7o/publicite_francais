@@ -22,7 +22,7 @@ from bs4 import BeautifulSoup
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from config.settings import DATABASE_ENABLED, DEBUG, OFFLINE, DATABASE_ENV
+from config.settings import DATABASE_ENABLED, DATABASE_ENV, DEBUG, OFFLINE
 from database import get_database_manager
 from models import ArticleData
 from utils.structured_logger import get_structured_logger
@@ -215,44 +215,51 @@ class DatabaseBaseParser(ABC):
     def _parse_article_date(self, date_str: str) -> Optional[str]:
         """
         Parse article date string to valid YYYY-MM-DD format or None.
-        
+
         Args:
             date_str: Date string from parser (could be "Unknown date", "2025-01-01", etc.)
-            
+
         Returns:
             Valid date string in YYYY-MM-DD format or None for invalid dates
         """
-        if not date_str or date_str.lower() in ["unknown date", "no date found", "unknown", ""]:
+        if not date_str or date_str.lower() in [
+            "unknown date",
+            "no date found",
+            "unknown",
+            "",
+        ]:
             return None
-            
+
         # If already in YYYY-MM-DD format, validate and return
-        if len(date_str) == 10 and date_str.count('-') == 2:
+        if len(date_str) == 10 and date_str.count("-") == 2:
             try:
                 datetime.strptime(date_str, "%Y-%m-%d")
                 return date_str
             except ValueError:
                 pass
-                
+
         # Try to parse other common formats
         date_formats = [
             "%Y-%m-%d",
-            "%d/%m/%Y", 
+            "%d/%m/%Y",
             "%m/%d/%Y",
             "%Y-%m-%d %H:%M:%S",
             "%Y-%m-%dT%H:%M:%S",
         ]
-        
+
         for fmt in date_formats:
             try:
                 # Split on T and space to handle datetime strings
-                clean_date = date_str.split('T')[0].split(' ')[0]
+                clean_date = date_str.split("T")[0].split(" ")[0]
                 dt = datetime.strptime(clean_date, fmt)
                 return dt.strftime("%Y-%m-%d")
             except ValueError:
                 continue
-                
+
         # If we can't parse it, log a warning and return None
-        self.logger.warning(f"Could not parse article date: '{date_str}', storing as NULL")
+        self.logger.warning(
+            f"Could not parse article date: '{date_str}', storing as NULL"
+        )
         return None
 
     def to_database(self, article_data: ArticleData, url: str) -> bool:
@@ -281,7 +288,7 @@ class DatabaseBaseParser(ABC):
             parsed_article_date = self._parse_article_date(article_data.article_date)
             # Use appropriate schema based on environment
             schema_name = f"news_data_{DATABASE_ENV}"
-            
+
             with self.db.get_session() as session:
                 from sqlalchemy import text
 
@@ -308,16 +315,22 @@ class DatabaseBaseParser(ABC):
                         SELECT id FROM {schema_name}.articles
                         WHERE source_id = :source_id AND title = :title AND article_date = :article_date
                     """),
-                        {"source_id": self.source_id, "title": article_data.title, "article_date": parsed_article_date},
+                        {
+                            "source_id": self.source_id,
+                            "title": article_data.title,
+                            "article_date": parsed_article_date,
+                        },
                     ).fetchone()
 
                     if existing_title_date:
                         self.logger.debug(
                             "Article already exists (duplicate title+date)",
                             extra_data={
-                                "title": article_data.title[:50] + "..." if len(article_data.title) > 50 else article_data.title,
+                                "title": article_data.title[:50] + "..."
+                                if len(article_data.title) > 50
+                                else article_data.title,
                                 "article_date": parsed_article_date,
-                                "existing_id": str(existing_title_date[0])
+                                "existing_id": str(existing_title_date[0]),
                             },
                         )
                         return False
@@ -341,7 +354,7 @@ class DatabaseBaseParser(ABC):
                         "num_paragraphs": article_data.num_paragraphs,
                     },
                 )
-                
+
                 session.commit()  # Commit the transaction explicitly
 
                 self.logger.info(

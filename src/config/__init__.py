@@ -2,7 +2,7 @@
 Configuration module for French Article Scraper.
 
 This module contains all configuration settings, including:
-- Website scraper and parser configurations  
+- Website scraper and parser configurations
 - Application settings
 
 Note: Text processing and filtering is now handled by dbt/SQL.

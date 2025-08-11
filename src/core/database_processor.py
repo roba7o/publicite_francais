@@ -16,7 +16,7 @@ from typing import Any, List, Tuple, Type
 
 from bs4 import BeautifulSoup
 
-from config.settings import DATABASE_ENABLED, OFFLINE, DATABASE_ENV
+from config.settings import DATABASE_ENABLED, DATABASE_ENV, OFFLINE
 from database import get_database_manager
 from utils.structured_logger import get_structured_logger
 from utils.validators import DataValidator
@@ -165,10 +165,11 @@ class DatabaseProcessor:
             (processed_count / total_attempted * 100) if total_attempted > 0 else 0
         )
 
-        # Clean completion message  
-        from utils.cli_output import success
-        success(f"Source '{config['name']}' processing completed")
-        
+        # Clean completion message
+        from utils.cli_output import success as cli_success
+
+        cli_success(f"Source '{config['name']}' processing completed")
+
         logger.info(
             "Database source processing completed",
             extra_data={
@@ -187,13 +188,15 @@ class DatabaseProcessor:
         """Create database parser using dynamic class loading from config."""
         parser_class_path = config.get("parser_class")
         if not parser_class_path:
-            logger.error(f"No parser_class specified in config for source: {config['name']}")
+            logger.error(
+                f"No parser_class specified in config for source: {config['name']}"
+            )
             return None
 
         try:
             # Dynamic class loading (like your old system!)
             ParserClass = cls.import_class(parser_class_path)
-            
+
             # Create parser with source_id (database parsers use different signature)
             parser_kwargs = config.get("parser_kwargs", {})
             return ParserClass(source_id, **parser_kwargs)
@@ -295,12 +298,16 @@ class DatabaseProcessor:
         )
         # Clean completion summary using CLI package
         from utils.cli_output import completion_summary
-        completion_summary("Database Processing Complete", {
-            "Articles Stored": total_processed,
-            "Articles Attempted": total_attempted, 
-            "Success Rate": f"{round(success_rate, 1)}%"
-        })
-        
+
+        completion_summary(
+            "Database Processing Complete",
+            {
+                "Articles Stored": total_processed,
+                "Articles Attempted": total_attempted,
+                "Success Rate": f"{round(success_rate, 1)}%",
+            },
+        )
+
         logger.info(
             "Database processing completed",
             extra_data={

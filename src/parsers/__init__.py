@@ -13,7 +13,7 @@ from .database_tf1_info_parser import DatabaseTF1InfoParser
 
 __all__ = [
     "DatabaseBaseParser",
-    "DatabaseSlateFrParser", 
+    "DatabaseSlateFrParser",
     "DatabaseFranceInfoParser",
     "DatabaseTF1InfoParser",
     "DatabaseLadepecheFrParser",

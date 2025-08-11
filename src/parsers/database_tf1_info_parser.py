@@ -34,7 +34,7 @@ class DatabaseTF1InfoParser(DatabaseBaseParser):
     def parse_article(self, soup: BeautifulSoup) -> Optional[ArticleData]:
         """
         Parse TF1 Info article from BeautifulSoup object.
-        
+
         This method is identical to TF1InfoArticleParser.parse_article()
         to ensure consistent parsing behavior.
         """

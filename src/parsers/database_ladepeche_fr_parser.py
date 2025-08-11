@@ -35,7 +35,7 @@ class DatabaseLadepecheFrParser(DatabaseBaseParser):
     def parse_article(self, soup: BeautifulSoup) -> Optional[ArticleData]:
         """
         Parse Ladepeche.fr article from BeautifulSoup object.
-        
+
         This method is identical to LadepecheFrArticleParser.parse_article()
         to ensure consistent parsing behavior.
         """

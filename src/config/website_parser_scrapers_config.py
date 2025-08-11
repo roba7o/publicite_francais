@@ -28,14 +28,14 @@ class ScraperConfig:
             "scraper_class": self.scraper_class,
             "parser_class": self.parser_class,
             "scraper_kwargs": self.scraper_kwargs or {},
-            "parser_kwargs": self.parser_kwargs or {}
+            "parser_kwargs": self.parser_kwargs or {},
         }
 
 
 def get_scraper_configs() -> list[ScraperConfig]:
     """Get list of scraper configurations with dynamic class loading."""
     from config.settings import DEBUG
-    
+
     return [
         ScraperConfig(
             name="Slate.fr",
@@ -47,7 +47,7 @@ def get_scraper_configs() -> list[ScraperConfig]:
         ScraperConfig(
             name="FranceInfo.fr",
             enabled=True,
-            scraper_class="scrapers.france_info_scraper.FranceInfoURLScraper", 
+            scraper_class="scrapers.france_info_scraper.FranceInfoURLScraper",
             parser_class="parsers.database_france_info_parser.DatabaseFranceInfoParser",
             scraper_kwargs={"debug": DEBUG},
         ),
