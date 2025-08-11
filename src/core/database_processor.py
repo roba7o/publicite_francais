@@ -165,11 +165,9 @@ class DatabaseProcessor:
             (processed_count / total_attempted * 100) if total_attempted > 0 else 0
         )
 
-        # ASCII art for source completion
-        print(f"""
-\033[34m┌──────────────────────────────────────┐
-│        SOURCE PROCESSING DONE       │  \033[32m{config["name"]}\033[34m
-└──────────────────────────────────────┘\033[0m""")
+        # Clean completion message  
+        from utils.cli_output import success
+        success(f"Source '{config['name']}' processing completed")
         
         logger.info(
             "Database source processing completed",
@@ -295,13 +293,13 @@ class DatabaseProcessor:
         success_rate = (
             (total_processed / total_attempted * 100) if total_attempted > 0 else 0
         )
-        # ASCII art for overall completion
-        print(f"""
-\033[35m╔══════════════════════════════════════════════════════════════╗
-║                    DATABASE PROCESSING COMPLETE             ║
-║                                                              ║
-║  \033[32m✓ {total_processed:3d} articles stored    \033[33m◆ {round(success_rate, 1):5.1f}% success rate\033[35m     ║
-╚══════════════════════════════════════════════════════════════╝\033[0m""")
+        # Clean completion summary using CLI package
+        from utils.cli_output import completion_summary
+        completion_summary("Database Processing Complete", {
+            "Articles Stored": total_processed,
+            "Articles Attempted": total_attempted, 
+            "Success Rate": f"{round(success_rate, 1)}%"
+        })
         
         logger.info(
             "Database processing completed",
