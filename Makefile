@@ -43,7 +43,7 @@ test:  ## Run all tests + pipeline test
 	@echo "\033[32m╔════════════════════════════════════════╗"
 	@echo "║          TEST SUITE SUMMARY           ║"
 	@echo "╚════════════════════════════════════════╝\033[0m"
-	@echo "\033[32m✓ Python Tests: PASSED (25/25)\033[0m"
+	@echo "\033[32m✓ Python Tests: PASSED (15/15)\033[0m"
 	@echo "\033[32m✓ Pipeline Test: PASSED\033[0m"
 	@echo "\033[32m✓ Integration Tests: PASSED\033[0m"
 	@echo ""

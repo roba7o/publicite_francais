@@ -20,8 +20,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 # Import after path setup
 from utils.structured_logger import get_structured_logger
-from utils.french_text_processor import FrenchTextProcessor
-from utils.csv_writer import DailyCSVWriter
 from config.website_parser_scrapers_config import ScraperConfig
 from core.database_processor import DatabaseProcessor
 
@@ -82,15 +80,16 @@ def mock_scraper_config():
 
 
 @pytest.fixture
-def french_text_processor():
-    """Initialized French text processor for testing."""
-    return FrenchTextProcessor()
+def scraper_configs():
+    """All scraper configurations for testing."""
+    from config.website_parser_scrapers_config import SCRAPER_CONFIGS
+    return SCRAPER_CONFIGS
 
 
-@pytest.fixture
-def csv_writer(temp_output_dir):
-    """CSV writer with temporary output directory."""
-    return DailyCSVWriter(output_dir=temp_output_dir, debug=True)
+@pytest.fixture  
+def database_processor():
+    """Database processor for testing database operations."""
+    return DatabaseProcessor
 
 
 @pytest.fixture

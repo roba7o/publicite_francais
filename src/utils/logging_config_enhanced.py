@@ -72,7 +72,7 @@ def _setup_component_log_levels() -> None:
         # Text processing - moderate verbosity
         "article_scrapers.utils.french_text_processor": logging.INFO,
         # CSV writing - less verbose unless debugging
-        "article_scrapers.utils.csv_writer": (
+        "article_scrapers.utils.removed_csv_writer": (
             logging.WARNING if not DEBUG else logging.INFO
         ),
         # Parsers - moderate verbosity

@@ -38,9 +38,9 @@ class MockParser:
         soup = BeautifulSoup(html, 'html.parser')
         return [(soup, "https://test.example.com/mock-article")]
         
-    def to_csv(self, parsed_data: Dict[str, Any], url: str) -> None:
-        """Mock CSV writing."""
-        pass
+    def to_database(self, parsed_data: Dict[str, Any], url: str) -> bool:
+        """Mock database writing."""
+        return True
 
 
 class MockFailingParser:
@@ -63,9 +63,9 @@ class MockFailingParser:
         """Return empty sources."""
         return []
         
-    def to_csv(self, parsed_data: Dict[str, Any], url: str) -> None:
-        """Mock CSV writing."""
-        pass
+    def to_database(self, parsed_data: Dict[str, Any], url: str) -> bool:
+        """Mock database writing (fails)."""
+        return False
 
 
 class MockParserWithRichContent:
@@ -119,6 +119,6 @@ class MockParserWithRichContent:
         soup = self.get_soup_from_url("mock://url")
         return [(soup, "https://test.example.com/rich-article")]
         
-    def to_csv(self, parsed_data: Dict[str, Any], url: str) -> None:
-        """Mock CSV writing."""
-        pass
+    def to_database(self, parsed_data: Dict[str, Any], url: str) -> bool:
+        """Mock database writing."""
+        return True
