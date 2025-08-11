@@ -9,7 +9,7 @@ import pytest
 from unittest.mock import Mock, patch
 
 from core.database_processor import DatabaseProcessor
-from config.website_parser_scrapers_config import ScraperConfig
+from config.website_parser_scrapers_config import SCRAPER_CONFIGS
 from models import ArticleData
 
 
@@ -29,19 +29,19 @@ class TestEssential:
 
     def test_database_processor_disabled_config(self):
         """Test that DatabaseProcessor handles disabled configurations."""
-        # Create a mock disabled source configuration for database architecture
-        config = ScraperConfig(
-            name="DisabledSource",
-            enabled=False,
-            scraper_class="scrapers.slate_fr_scraper.SlateFrURLScraper",
-            parser_class="parsers.database_slate_fr_parser.DatabaseSlateFrParser",
-            scraper_kwargs={"debug": False}
-        )
+        # Create a disabled source configuration dictionary
+        config = {
+            "name": "DisabledSource",
+            "enabled": False,
+            "scraper_class": "scrapers.slate_fr_scraper.SlateFrURLScraper",
+            "parser_class": "parsers.database_slate_fr_parser.DatabaseSlateFrParser",
+            "scraper_kwargs": {"debug": False}
+        }
         
-        # Test that the ScraperConfig properly tracks enabled state
-        assert config.enabled is False
-        assert config.name == "DisabledSource"
-        assert config.to_dict()['enabled'] is False
+        # Test that the configuration dictionary has correct enabled state
+        assert config["enabled"] is False
+        assert config["name"] == "DisabledSource"
+        assert config['enabled'] is False
 
     def test_database_processor_initialization(self):
         """Test DatabaseProcessor can be initialized."""
@@ -77,19 +77,18 @@ class TestEssential:
         
         # Check first config has required fields for database architecture
         config = SCRAPER_CONFIGS[0]
-        assert hasattr(config, 'name')
-        assert hasattr(config, 'enabled')
-        assert hasattr(config, 'scraper_class')
-        assert hasattr(config, 'to_dict')  # Database architecture method
+        assert isinstance(config, dict)
+        assert 'name' in config
+        assert 'enabled' in config
+        assert 'scraper_class' in config
         
-        # Test conversion to dict format with dynamic class loading
-        config_dict = config.to_dict()
-        assert 'name' in config_dict
-        assert 'enabled' in config_dict  
-        assert 'scraper_class' in config_dict
-        assert 'parser_class' in config_dict  # Dynamic parser loading!
-        assert 'scraper_kwargs' in config_dict
-        assert 'parser_kwargs' in config_dict
+        # Test that dict format has all required fields
+        assert 'name' in config
+        assert 'enabled' in config  
+        assert 'scraper_class' in config
+        assert 'parser_class' in config
+        assert 'scraper_kwargs' in config
+        assert 'parser_kwargs' in config
 
     def test_offline_mode_setting(self):
         """Test that offline mode setting can be imported."""

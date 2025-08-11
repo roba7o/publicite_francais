@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 # Import after path setup
 from utils.structured_logger import get_structured_logger
-from config.website_parser_scrapers_config import ScraperConfig
+# ScraperConfig removed - using dictionary configurations
 from core.database_processor import DatabaseProcessor
 
 
@@ -70,13 +70,13 @@ def sample_article_data():
 @pytest.fixture
 def mock_scraper_config():
     """Mock scraper configuration for testing."""
-    return ScraperConfig(
-        name="TestSource",
-        enabled=True,
-        scraper_class="tests.fixtures.mock_scraper.MockScraper",
-        parser_class="tests.fixtures.mock_parser.MockParser",
-        scraper_kwargs={"debug": True}
-    )
+    return {
+        "name": "TestSource",
+        "enabled": True,
+        "scraper_class": "tests.fixtures.mock_scraper.MockScraper",
+        "parser_class": "tests.fixtures.mock_parser.MockParser",
+        "scraper_kwargs": {"debug": True}
+    }
 
 
 @pytest.fixture

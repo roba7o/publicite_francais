@@ -55,9 +55,8 @@ def main() -> Optional[int]:
         cli.success("Database initialized successfully")
         logger.info("Database initialization successful")
 
-        # Get consolidated source configurations and convert to dict format
-        scraper_configs = get_scraper_configs()
-        source_configs = [config.to_dict() for config in scraper_configs]
+        # Get consolidated source configurations
+        source_configs = get_scraper_configs()
 
         cli.info(f"Found {len(source_configs)} enabled news sources")
         logger.info(
