@@ -71,10 +71,8 @@ def _setup_component_log_levels() -> None:
         "article_scrapers.core.processor": (logging.DEBUG if DEBUG else logging.INFO),
         # Text processing - moderate verbosity
         "article_scrapers.utils.french_text_processor": logging.INFO,
-        # CSV writing - less verbose unless debugging
-        "article_scrapers.utils.removed_csv_writer": (
-            logging.WARNING if not DEBUG else logging.INFO
-        ),
+        # Database operations - moderate verbosity
+        "article_scrapers.database": logging.INFO,
         # Parsers - moderate verbosity
         "article_scrapers.parsers": logging.INFO,
         # Scrapers - moderate verbosity

@@ -206,7 +206,7 @@ def main():
     
     if passed == len(test_results):
         print("\n\033[32m✓ All tests passed! Database infrastructure is ready.\033[0m")
-        print("\033[35m◆ Your existing CSV scraper continues to work unchanged.\033[0m")
+        print("\033[35m◆ Database storage system is working correctly.\033[0m")
         print("\033[34m▲ Database is ready for your future refactor steps.\033[0m")
         logger.info(
             "Database connection tests completed successfully",

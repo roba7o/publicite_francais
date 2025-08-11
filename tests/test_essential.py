@@ -2,7 +2,7 @@
 Essential working tests only.
 
 These tests verify core functionality is working correctly after development.
-Now focused on database pipeline instead of CSV processing.
+Focused on database pipeline functionality.
 """
 
 import pytest

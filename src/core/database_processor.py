@@ -5,7 +5,7 @@ This is the database equivalent of ArticleProcessor that:
 - Uses your existing scrapers (unchanged)
 - Uses Database parsers (extends DatabaseBaseParser)
 - Stores raw data directly to database via to_database()
-- NO CSV output, NO word frequencies, NO text analysis
+- NO word frequencies, NO text analysis
 
 All text processing is moved to dbt/SQL.
 """
@@ -151,7 +151,7 @@ class DatabaseProcessor:
         processed_count = 0
         total_attempted = len(sources)
 
-        # Process each article (database storage instead of CSV)
+        # Process each article for database storage
         for soup, source_identifier in sources:
             if soup:
                 success = cls._process_article(
@@ -257,7 +257,7 @@ class DatabaseProcessor:
             if not article_data:
                 return False
 
-            # Store raw data directly to database (replaces CSV)
+            # Store raw data directly to database
             return parser.to_database(article_data, url)  # type: ignore
 
         except Exception as e:

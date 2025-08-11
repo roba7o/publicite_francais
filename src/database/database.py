@@ -2,7 +2,7 @@
 Database connection module for French news scraper.
 
 This module provides database connectivity infrastructure without modifying
-existing CSV-based scraper logic. It sets up connection pooling, provides
+existing scraper logic. It sets up connection pooling, provides
 connection management, and includes basic health checking functionality.
 
 Usage:

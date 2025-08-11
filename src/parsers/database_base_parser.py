@@ -1,13 +1,13 @@
 """
 Database-focused base parser that stores raw article data to PostgreSQL.
 
-This is the database equivalent of BaseParser that:
-- Keeps all the HTTP session management and parsing infrastructure
-- Replaces CSV/text processing with direct database storage
+This parser provides:
+- HTTP session management and parsing infrastructure
+- Direct database storage for articles
 - Maintains the same interface for child parsers
 - Stores only raw data (title, full_text, url, date)
 
-Child parsers only need to implement parse_article() - same as BaseParser.
+Child parsers only need to implement parse_article().
 """
 
 import time
@@ -32,12 +32,11 @@ class DatabaseBaseParser(ABC):
     """
     Database-focused base parser for raw data collection.
 
-    This mirrors BaseParser but stores data to PostgreSQL instead of CSV.
-    Child parsers implement the same parse_article(soup) -> ArticleData interface.
+    Child parsers implement the parse_article(soup) -> ArticleData interface.
 
     Features:
-    - Shared HTTP session with connection pooling (same as BaseParser)
-    - Direct PostgreSQL storage instead of CSV output
+    - Shared HTTP session with connection pooling
+    - Direct PostgreSQL storage
     - Duplicate detection based on source_id + url
     - No text processing - stores raw article content
     - Support for both live web scraping and offline testing
@@ -260,7 +259,6 @@ class DatabaseBaseParser(ABC):
         """
         Store raw article data directly to database.
 
-        This replaces BaseParser's to_csv() method with database storage.
         NO text processing, NO word frequencies - just raw data.
 
         Args:

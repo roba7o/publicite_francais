@@ -4,7 +4,7 @@ Database-focused Ladepeche.fr parser that stores raw data to PostgreSQL.
 This is the database equivalent of LadepecheFrArticleParser that:
 - Uses DatabaseBaseParser instead of BaseParser
 - Keeps the exact same HTML parsing logic
-- Stores to database instead of CSV via to_database() method
+- Stores to database via to_database() method
 """
 
 import re
@@ -22,7 +22,7 @@ class DatabaseLadepecheFrParser(DatabaseBaseParser):
     Database-focused Ladepeche.fr parser that stores raw data only.
 
     This mirrors LadepecheFrArticleParser exactly but extends DatabaseBaseParser
-    instead of BaseParser, so it stores to PostgreSQL instead of CSV.
+    instead of BaseParser, so it stores to PostgreSQL.
 
     The HTML parsing logic is identical to your existing parser.
     """
