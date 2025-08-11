@@ -10,14 +10,14 @@ This is the database equivalent of ArticleProcessor that:
 All text processing is moved to dbt/SQL.
 """
 
-import importlib
 import time
-from typing import Any, List, Tuple, Type
+from typing import Any, List, Tuple
 
 from bs4 import BeautifulSoup
 
-from config.settings import DATABASE_ENABLED, DATABASE_ENV, OFFLINE
-from database import get_database_manager
+from config.settings import DATABASE_ENABLED, OFFLINE
+from core.class_registry import get_scraper_class, get_parser_class, extract_class_name
+from database import ArticleRepository
 from utils.structured_logger import get_structured_logger
 from utils.validators import DataValidator
 
@@ -35,45 +35,35 @@ class DatabaseProcessor:
     - Uses your existing scrapers
     """
 
-    @staticmethod
-    def import_class(class_path: str) -> Type[Any]:
-        """Import class from string path (same as ArticleProcessor)."""
-        module_path, class_name = class_path.rsplit(".", 1)
-        module = importlib.import_module(module_path)
-        cls = getattr(module, class_name)
-        return cls  # type: ignore
+    def get_scraper_class_safe(self, class_path: str) -> Any:
+        """Get scraper class from registry with error handling."""
+        class_name = extract_class_name(class_path)
+        scraper_class = get_scraper_class(class_name)
+        if not scraper_class:
+            raise ImportError(f"Scraper class not found: {class_name}")
+        return scraper_class
+    
+    def get_parser_class_safe(self, class_path: str) -> Any:
+        """Get parser class from registry with error handling."""
+        class_name = extract_class_name(class_path)
+        parser_class = get_parser_class(class_name)
+        if not parser_class:
+            raise ImportError(f"Parser class not found: {class_name}")
+        return parser_class
 
-    @classmethod
-    def get_source_id(cls, source_name: str) -> str:
+    def __init__(self):
+        """Initialize processor with database repository."""
+        self.article_repo = ArticleRepository()
+    
+    def get_source_id(self, source_name: str) -> str:
         """Get source ID from database."""
-        db = get_database_manager()
-        # Use appropriate schema based on environment
-        schema_name = f"news_data_{DATABASE_ENV}"
-        try:
-            with db.get_session() as session:
-                from sqlalchemy import text
-
-                result = session.execute(
-                    text(f"""
-                    SELECT id FROM {schema_name}.news_sources
-                    WHERE name = :name
-                """),
-                    {"name": source_name},
-                )
-
-                row = result.fetchone()
-                if row:
-                    return str(row[0])
-                else:
-                    logger.error(f"Source not found in database: {source_name}")
-                    return ""
-
-        except Exception as e:
-            logger.error(f"Failed to get source ID: {e}")
+        source_id = self.article_repo.get_source_id(source_name)
+        if not source_id:
+            logger.error(f"Source not found in database: {source_name}")
             return ""
+        return source_id
 
-    @classmethod
-    def process_source(cls, config: dict) -> Tuple[int, int]:
+    def process_source(self, config: dict) -> Tuple[int, int]:
         """
         Process a single source - database version.
 
@@ -104,17 +94,17 @@ class DatabaseProcessor:
 
         try:
             # Use your existing scraper (unchanged)
-            ScraperClass = cls.import_class(config["scraper_class"])
+            ScraperClass = self.get_scraper_class_safe(config["scraper_class"])
             scraper = ScraperClass(**(config.get("scraper_kwargs", {})))
 
             # Get source ID from database
-            source_id = cls.get_source_id(config["name"])
+            source_id = self.get_source_id(config["name"])
             if not source_id:
                 logger.error(f"Could not get source ID for {config['name']}")
                 return 0, 0
 
             # Create database parser using dynamic class loading
-            database_parser = cls._create_database_parser(config, source_id)
+            database_parser = self._create_database_parser(config, source_id)
             if not database_parser:
                 logger.error(f"Could not create database parser for {config['name']}")
                 return 0, 0
@@ -129,9 +119,9 @@ class DatabaseProcessor:
 
         # Get content sources (same logic as ArticleProcessor)
         sources = (
-            cls._get_test_sources(database_parser, config["name"])
+            self._get_test_sources(database_parser, config["name"])
             if OFFLINE
-            else cls._get_live_sources(scraper, database_parser, config["name"])
+            else self._get_live_sources(scraper, database_parser, config["name"])
         )
 
         logger.info(
@@ -154,7 +144,7 @@ class DatabaseProcessor:
         # Process each article for database storage
         for soup, source_identifier in sources:
             if soup:
-                success = cls._process_article(
+                success = self._process_article(
                     database_parser, soup, source_identifier, config["name"]
                 )
                 if success:
@@ -183,8 +173,7 @@ class DatabaseProcessor:
 
         return processed_count, total_attempted
 
-    @classmethod
-    def _create_database_parser(cls, config: dict, source_id: str):
+    def _create_database_parser(self, config: dict, source_id: str):
         """Create database parser using dynamic class loading from config."""
         parser_class_path = config.get("parser_class")
         if not parser_class_path:
@@ -194,8 +183,8 @@ class DatabaseProcessor:
             return None
 
         try:
-            # Dynamic class loading (like your old system!)
-            ParserClass = cls.import_class(parser_class_path)
+            # Registry-based class loading (more robust!)
+            ParserClass = self.get_parser_class_safe(parser_class_path)
 
             # Create parser with source_id (database parsers use different signature)
             parser_kwargs = config.get("parser_kwargs", {})
@@ -265,8 +254,7 @@ class DatabaseProcessor:
             )
             return False
 
-    @classmethod
-    def process_all_sources(cls, source_configs: List[dict]) -> Tuple[int, int]:
+    def process_all_sources(self, source_configs: List[dict]) -> Tuple[int, int]:
         """
         Process all sources - database version.
         """
@@ -289,7 +277,7 @@ class DatabaseProcessor:
 
         # Process sources sequentially for now (simpler)
         for config in enabled_sources:
-            processed, attempted = cls.process_source(config)
+            processed, attempted = self.process_source(config)
             total_processed += processed
             total_attempted += attempted
 

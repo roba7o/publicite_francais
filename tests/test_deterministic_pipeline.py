@@ -68,10 +68,11 @@ class TestDeterministicPipeline:
         processed_count = 0
         attempted_count = 0
         
+        processor = DatabaseProcessor()
         for config in SCRAPER_CONFIGS:
             if config["enabled"]:
                 # Config is already in dict format
-                p_count, a_count = DatabaseProcessor.process_source(config)
+                p_count, a_count = processor.process_source(config)
                 processed_count += p_count
                 attempted_count += a_count
         

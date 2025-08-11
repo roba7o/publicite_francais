@@ -16,16 +16,19 @@ from models import ArticleData
 class TestEssential:
     """Essential tests that must pass for the database system to work."""
 
-    def test_database_processor_import_class(self):
-        """Test that the DatabaseProcessor can import classes."""
-        with patch('core.database_processor.importlib.import_module') as mock_import:
-            mock_module = Mock()
-            mock_class = Mock()
-            mock_module.TestClass = mock_class
-            mock_import.return_value = mock_module
-            
-            result = DatabaseProcessor.import_class("test.module.TestClass")
-            assert result == mock_class
+    def test_database_processor_class_registry(self):
+        """Test that the DatabaseProcessor can load classes from registry."""
+        processor = DatabaseProcessor()
+        
+        # Test scraper class loading
+        scraper_class = processor.get_scraper_class_safe("scrapers.slate_fr_scraper.SlateFrURLScraper")
+        assert scraper_class is not None
+        assert scraper_class.__name__ == "SlateFrURLScraper"
+        
+        # Test parser class loading  
+        parser_class = processor.get_parser_class_safe("parsers.database_slate_fr_parser.DatabaseSlateFrParser")
+        assert parser_class is not None
+        assert parser_class.__name__ == "DatabaseSlateFrParser"
 
     def test_database_processor_disabled_config(self):
         """Test that DatabaseProcessor handles disabled configurations."""
