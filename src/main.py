@@ -1,45 +1,17 @@
 import time
 
-from config.settings import DEBUG, OFFLINE, DATABASE_ENABLED
+from config.settings import OFFLINE, DATABASE_ENABLED
+from config.website_parser_scrapers_config import get_scraper_configs
 from database import initialize_database
 from core.database_processor import DatabaseProcessor
 from utils.logging_config_enhanced import configure_debug_mode, setup_logging
 from utils.structured_logger import get_structured_logger
 
 
-def create_database_configs():
-    """Create database-focused source configurations."""
-    return [
-        {
-            "name": "Slate.fr",
-            "enabled": True,
-            "scraper_class": "scrapers.slate_fr_scraper.SlateFrURLScraper",
-            "scraper_kwargs": {"debug": DEBUG}
-        },
-        {
-            "name": "FranceInfo.fr", 
-            "enabled": True,
-            "scraper_class": "scrapers.france_info_scraper.FranceInfoURLScraper",
-            "scraper_kwargs": {"debug": DEBUG}
-        },
-        {
-            "name": "TF1 Info",
-            "enabled": True,
-            "scraper_class": "scrapers.tf1_info_scraper.TF1InfoURLScraper",
-            "scraper_kwargs": {"debug": DEBUG}
-        },
-        {
-            "name": "Depeche.fr",
-            "enabled": True,
-            "scraper_class": "scrapers.ladepeche_fr_scraper.LadepecheFrURLScraper",
-            "scraper_kwargs": {"debug": DEBUG}
-        },
-    ]
-
-
 def main():
     """Main entry point - Database pipeline orchestration"""
-    # Setup logging
+    # Setup logging with dynamic DEBUG
+    from config.settings import DEBUG
     setup_logging()
     if DEBUG:
         configure_debug_mode(enabled=True)
@@ -57,8 +29,10 @@ def main():
     initialize_database()
     logger.info("Starting database collection")
 
-    # Create source configurations and process all sources
-    source_configs = create_database_configs()
+    # Get consolidated source configurations and convert to dict format
+    scraper_configs = get_scraper_configs()
+    source_configs = [config.to_dict() for config in scraper_configs]
+    
     start_time = time.time()
     processor = DatabaseProcessor()
     processor.process_all_sources(source_configs)

@@ -113,8 +113,8 @@ class DatabaseProcessor:
                 logger.error(f"Could not get source ID for {config['name']}")
                 return 0, 0
 
-            # Create database parser
-            database_parser = cls._create_database_parser(config["name"], source_id)
+            # Create database parser using dynamic class loading
+            database_parser = cls._create_database_parser(config, source_id)
             if not database_parser:
                 logger.error(f"Could not create database parser for {config['name']}")
                 return 0, 0
@@ -185,26 +185,22 @@ class DatabaseProcessor:
         return processed_count, total_attempted
 
     @classmethod
-    def _create_database_parser(cls, source_name: str, source_id: str):
-        """Create database parser based on source name."""
-        # Map source names to database parsers
-        parser_map = {
-            "Slate.fr": "parsers.database_slate_fr_parser.DatabaseSlateFrParser",
-            "FranceInfo.fr": "parsers.database_france_info_parser.DatabaseFranceInfoParser",
-            "TF1 Info": "parsers.database_tf1_info_parser.DatabaseTF1InfoParser",
-            "Depeche.fr": "parsers.database_ladepeche_fr_parser.DatabaseLadepecheFrParser",
-        }
-
-        parser_class_path = parser_map.get(source_name)
+    def _create_database_parser(cls, config: dict, source_id: str):
+        """Create database parser using dynamic class loading from config."""
+        parser_class_path = config.get("parser_class")
         if not parser_class_path:
-            logger.error(f"No database parser found for source: {source_name}")
+            logger.error(f"No parser_class specified in config for source: {config['name']}")
             return None
 
         try:
+            # Dynamic class loading (like your old system!)
             ParserClass = cls.import_class(parser_class_path)
-            return ParserClass(source_id)
+            
+            # Create parser with source_id (database parsers use different signature)
+            parser_kwargs = config.get("parser_kwargs", {})
+            return ParserClass(source_id, **parser_kwargs)
         except Exception as e:
-            logger.error(f"Failed to create database parser: {e}")
+            logger.error(f"Failed to create database parser {parser_class_path}: {e}")
             return None
 
     @staticmethod

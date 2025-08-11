@@ -71,12 +71,7 @@ class TestDeterministicPipeline:
         for config in SCRAPER_CONFIGS:
             if config.enabled:
                 # Convert to dict format for processor
-                config_dict = {
-                    'name': config.name,
-                    'enabled': config.enabled,
-                    'scraper_class': config.scraper_class,
-                    'scraper_kwargs': config.scraper_kwargs or {}
-                }
+                config_dict = config.to_dict()
                 
                 p_count, a_count = DatabaseProcessor.process_source(config_dict)
                 processed_count += p_count
