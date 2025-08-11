@@ -21,18 +21,12 @@ run:  ## Run main script locally (must be inside venv)
 	cd $(SRC) && ../venv/bin/python -m $(MAIN_MODULE)
 
 run-live:  ## Run script in live mode (OFFLINE = False)
-	@echo "Setting OFFLINE = False and running in live mode..."
-	@sed -i.bak 's/OFFLINE = True/OFFLINE = False/' $(SETTINGS_FILE)
-	cd $(SRC) && ../venv/bin/python -m $(MAIN_MODULE)
-	@sed -i.bak 's/OFFLINE = False/OFFLINE = True/' $(SETTINGS_FILE)
-	@rm -f $(SETTINGS_FILE).bak
+	@echo "Running in live mode (OFFLINE=false)..."
+	cd $(SRC) && OFFLINE=false ../venv/bin/python -m $(MAIN_MODULE)
 
 run-offline:  ## Run script in offline mode (OFFLINE = True)
-	@echo "Setting OFFLINE = True and running in offline mode..."
-	@sed -i.bak 's/OFFLINE = False/OFFLINE = True/' $(SETTINGS_FILE)
-	cd $(SRC) && ../venv/bin/python -m $(MAIN_MODULE)
-	@sed -i.bak 's/OFFLINE = True/OFFLINE = False/' $(SETTINGS_FILE)
-	@rm -f $(SETTINGS_FILE).bak
+	@echo "Running in offline mode (OFFLINE=true)..."
+	cd $(SRC) && OFFLINE=true ../venv/bin/python -m $(MAIN_MODULE)
 
 test:  ## Run all tests + pipeline test
 	@echo "\033[33m◆ Running Python tests...\033[0m"
@@ -112,8 +106,8 @@ dbt-debug:  ## Test dbt database connection
 
 dbt-clean-test:  ## Clean test schema when done
 	@echo "\033[31m× Dropping test schema...\033[0m"
-	@docker compose exec postgres psql -U news_user -d french_news -c "DROP SCHEMA IF EXISTS dbt_test CASCADE;"
-	@docker compose exec postgres psql -U news_user -d french_news -c "CREATE SCHEMA dbt_test; GRANT ALL ON SCHEMA dbt_test TO news_user;"
+	@docker compose exec postgres sh -c 'psql -U $$POSTGRES_USER -d $$POSTGRES_DB -c "DROP SCHEMA IF EXISTS dbt_test CASCADE;"'
+	@docker compose exec postgres sh -c 'psql -U $$POSTGRES_USER -d $$POSTGRES_DB -c "CREATE SCHEMA dbt_test; GRANT ALL ON SCHEMA dbt_test TO $$POSTGRES_USER;"'
 	@echo "\033[32m✓ Test schema cleaned\033[0m"
 
 pipeline:  ## Run full pipeline: scrape articles + process with dbt
@@ -127,11 +121,11 @@ test-pipeline:  ## Run pipeline test with fresh database (clears data first)
 	@echo "\033[33m◆ Running pipeline test with fresh data...\033[0m"
 	@echo "\033[34m□ Step 1: Ensuring database is ready...\033[0m"
 	@docker compose up -d postgres > /dev/null 2>&1
-	@docker compose exec postgres sh -c 'until pg_isready -U news_user -d french_news; do sleep 1; done' > /dev/null 2>&1
+	@docker compose exec postgres sh -c 'until pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB; do sleep 1; done' > /dev/null 2>&1
 	@echo "\033[31m× Step 2: Clearing database tables...\033[0m"
-	@docker compose exec postgres psql -U news_user -d french_news -c "TRUNCATE news_data_test.articles CASCADE;" > /dev/null 2>&1
+	@docker compose exec postgres sh -c 'psql -U $$POSTGRES_USER -d $$POSTGRES_DB -c "TRUNCATE news_data_test.articles CASCADE;"' > /dev/null 2>&1
 	@printf "\033[32m  ✓ Database cleared - "
-	@docker compose exec postgres psql -U news_user -d french_news -t -c 'SELECT COUNT(*) FROM news_data_test.articles;' | xargs | awk '{print $$1 " articles remaining\033[0m"}'
+	@docker compose exec postgres sh -c 'psql -U $$POSTGRES_USER -d $$POSTGRES_DB -t -c "SELECT COUNT(*) FROM news_data_test.articles;"' | xargs | awk '{print $$1 " articles remaining\033[0m"}'
 	@echo "\033[34m■ Step 3: Scraping test articles...\033[0m"
 	@cd $(SRC) && ../venv/bin/python -m $(MAIN_MODULE) > /dev/null 2>&1 || (echo "\033[31m✗ Scraping failed\033[0m" && exit 1)
 	@echo "\033[32m  ✓ Articles scraped successfully\033[0m"
@@ -139,7 +133,7 @@ test-pipeline:  ## Run pipeline test with fresh database (clears data first)
 	@cd french_flashcards && ../venv/bin/dbt run --target test > /dev/null 2>&1 || (echo "\033[31m✗ dbt processing failed\033[0m" && exit 1)
 	@echo "\033[32m  ✓ dbt processing successful\033[0m"
 	@echo "\033[36m▶ Step 5: Verifying results...\033[0m"
-	@docker compose exec postgres psql -U news_user -d french_news -c "SELECT COUNT(*) as sentences FROM dbt_test.sentences; SELECT COUNT(*) as vocabulary_words FROM dbt_test.vocabulary_for_flashcards;" 2>/dev/null
+	@docker compose exec postgres sh -c 'psql -U $$POSTGRES_USER -d $$POSTGRES_DB -c "SELECT COUNT(*) as sentences FROM dbt_test.sentences; SELECT COUNT(*) as vocabulary_words FROM dbt_test.vocabulary_for_flashcards;"' 2>/dev/null
 	@echo "\033[32m✓ Pipeline test complete!\033[0m"
 
 test-workflow:  ## Complete test workflow with HTML test files
@@ -171,9 +165,9 @@ docker-test-pipeline:  ## Run pipeline test in Docker with fresh data
 	@echo "\033[34m□ Step 1: Starting database...\033[0m"
 	docker compose up -d postgres
 	@echo "\033[33m⧗ Waiting for database...\033[0m"
-	docker compose exec postgres sh -c 'until pg_isready -U news_user -d french_news; do sleep 1; done'
+	docker compose exec postgres sh -c 'until pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB; do sleep 1; done'
 	@echo "\033[31m× Step 2: Clearing database...\033[0m"
-	docker compose exec postgres psql -U news_user -d french_news -c "TRUNCATE news_data_test.articles CASCADE;"
+	docker compose exec postgres sh -c 'psql -U $$POSTGRES_USER -d $$POSTGRES_DB -c "TRUNCATE news_data_test.articles CASCADE;"'
 	@echo "\033[34m■ Step 3: Running scraper...\033[0m"
 	docker compose run --rm scraper
 	@echo "\033[35m■ Step 4: Running dbt...\033[0m"
