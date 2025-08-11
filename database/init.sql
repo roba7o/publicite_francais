@@ -1,103 +1,144 @@
 -- French News Database Initialization Script
--- This script sets up the basic schema structure for future use
+-- This script sets up the schema structure for all environments
 -- Run automatically when the PostgreSQL container starts for the first time
 
 -- Enable UUID extension for unique identifiers
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Create schema for organizing tables
-CREATE SCHEMA IF NOT EXISTS news_data;
-
--- Set search path to include our schema
-SET search_path TO news_data, public;
-
 -- =============================================================================
--- TABLES FOR FUTURE IMPLEMENTATION
--- These tables are created for the upcoming refactor but not used yet
+-- SCHEMAS FOR DIFFERENT ENVIRONMENTS
 -- =============================================================================
 
--- News sources configuration table
-CREATE TABLE IF NOT EXISTS news_sources (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name VARCHAR(100) NOT NULL UNIQUE,
-    base_url VARCHAR(500) NOT NULL,
-    enabled BOOLEAN NOT NULL DEFAULT true,
-    scraper_class VARCHAR(200),
-    parser_class VARCHAR(200),
-    config JSONB, -- Store scraper/parser specific config
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
+-- Create schemas for organizing tables by environment
+CREATE SCHEMA IF NOT EXISTS news_data_dev;    -- Development environment
+CREATE SCHEMA IF NOT EXISTS news_data_test;   -- Test environment 
+CREATE SCHEMA IF NOT EXISTS news_data_prod;   -- Production environment
 
--- Articles metadata table
-CREATE TABLE IF NOT EXISTS articles (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    source_id UUID NOT NULL REFERENCES news_sources(id),
-    title TEXT NOT NULL,
-    url TEXT NOT NULL,
-    article_date DATE,
-    scraped_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    full_text TEXT,
-    num_paragraphs INTEGER,
-    -- Prevent duplicate articles from same source
-    UNIQUE(source_id, url),
-    UNIQUE(source_id, title, article_date)
-);
-
--- Word frequencies table
-CREATE TABLE IF NOT EXISTS word_frequencies (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    article_id UUID NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
-    word VARCHAR(100) NOT NULL,
-    frequency INTEGER NOT NULL CHECK (frequency > 0),
-    context TEXT, -- Sentence context where the word appears
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
--- Processing logs table for monitoring
-CREATE TABLE IF NOT EXISTS processing_logs (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    source_id UUID REFERENCES news_sources(id),
-    run_type VARCHAR(20) NOT NULL CHECK (run_type IN ('live', 'offline', 'test')),
-    articles_attempted INTEGER DEFAULT 0,
-    articles_processed INTEGER DEFAULT 0,
-    started_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    completed_at TIMESTAMP WITH TIME ZONE,
-    status VARCHAR(20) DEFAULT 'running' CHECK (status IN ('running', 'completed', 'failed')),
-    error_message TEXT
-);
+-- Create dbt schemas for text processing
+CREATE SCHEMA IF NOT EXISTS dbt_staging;      -- dbt development target
+CREATE SCHEMA IF NOT EXISTS dbt_test;         -- dbt test target
+CREATE SCHEMA IF NOT EXISTS dbt_prod;         -- dbt production target
 
 -- =============================================================================
--- INDEXES FOR PERFORMANCE
+-- TABLE CREATION FUNCTION
+-- This creates the same tables in each environment schema
 -- =============================================================================
 
--- Articles indexes
-CREATE INDEX IF NOT EXISTS idx_articles_source_id ON articles(source_id);
-CREATE INDEX IF NOT EXISTS idx_articles_scraped_at ON articles(scraped_at);
-CREATE INDEX IF NOT EXISTS idx_articles_article_date ON articles(article_date);
-CREATE INDEX IF NOT EXISTS idx_articles_url ON articles(url);
+CREATE OR REPLACE FUNCTION create_environment_tables(env_schema text)
+RETURNS void AS $$
+BEGIN
+    -- News sources configuration table
+    EXECUTE format('
+        CREATE TABLE IF NOT EXISTS %I.news_sources (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            name VARCHAR(100) NOT NULL UNIQUE,
+            base_url VARCHAR(500) NOT NULL,
+            enabled BOOLEAN NOT NULL DEFAULT true,
+            scraper_class VARCHAR(200),
+            parser_class VARCHAR(200),
+            config JSONB,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        )', env_schema);
 
--- Word frequencies indexes
-CREATE INDEX IF NOT EXISTS idx_word_frequencies_article_id ON word_frequencies(article_id);
-CREATE INDEX IF NOT EXISTS idx_word_frequencies_word ON word_frequencies(word);
-CREATE INDEX IF NOT EXISTS idx_word_frequencies_frequency ON word_frequencies(frequency);
+    -- Articles metadata table
+    EXECUTE format('
+        CREATE TABLE IF NOT EXISTS %I.articles (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            source_id UUID NOT NULL REFERENCES %I.news_sources(id),
+            title TEXT NOT NULL,
+            url TEXT NOT NULL,
+            article_date DATE,
+            scraped_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+            full_text TEXT,
+            num_paragraphs INTEGER,
+            UNIQUE(source_id, url),
+            UNIQUE(source_id, title, article_date)
+        )', env_schema, env_schema);
 
--- Processing logs indexes
-CREATE INDEX IF NOT EXISTS idx_processing_logs_source_id ON processing_logs(source_id);
-CREATE INDEX IF NOT EXISTS idx_processing_logs_started_at ON processing_logs(started_at);
-CREATE INDEX IF NOT EXISTS idx_processing_logs_status ON processing_logs(status);
+    -- Word frequencies table
+    EXECUTE format('
+        CREATE TABLE IF NOT EXISTS %I.word_frequencies (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            article_id UUID NOT NULL REFERENCES %I.articles(id) ON DELETE CASCADE,
+            word VARCHAR(100) NOT NULL,
+            frequency INTEGER NOT NULL CHECK (frequency > 0),
+            context TEXT,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        )', env_schema, env_schema);
+
+    -- Processing logs table for monitoring
+    EXECUTE format('
+        CREATE TABLE IF NOT EXISTS %I.processing_logs (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            source_id UUID REFERENCES %I.news_sources(id),
+            run_type VARCHAR(20) NOT NULL CHECK (run_type IN (''live'', ''offline'', ''test'')),
+            articles_attempted INTEGER DEFAULT 0,
+            articles_processed INTEGER DEFAULT 0,
+            started_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+            completed_at TIMESTAMP WITH TIME ZONE,
+            status VARCHAR(20) DEFAULT ''running'' CHECK (status IN (''running'', ''completed'', ''failed'')),
+            error_message TEXT
+        )', env_schema, env_schema);
+
+    -- Create indexes for performance
+    EXECUTE format('CREATE INDEX IF NOT EXISTS idx_%I_articles_source_id ON %I.articles(source_id)', env_schema, env_schema);
+    EXECUTE format('CREATE INDEX IF NOT EXISTS idx_%I_articles_scraped_at ON %I.articles(scraped_at)', env_schema, env_schema);
+    EXECUTE format('CREATE INDEX IF NOT EXISTS idx_%I_articles_article_date ON %I.articles(article_date)', env_schema, env_schema);
+    EXECUTE format('CREATE INDEX IF NOT EXISTS idx_%I_articles_url ON %I.articles(url)', env_schema, env_schema);
+    
+    EXECUTE format('CREATE INDEX IF NOT EXISTS idx_%I_word_frequencies_article_id ON %I.word_frequencies(article_id)', env_schema, env_schema);
+    EXECUTE format('CREATE INDEX IF NOT EXISTS idx_%I_word_frequencies_word ON %I.word_frequencies(word)', env_schema, env_schema);
+    EXECUTE format('CREATE INDEX IF NOT EXISTS idx_%I_word_frequencies_frequency ON %I.word_frequencies(frequency)', env_schema, env_schema);
+    
+    EXECUTE format('CREATE INDEX IF NOT EXISTS idx_%I_processing_logs_source_id ON %I.processing_logs(source_id)', env_schema, env_schema);
+    EXECUTE format('CREATE INDEX IF NOT EXISTS idx_%I_processing_logs_started_at ON %I.processing_logs(started_at)', env_schema, env_schema);
+    EXECUTE format('CREATE INDEX IF NOT EXISTS idx_%I_processing_logs_status ON %I.processing_logs(status)', env_schema, env_schema);
+
+    RAISE NOTICE 'Created tables and indexes for schema: %', env_schema;
+END;
+$$ LANGUAGE plpgsql;
+
+-- =============================================================================
+-- CREATE TABLES IN ALL ENVIRONMENTS
+-- =============================================================================
+
+SELECT create_environment_tables('news_data_dev');
+SELECT create_environment_tables('news_data_test');
+SELECT create_environment_tables('news_data_prod');
 
 -- =============================================================================
 -- SAMPLE DATA FOR TESTING
+-- Insert into all environment schemas
 -- =============================================================================
 
--- Insert the current news sources
-INSERT INTO news_sources (name, base_url, enabled, scraper_class, parser_class) VALUES
-    ('Slate.fr', 'https://www.slate.fr', true, 'scrapers.slate_fr_scraper.SlateFrURLScraper', 'parsers.slate_fr_parser.SlateFrArticleParser'),
-    ('FranceInfo.fr', 'https://www.franceinfo.fr', true, 'scrapers.france_info_scraper.FranceInfoURLScraper', 'parsers.france_info_parser.FranceInfoArticleParser'),
-    ('TF1 Info', 'https://www.tf1info.fr', true, 'scrapers.tf1_info_scraper.TF1InfoURLScraper', 'parsers.tf1_info_parser.TF1InfoArticleParser'),
-    ('Depeche.fr', 'https://www.ladepeche.fr', true, 'scrapers.ladepeche_fr_scraper.LadepecheFrURLScraper', 'parsers.ladepeche_fr_parser.LadepecheFrArticleParser')
-ON CONFLICT (name) DO NOTHING;
+-- Insert the current news sources into each environment
+DO $$
+BEGIN
+    -- Development environment
+    INSERT INTO news_data_dev.news_sources (name, base_url, enabled, scraper_class, parser_class) VALUES
+        ('Slate.fr', 'https://www.slate.fr', true, 'scrapers.slate_fr_scraper.SlateFrURLScraper', 'parsers.database_slate_fr_parser.DatabaseSlateFrArticleParser'),
+        ('FranceInfo.fr', 'https://www.franceinfo.fr', true, 'scrapers.france_info_scraper.FranceInfoURLScraper', 'parsers.database_france_info_parser.DatabaseFranceInfoArticleParser'),
+        ('TF1 Info', 'https://www.tf1info.fr', true, 'scrapers.tf1_info_scraper.TF1InfoURLScraper', 'parsers.database_tf1_info_parser.DatabaseTF1InfoArticleParser'),
+        ('Depeche.fr', 'https://www.ladepeche.fr', true, 'scrapers.ladepeche_fr_scraper.LadepecheFrURLScraper', 'parsers.database_ladepeche_fr_parser.DatabaseLadepecheFrArticleParser')
+    ON CONFLICT (name) DO NOTHING;
+
+    -- Test environment
+    INSERT INTO news_data_test.news_sources (name, base_url, enabled, scraper_class, parser_class) VALUES
+        ('Slate.fr', 'https://www.slate.fr', true, 'scrapers.slate_fr_scraper.SlateFrURLScraper', 'parsers.database_slate_fr_parser.DatabaseSlateFrArticleParser'),
+        ('FranceInfo.fr', 'https://www.franceinfo.fr', true, 'scrapers.france_info_scraper.FranceInfoURLScraper', 'parsers.database_france_info_parser.DatabaseFranceInfoArticleParser'),
+        ('TF1 Info', 'https://www.tf1info.fr', true, 'scrapers.tf1_info_scraper.TF1InfoURLScraper', 'parsers.database_tf1_info_parser.DatabaseTF1InfoArticleParser'),
+        ('Depeche.fr', 'https://www.ladepeche.fr', true, 'scrapers.ladepeche_fr_scraper.LadepecheFrURLScraper', 'parsers.database_ladepeche_fr_parser.DatabaseLadepecheFrArticleParser')
+    ON CONFLICT (name) DO NOTHING;
+
+    -- Production environment
+    INSERT INTO news_data_prod.news_sources (name, base_url, enabled, scraper_class, parser_class) VALUES
+        ('Slate.fr', 'https://www.slate.fr', true, 'scrapers.slate_fr_scraper.SlateFrURLScraper', 'parsers.database_slate_fr_parser.DatabaseSlateFrArticleParser'),
+        ('FranceInfo.fr', 'https://www.franceinfo.fr', true, 'scrapers.france_info_scraper.FranceInfoURLScraper', 'parsers.database_france_info_parser.DatabaseFranceInfoArticleParser'),
+        ('TF1 Info', 'https://www.tf1info.fr', true, 'scrapers.tf1_info_scraper.TF1InfoURLScraper', 'parsers.database_tf1_info_parser.DatabaseTF1InfoArticleParser'),
+        ('Depeche.fr', 'https://www.ladepeche.fr', true, 'scrapers.ladepeche_fr_scraper.LadepecheFrURLScraper', 'parsers.database_ladepeche_fr_parser.DatabaseLadepecheFrArticleParser')
+    ON CONFLICT (name) DO NOTHING;
+END $$;
 
 -- =============================================================================
 -- UTILITY FUNCTIONS
@@ -110,27 +151,50 @@ BEGIN
     NEW.updated_at = CURRENT_TIMESTAMP;
     RETURN NEW;
 END;
-$$ language 'plpgsql';
-
--- Trigger to automatically update updated_at for news_sources
-CREATE TRIGGER update_news_sources_updated_at 
-    BEFORE UPDATE ON news_sources 
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+$$ LANGUAGE plpgsql;
 
 -- =============================================================================
--- PERMISSIONS
+-- PERMISSIONS FOR ALL SCHEMAS
 -- =============================================================================
 
--- Grant necessary permissions to the news_user
-GRANT USAGE ON SCHEMA news_data TO news_user;
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA news_data TO news_user;
-GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA news_data TO news_user;
+-- Grant necessary permissions to the news_user for all schemas
+DO $$
+DECLARE
+    schema_name text;
+BEGIN
+    FOR schema_name IN VALUES ('news_data_dev'), ('news_data_test'), ('news_data_prod'), ('dbt_staging'), ('dbt_test'), ('dbt_prod')
+    LOOP
+        EXECUTE format('GRANT USAGE ON SCHEMA %I TO news_user', schema_name);
+        EXECUTE format('GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA %I TO news_user', schema_name);
+        EXECUTE format('GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA %I TO news_user', schema_name);
+        EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA %I GRANT ALL ON TABLES TO news_user', schema_name);
+        EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA %I GRANT ALL ON SEQUENCES TO news_user', schema_name);
+        RAISE NOTICE 'Granted permissions for schema: %', schema_name;
+    END LOOP;
+END $$;
+
+-- Drop the helper function
+DROP FUNCTION create_environment_tables(text);
 
 -- Print confirmation message
 DO $$
 BEGIN
-    RAISE NOTICE 'French News Database initialized successfully!';
-    RAISE NOTICE 'Schema: news_data';
-    RAISE NOTICE 'Tables created: news_sources, articles, word_frequencies, processing_logs';
-    RAISE NOTICE 'Ready for future Python integration';
+    RAISE NOTICE '';
+    RAISE NOTICE '╔════════════════════════════════════════════╗';
+    RAISE NOTICE '║     French News Database Initialized!     ║';
+    RAISE NOTICE '╚════════════════════════════════════════════╝';
+    RAISE NOTICE '';
+    RAISE NOTICE 'Environment Schemas Created:';
+    RAISE NOTICE '  • news_data_dev   (development)';
+    RAISE NOTICE '  • news_data_test  (testing)'; 
+    RAISE NOTICE '  • news_data_prod  (production)';
+    RAISE NOTICE '';
+    RAISE NOTICE 'dbt Schemas Created:';
+    RAISE NOTICE '  • dbt_staging     (dev target)';
+    RAISE NOTICE '  • dbt_test        (test target)';
+    RAISE NOTICE '  • dbt_prod        (prod target)';
+    RAISE NOTICE '';
+    RAISE NOTICE 'Tables: news_sources, articles, word_frequencies, processing_logs';
+    RAISE NOTICE 'Ready for Python + dbt integration!';
+    RAISE NOTICE '';
 END $$;

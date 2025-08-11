@@ -23,3 +23,14 @@ french_flashcards:
       threads: 4
       keepalives_idle: 0
       search_path: "dbt_test"
+    prod:
+      type: postgres
+      host: "{{ env_var('POSTGRES_HOST', 'localhost') }}"
+      user: "{{ env_var('POSTGRES_USER', 'news_user') }}"
+      password: "{{ env_var('POSTGRES_PASSWORD', 'dev_password_123') }}"
+      port: "{{ env_var('POSTGRES_PORT', '5432') | as_number }}"
+      dbname: "{{ env_var('POSTGRES_DB', 'french_news') }}"
+      schema: dbt_prod
+      threads: 4
+      keepalives_idle: 0
+      search_path: "dbt_prod"
