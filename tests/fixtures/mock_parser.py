@@ -3,29 +3,34 @@ Mock parser implementations for testing.
 
 These mock parsers simulate real parser behavior without processing
 actual HTML, allowing for controlled testing scenarios.
+
+Updated to align with database architecture using ArticleData models.
 """
 
-from typing import Dict, Any, Optional, List, Tuple
+from typing import Optional, List, Tuple
 from unittest.mock import Mock
 from bs4 import BeautifulSoup
 
+from models import ArticleData
 
-class MockParser:
-    """Mock article parser for testing."""
+
+class MockDatabaseParser:
+    """Mock database parser for testing - aligns with DatabaseBaseParser interface."""
     
-    def __init__(self, debug=False):
+    def __init__(self, source_id: str, debug=False):
+        self.source_id = source_id
         self.debug = debug
         self.logger = Mock()
         self.delay = 0.1
         
-    def parse_article(self, soup: BeautifulSoup) -> Optional[Dict[str, Any]]:
-        """Return mock article data."""
-        return {
-            'title': 'Mock Article Title',
-            'full_text': 'Ceci est un article de test français avec du contenu pour analyse.',
-            'article_date': '2025-07-13',
-            'date_scraped': '2025-07-13 17:00:00'
-        }
+    def parse_article(self, soup: BeautifulSoup) -> Optional[ArticleData]:
+        """Return mock ArticleData object."""
+        return ArticleData(
+            title='Mock Article Title',
+            full_text='Ceci est un article de test français avec du contenu pour analyse.',
+            article_date='2025-07-13',
+            date_scraped='2025-07-13'
+        )
         
     def get_soup_from_url(self, url: str) -> Optional[BeautifulSoup]:
         """Return mock BeautifulSoup object."""
@@ -38,20 +43,29 @@ class MockParser:
         soup = BeautifulSoup(html, 'html.parser')
         return [(soup, "https://test.example.com/mock-article")]
         
-    def to_database(self, parsed_data: Dict[str, Any], url: str) -> bool:
+    def to_database(self, article_data: ArticleData, url: str) -> bool:
         """Mock database writing."""
         return True
+
+
+# Keep old MockParser for backward compatibility
+class MockParser(MockDatabaseParser):
+    """Legacy mock parser - redirects to database version."""
+    
+    def __init__(self, debug=False):
+        super().__init__("mock-source-id", debug)
 
 
 class MockFailingParser:
     """Mock parser that simulates parsing failures."""
     
-    def __init__(self, debug=False):
+    def __init__(self, source_id: str = "mock-failing-id", debug=False):
+        self.source_id = source_id
         self.debug = debug
         self.logger = Mock()
         self.delay = 0.1
         
-    def parse_article(self, soup: BeautifulSoup) -> Optional[Dict[str, Any]]:
+    def parse_article(self, soup: BeautifulSoup) -> Optional[ArticleData]:
         """Simulate parsing failure."""
         return None
         
@@ -63,7 +77,7 @@ class MockFailingParser:
         """Return empty sources."""
         return []
         
-    def to_database(self, parsed_data: Dict[str, Any], url: str) -> bool:
+    def to_database(self, article_data: ArticleData, url: str) -> bool:
         """Mock database writing (fails)."""
         return False
 
@@ -71,16 +85,17 @@ class MockFailingParser:
 class MockParserWithRichContent:
     """Mock parser that returns rich content for text processing tests."""
     
-    def __init__(self, debug=False):
+    def __init__(self, source_id: str = "mock-rich-id", debug=False):
+        self.source_id = source_id
         self.debug = debug
         self.logger = Mock()
         self.delay = 0.1
         
-    def parse_article(self, soup: BeautifulSoup) -> Optional[Dict[str, Any]]:
+    def parse_article(self, soup: BeautifulSoup) -> Optional[ArticleData]:
         """Return mock article with rich French content."""
-        return {
-            'title': 'Article Français Complexe avec Analyses Détaillées',
-            'full_text': """
+        return ArticleData(
+            title='Article Français Complexe avec Analyses Détaillées',
+            full_text="""
             Le gouvernement français annonce des réformes importantes pour l'économie nationale.
             Ces changements concernent principalement la sécurité sociale et les politiques publiques.
             Les citoyens français attendent ces modifications avec un intérêt particulier.
@@ -95,9 +110,9 @@ class MockParserWithRichContent:
             Les médias nationaux couvrent extensivement ces développements politiques majeurs.
             Cette situation politique complexe nécessite une analyse approfondie des enjeux.
             """,
-            'article_date': '2025-07-13',
-            'date_scraped': '2025-07-13 17:00:00'
-        }
+            article_date='2025-07-13',
+            date_scraped='2025-07-13'
+        )
         
     def get_soup_from_url(self, url: str) -> Optional[BeautifulSoup]:
         """Return mock BeautifulSoup with rich content."""
@@ -119,6 +134,6 @@ class MockParserWithRichContent:
         soup = self.get_soup_from_url("mock://url")
         return [(soup, "https://test.example.com/rich-article")]
         
-    def to_database(self, parsed_data: Dict[str, Any], url: str) -> bool:
+    def to_database(self, article_data: ArticleData, url: str) -> bool:
         """Mock database writing."""
         return True

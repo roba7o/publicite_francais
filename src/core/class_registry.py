@@ -49,6 +49,9 @@ class ClassRegistry:
                 'DatabaseLadepecheFrParser': DatabaseLadepecheFrParser,
             })
             
+            # Register test/mock classes (for testing environment)
+            self._register_test_classes()
+            
             logger.info(
                 "Class registry initialized",
                 extra_data={
@@ -63,6 +66,33 @@ class ClassRegistry:
                 extra_data={"error": str(e)},
                 exc_info=True
             )
+    
+    def _register_test_classes(self):
+        """Register test/mock classes for testing environment."""
+        try:
+            # Only import test classes if they're available (in test environment)
+            from tests.fixtures.mock_scraper import MockScraper, MockFailingScraper, MockSlowScraper, MockEmptyScraper
+            from tests.fixtures.mock_parser import MockDatabaseParser, MockParser, MockFailingParser, MockParserWithRichContent
+            
+            # Register mock scrapers
+            self._scrapers.update({
+                'MockScraper': MockScraper,
+                'MockFailingScraper': MockFailingScraper, 
+                'MockSlowScraper': MockSlowScraper,
+                'MockEmptyScraper': MockEmptyScraper,
+            })
+            
+            # Register mock parsers
+            self._parsers.update({
+                'MockDatabaseParser': MockDatabaseParser,
+                'MockParser': MockParser,
+                'MockFailingParser': MockFailingParser,
+                'MockParserWithRichContent': MockParserWithRichContent,
+            })
+            
+        except ImportError:
+            # Test classes not available (not in test environment)
+            pass
     
     def get_scraper_class(self, class_name: str) -> Optional[Type]:
         """Get scraper class by name (class name only, not full path)."""

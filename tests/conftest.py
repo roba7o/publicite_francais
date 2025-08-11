@@ -74,8 +74,9 @@ def mock_scraper_config():
         "name": "TestSource",
         "enabled": True,
         "scraper_class": "tests.fixtures.mock_scraper.MockScraper",
-        "parser_class": "tests.fixtures.mock_parser.MockParser",
-        "scraper_kwargs": {"debug": True}
+        "parser_class": "tests.fixtures.mock_parser.MockDatabaseParser",
+        "scraper_kwargs": {"debug": True},
+        "parser_kwargs": {}
     }
 
 

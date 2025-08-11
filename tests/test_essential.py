@@ -109,3 +109,22 @@ class TestEssential:
         from utils.validators import DataValidator
         validator = DataValidator()
         assert validator is not None
+
+    def test_mock_classes_aligned_with_architecture(self):
+        """Test that mock classes work with the new database architecture."""
+        from core.database_processor import DatabaseProcessor
+        from tests.fixtures.mock_parser import MockDatabaseParser
+        from tests.fixtures.mock_scraper import MockScraper
+        from models import ArticleData
+        
+        # Test that mock parser returns ArticleData (not dict)
+        parser = MockDatabaseParser("test-source")
+        article_data = parser.parse_article(None)  # Mock doesn't need actual soup
+        assert isinstance(article_data, ArticleData)
+        assert article_data.title == "Mock Article Title"
+        
+        # Test that mock scraper works with processor
+        scraper = MockScraper(debug=True)
+        urls = scraper.get_article_urls()
+        assert len(urls) == 3
+        assert all(url.startswith("https://") for url in urls)
