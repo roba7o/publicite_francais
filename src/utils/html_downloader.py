@@ -1,3 +1,9 @@
+"""
+NOTE: This file is used to download HTML pages from specified URLs and save them locally.
+It is not part of the main scraping logic but is used for testing and development purposes.
+Do not remove this file even if it seems unused in the main application.
+"""
+
 from pathlib import Path
 from typing import Dict, Optional, Union
 
