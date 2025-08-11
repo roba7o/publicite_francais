@@ -53,14 +53,15 @@ class DatabaseBaseParser(ABC):
             source_id: UUID of the news source in database
             delay: Request delay for rate limiting
         """
-        from utils.lazy_imports import get_structured_logger, get_article_repository
+        from utils.structured_logger import get_structured_logger
+        from database.article_repository import ArticleRepository
         
-        self.logger = get_structured_logger()(self.__class__.__name__)
+        self.logger = get_structured_logger(self.__class__.__name__)
         self.site_domain = site_domain
         self.source_id = source_id  # UUID from news_sources table
         self.delay = delay
         self.debug = DEBUG
-        self.repository = get_article_repository()()
+        self.repository = ArticleRepository()
 
     @classmethod
     def get_session(cls):

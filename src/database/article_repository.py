@@ -19,10 +19,11 @@ class ArticleRepository:
     
     def __init__(self):
         """Initialize repository with default dependencies."""
-        from utils.lazy_imports import get_database_manager, get_structured_logger
+        from database import get_database_manager
+        from utils.structured_logger import get_structured_logger
         
-        self.db = get_database_manager()()
-        self.logger = get_structured_logger()(__name__)
+        self.db = get_database_manager()
+        self.logger = get_structured_logger(__name__)
         self.schema_name = NEWS_DATA_SCHEMA
     
     def get_source_id(self, source_name: str) -> Optional[str]:

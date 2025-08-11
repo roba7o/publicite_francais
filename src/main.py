@@ -18,13 +18,11 @@ def main() -> Optional[int]:
         Optional[int]: Exit code (0 for success, 1 for failure, None for normal exit)
     """
     # Use shared output system
-    from utils.lazy_imports import get_shared_output, get_debug_setting
-
-    output = get_shared_output()
+    from utils.shared_output import output
+    from config.settings import DEBUG
 
     try:
         # Setup logging with dynamic DEBUG
-        DEBUG = get_debug_setting()
 
         setup_logging()
         if DEBUG:

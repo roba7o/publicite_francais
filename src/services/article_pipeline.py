@@ -27,16 +27,16 @@ class DatabaseProcessor:
 
     def __init__(self):
         """Initialize processor with default dependencies."""
-        from utils.lazy_imports import get_article_repository, get_shared_output
+        from database import ArticleRepository
+        from utils.shared_output import output
         
-        self.article_repo = get_article_repository()()
-        self.output = get_shared_output()
+        self.article_repo = ArticleRepository()
+        self.output = output
     
     def create_scraper(self, config: dict) -> Any:
         """Create scraper from configuration."""
-        from utils.lazy_imports import get_simple_factory
+        from core.component_loader import create_component
         
-        create_component = get_simple_factory()
         return create_component(
             config["scraper_class"], 
             **(config.get("scraper_kwargs", {}))
@@ -44,7 +44,7 @@ class DatabaseProcessor:
     
     def create_parser(self, config: dict, source_id: str) -> Any:
         """Create database parser from configuration.""" 
-        from utils.lazy_imports import get_simple_factory
+        from core.component_loader import create_component
         
         parser_class_path = config.get("parser_class")
         if not parser_class_path:
@@ -53,7 +53,6 @@ class DatabaseProcessor:
             return None
 
         try:
-            create_component = get_simple_factory()
             parser_kwargs = config.get("parser_kwargs", {})
             return create_component(parser_class_path, source_id, **parser_kwargs)
             
