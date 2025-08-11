@@ -112,10 +112,23 @@ dbt-clean-test:  ## Clean test schema when done
 
 pipeline:  ## Run full pipeline: scrape articles + process with dbt
 	@echo "\033[34m■ Step 1: Scraping articles...\033[0m"
-	cd $(SRC) && ../venv/bin/python -m $(MAIN_MODULE)
+	cd $(SRC) && ../venv/bin/python -m $(MAIN_MODULE) || (echo "\033[31m✗ Scraping failed\033[0m" && exit 1)
+	@echo "\033[32m  ✓ Articles scraped successfully\033[0m"
 	@echo "\033[35m■ Step 2: Processing with dbt...\033[0m"
-	cd french_flashcards && ../venv/bin/dbt run
-	@echo "\033[32m✓ Pipeline complete! Check database for word frequencies.\033[0m"
+	cd french_flashcards && ../venv/bin/dbt run || (echo "\033[31m✗ dbt processing failed\033[0m" && exit 1)
+	@echo "\033[32m  ✓ dbt processing successful\033[0m"
+	@echo "\033[36m▶ Verifying pipeline results...\033[0m"
+	@$(MAKE) pipeline-status
+	@echo "\033[32m✓ Pipeline complete!\033[0m"
+
+pipeline-status:  ## Show pipeline status and health check
+	@echo "\033[36m◆ Pipeline Health Check:\033[0m"
+	@printf "\033[34m  Raw Articles: \033[0m"
+	@docker compose exec postgres sh -c 'psql -U $$POSTGRES_USER -d $$POSTGRES_DB -t -c "SELECT COUNT(*) FROM news_data_test.articles;"' 2>/dev/null | xargs || echo "0 (error)"
+	@printf "\033[35m  dbt Sentences: \033[0m"
+	@docker compose exec postgres sh -c 'psql -U $$POSTGRES_USER -d $$POSTGRES_DB -t -c "SELECT COUNT(*) FROM dbt_test.sentences;"' 2>/dev/null | xargs || echo "0 (not processed)"
+	@printf "\033[32m  Vocabulary: \033[0m"
+	@docker compose exec postgres sh -c 'psql -U $$POSTGRES_USER -d $$POSTGRES_DB -t -c "SELECT COUNT(*) FROM dbt_test.vocabulary_for_flashcards;"' 2>/dev/null | xargs || echo "0 (not processed)"
 
 test-pipeline:  ## Run pipeline test with fresh database (clears data first)
 	@echo "\033[33m◆ Running pipeline test with fresh data...\033[0m"
