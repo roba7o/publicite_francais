@@ -8,7 +8,7 @@ a clean interface for article-related database operations.
 from typing import Optional
 from sqlalchemy import text
 
-from config.settings import DATABASE_ENV
+from config.settings import get_schema_name
 from database import get_database_manager
 from utils.structured_logger import get_structured_logger
 
@@ -20,7 +20,7 @@ class ArticleRepository:
     
     def __init__(self):
         self.db = get_database_manager()
-        self.schema_name = f"news_data_{DATABASE_ENV}"
+        self.schema_name = get_schema_name("news_data")
     
     def get_source_id(self, source_name: str) -> Optional[str]:
         """Get source ID from database by name."""

@@ -22,7 +22,7 @@ from bs4 import BeautifulSoup
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from config.settings import DATABASE_ENABLED, DATABASE_ENV, DEBUG, OFFLINE
+from config.settings import DATABASE_ENABLED, DEBUG, OFFLINE, get_schema_name
 from database import get_database_manager
 from models import ArticleData
 from utils.structured_logger import get_structured_logger
@@ -287,7 +287,7 @@ class DatabaseBaseParser(ABC):
             # Parse article date to valid format or None
             parsed_article_date = self._parse_article_date(article_data.article_date)
             # Use appropriate schema based on environment
-            schema_name = f"news_data_{DATABASE_ENV}"
+            schema_name = get_schema_name("news_data")
 
             with self.db.get_session() as session:
                 from sqlalchemy import text

@@ -18,10 +18,8 @@ from bs4 import BeautifulSoup
 from config.settings import DATABASE_ENABLED, OFFLINE
 from core.class_registry import get_scraper_class, get_parser_class, extract_class_name
 from database import ArticleRepository
-from utils.structured_logger import get_structured_logger
+from utils.consolidated_output import ConsolidatedOutput
 from utils.validators import DataValidator
-
-logger = get_structured_logger(__name__)
 
 
 class DatabaseProcessor:
@@ -54,12 +52,14 @@ class DatabaseProcessor:
     def __init__(self):
         """Initialize processor with database repository."""
         self.article_repo = ArticleRepository()
+        self.output = ConsolidatedOutput("database_processor")
     
     def get_source_id(self, source_name: str) -> str:
         """Get source ID from database."""
         source_id = self.article_repo.get_source_id(source_name)
         if not source_id:
-            logger.error(f"Source not found in database: {source_name}")
+            self.output.error(f"Source not found in database: {source_name}",
+                             extra_data={"source_name": source_name, "operation": "get_source_id"})
             return ""
         return source_id
 
@@ -70,26 +70,20 @@ class DatabaseProcessor:
         Uses your existing scraper but Database parser + database storage.
         """
         if not config.get("enabled", True):
-            logger.info(
-                "Source processing skipped",
-                extra_data={"source": config["name"], "reason": "disabled"},
-            )
+            self.output.info("Source processing skipped - disabled",
+                            extra_data={"source": config["name"], "reason": "disabled"})
             return 0, 0
 
         if not DATABASE_ENABLED:
-            logger.warning(
-                "Database not enabled - skipping source",
-                extra_data={"source": config["name"]},
-            )
+            self.output.warning("Database not enabled - skipping source",
+                               extra_data={"source": config["name"], "database_enabled": False})
             return 0, 0
 
-        logger.info(
-            "Starting database source processing",
-            extra_data={
-                "source": config["name"],
-                "scraper_class": config["scraper_class"],
-            },
-        )
+        self.output.process_start(f"source_processing_{config['name']}", 
+                                 extra_data={
+                                     "source": config["name"],
+                                     "scraper_class": config["scraper_class"],
+                                 })
         start_time = time.time()
 
         try:
@@ -100,21 +94,20 @@ class DatabaseProcessor:
             # Get source ID from database
             source_id = self.get_source_id(config["name"])
             if not source_id:
-                logger.error(f"Could not get source ID for {config['name']}")
+                self.output.error(f"Could not get source ID for {config['name']}",
+                                 extra_data={"source": config["name"], "operation": "get_source_id"})
                 return 0, 0
 
             # Create database parser using dynamic class loading
             database_parser = self._create_database_parser(config, source_id)
             if not database_parser:
-                logger.error(f"Could not create database parser for {config['name']}")
+                self.output.error(f"Could not create database parser for {config['name']}",
+                                 extra_data={"source": config["name"], "operation": "create_parser"})
                 return 0, 0
 
         except Exception as e:
-            logger.error(
-                "Component initialization failed",
-                extra_data={"source": config["name"], "error": str(e)},
-                exc_info=True,
-            )
+            self.output.error("Component initialization failed",
+                             extra_data={"source": config["name"], "error": str(e), "operation": "initialization"})
             return 0, 0
 
         # Get content sources (same logic as ArticleProcessor)
@@ -124,18 +117,13 @@ class DatabaseProcessor:
             else self._get_live_sources(scraper, database_parser, config["name"])
         )
 
-        logger.info(
-            f"Found {len(sources)} sources for {config['name']} (mode: {'offline' if OFFLINE else 'live'})"
-        )
+        mode_str = 'offline' if OFFLINE else 'live'
+        self.output.info(f"Found {len(sources)} sources for {config['name']} (mode: {mode_str})",
+                        extra_data={"source": config["name"], "sources_found": len(sources), "mode": mode_str})
 
         if not sources:
-            logger.warning(
-                "No content sources found",
-                extra_data={
-                    "source": config["name"],
-                    "mode": "offline" if OFFLINE else "live",
-                },
-            )
+            self.output.warning("No content sources found",
+                               extra_data={"source": config["name"], "mode": mode_str, "sources_count": 0})
             return 0, 0
 
         processed_count = 0
@@ -155,21 +143,18 @@ class DatabaseProcessor:
             (processed_count / total_attempted * 100) if total_attempted > 0 else 0
         )
 
-        # Clean completion message
-        from utils.cli_output import success as cli_success
+        # Complete source processing with consolidated output
+        self.output.process_complete(f"source_processing_{config['name']}", 
+                                    extra_data={
+                                        "source": config["name"],
+                                        "articles_stored": processed_count,
+                                        "articles_attempted": total_attempted,
+                                        "success_rate_percent": round(success_rate, 1),
+                                        "processing_time_seconds": round(elapsed_time, 2),
+                                    })
 
-        cli_success(f"Source '{config['name']}' processing completed")
-
-        logger.info(
-            "Database source processing completed",
-            extra_data={
-                "source": config["name"],
-                "articles_stored": processed_count,
-                "articles_attempted": total_attempted,
-                "success_rate_percent": round(success_rate, 1),
-                "processing_time_seconds": round(elapsed_time, 2),
-            },
-        )
+        self.output.success(f"Source '{config['name']}' processing completed",
+                           extra_data={"source": config["name"], "status": "completed"})
 
         return processed_count, total_attempted
 
@@ -177,9 +162,8 @@ class DatabaseProcessor:
         """Create database parser using dynamic class loading from config."""
         parser_class_path = config.get("parser_class")
         if not parser_class_path:
-            logger.error(
-                f"No parser_class specified in config for source: {config['name']}"
-            )
+            self.output.error(f"No parser_class specified in config for source: {config['name']}",
+                             extra_data={"source": config['name'], "operation": "create_parser"})
             return None
 
         try:
@@ -190,24 +174,22 @@ class DatabaseProcessor:
             parser_kwargs = config.get("parser_kwargs", {})
             return ParserClass(source_id, **parser_kwargs)
         except Exception as e:
-            logger.error(f"Failed to create database parser {parser_class_path}: {e}")
+            self.output.error(f"Failed to create database parser {parser_class_path}: {e}",
+                             extra_data={"parser_class": parser_class_path, "error": str(e), "operation": "create_parser"})
             return None
 
-    @staticmethod
-    def _get_test_sources(parser, source_name: str) -> List[Tuple[BeautifulSoup, str]]:
+    def _get_test_sources(self, parser, source_name: str) -> List[Tuple[BeautifulSoup, str]]:
         """Get test sources for offline mode."""
         return parser.get_test_sources_from_directory(source_name)  # type: ignore
 
-    @staticmethod
     def _get_live_sources(
-        scraper: Any, parser, source_name: str
+        self, scraper: Any, parser, source_name: str
     ) -> List[Tuple[BeautifulSoup, str]]:
         """Get live sources (simplified - no complex concurrency for now)."""
         urls = scraper.get_article_urls()
         if not urls:
-            logger.warning(
-                "URL discovery returned no results", extra_data={"source": source_name}
-            )
+            self.output.warning("URL discovery returned no results", 
+                               extra_data={"source": source_name, "operation": "url_discovery"})
             return []
 
         sources = []
@@ -224,17 +206,14 @@ class DatabaseProcessor:
                     sources.append((soup, validated_url))
 
             except Exception as e:
-                logger.warning(
-                    "URL processing error",
-                    extra_data={"url": url, "source": source_name, "error": str(e)},
-                )
+                self.output.warning("URL processing error",
+                                   extra_data={"url": url, "source": source_name, "error": str(e), "operation": "url_processing"})
                 continue
 
         return sources
 
-    @staticmethod
     def _process_article(
-        parser, soup: BeautifulSoup, url: str, source_name: str
+        self, parser, soup: BeautifulSoup, url: str, source_name: str
     ) -> bool:
         """Process single article - database version."""
         try:
@@ -247,11 +226,8 @@ class DatabaseProcessor:
             return parser.to_database(article_data, url)  # type: ignore
 
         except Exception as e:
-            logger.error(
-                "Article processing failed",
-                extra_data={"source": source_name, "url": url, "error": str(e)},
-                exc_info=True,
-            )
+            self.output.error("Article processing failed",
+                             extra_data={"source": source_name, "url": url, "error": str(e), "operation": "article_processing"})
             return False
 
     def process_all_sources(self, source_configs: List[dict]) -> Tuple[int, int]:
@@ -265,15 +241,14 @@ class DatabaseProcessor:
             config for config in source_configs if config.get("enabled", True)
         ]
 
-        logger.info(
-            "Starting database processing",
-            extra_data={
-                "total_sources": len(source_configs),
-                "enabled_sources": len(enabled_sources),
-                "database_enabled": DATABASE_ENABLED,
-                "mode": "offline" if OFFLINE else "live",
-            },
-        )
+        mode_str = "offline" if OFFLINE else "live"
+        self.output.process_start("database_processing", 
+                                 extra_data={
+                                     "total_sources": len(source_configs),
+                                     "enabled_sources": len(enabled_sources),
+                                     "database_enabled": DATABASE_ENABLED,
+                                     "mode": mode_str,
+                                 })
 
         # Process sources sequentially for now (simpler)
         for config in enabled_sources:
@@ -284,25 +259,28 @@ class DatabaseProcessor:
         success_rate = (
             (total_processed / total_attempted * 100) if total_attempted > 0 else 0
         )
-        # Clean completion summary using CLI package
-        from utils.cli_output import completion_summary
-
-        completion_summary(
+        
+        # Display completion summary with consolidated output
+        self.output.completion_summary(
             "Database Processing Complete",
             {
                 "Articles Stored": total_processed,
                 "Articles Attempted": total_attempted,
                 "Success Rate": f"{round(success_rate, 1)}%",
             },
-        )
-
-        logger.info(
-            "Database processing completed",
             extra_data={
                 "total_articles_stored": total_processed,
                 "total_articles_attempted": total_attempted,
                 "success_rate_percent": round(success_rate, 1),
-            },
+                "processing_complete": True
+            }
         )
+
+        self.output.process_complete("database_processing",
+                                   extra_data={
+                                       "total_articles_stored": total_processed,
+                                       "total_articles_attempted": total_attempted,
+                                       "success_rate_percent": round(success_rate, 1),
+                                   })
 
         return total_processed, total_attempted
