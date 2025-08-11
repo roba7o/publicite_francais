@@ -26,5 +26,11 @@ cross join lateral (
       and trim(word) !~ '^[0-9]+$'
 ) word_positions
 
-inner join {{ ref('words') }} words 
+inner join {{ ref('raw_words') }} words 
     on words.word_clean = word_positions.word_clean
+    and not words.is_stopword 
+    and not words.is_junk_word 
+    and not words.too_short 
+    and not words.is_numeric 
+    and not words.mostly_numeric
+    and words.frequency >= 2  -- Quality filter

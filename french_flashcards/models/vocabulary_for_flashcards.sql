@@ -30,10 +30,17 @@ select
     -- Source variety
     count(distinct occurrences.source_id) as appears_in_sources
 
-from {{ ref('words') }} words
+from {{ ref('raw_words') }} words
 
 inner join {{ ref('word_occurrences') }} occurrences 
     on occurrences.word_id = words.word_id
+
+where not words.is_stopword 
+  and not words.is_junk_word 
+  and not words.too_short 
+  and not words.is_numeric 
+  and not words.mostly_numeric
+  and words.frequency >= 2
 
 group by words.word_id, words.word_clean
 

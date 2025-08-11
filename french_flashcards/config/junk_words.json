@@ -1,0 +1,43 @@
+{
+  "description": "Junk word patterns to filter out during French text processing",
+  "version": "1.0", 
+  "last_updated": "2025-01-11",
+  "categories": {
+    "truncated_words": [
+      "tre", "ses", "comple", "apre", "franc", "cision", "sente", "core", "bre", "tait",
+      "ment", "leurs", "dont", "quipe", "dote", "serait", "avance", "tecter", "ramiro",
+      "caisse", "saide", "rentes", "ducatif", "suspecte", "tention", "provisoire", "soupc",
+      "onne", "empreinte", "repe", "peut-e", "contro", "ricain", "fense", "enne", "aire",
+      "ration", "commenc", "ait", "imme", "diat", "pre", "potentiellement", "jusqu"
+    ],
+    "generic_words": [
+      "selon", "qui", "que", "pas", "monde", "fait", "peuvent", "leur", "prix", "offre",
+      "mode", "impose", "euros", "dont", "couverture", "simple", "peut", "ses", "sente",
+      "ment", "leurs", "votre", "argent", "premier", "certains", "offrent", "rendement",
+      "investissement", "payer", "cher", "investir", "suivez", "placements", "cashback",
+      "travailler"
+    ],
+    "parsing_artifacts": [
+      "messages", "involontaires", "d'avoir", "mis", "examen", "meurtre", "personne",
+      "charge", "d'une", "mission", "public", "place", "lors", "d'un", "devant",
+      "oise-dolto", "nucle", "aires", "bombe", "europe", "continent", "l'europe",
+      "l'arsenal", "face", "pourrait", "pays", "l'uranium", "missiles", "londres",
+      "l'allemagne", "politique", "france", "royaume-uni", "renforcement", "reste"
+    ],
+    "financial_terms": [
+      "euros", "prix", "argent", "investissement", "placements", "rendement", "cashback",
+      "payer", "cher", "investir", "offre", "offrent"
+    ],
+    "common_verb_forms": [
+      "tait", "serait", "peuvent", "offrent", "commenc", "ait", "dote", "pourrait", "travailler"
+    ],
+    "generic_descriptors": [
+      "simple", "comple", "certains", "potentiellement", "imme", "diat", "premier", "reste"
+    ]
+  },
+  "notes": {
+    "purpose": "These words are filtered out because they are truncated, too generic, or result from parsing errors",
+    "customization": "Add words specific to your news sources that create noise in vocabulary extraction",
+    "learning_impact": "Removing these improves the quality of vocabulary for French learning"
+  }
+}

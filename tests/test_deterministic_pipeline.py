@@ -114,7 +114,7 @@ class TestDeterministicPipeline:
             counts = session.execute(text("""
                 SELECT 'sentences' as table_name, COUNT(*) as count FROM dbt_test.sentences
                 UNION ALL
-                SELECT 'words', COUNT(*) FROM dbt_test.words  
+                SELECT 'raw_words', COUNT(*) FROM dbt_test.raw_words  
                 UNION ALL
                 SELECT 'word_occurrences', COUNT(*) FROM dbt_test.word_occurrences
                 UNION ALL
@@ -124,10 +124,11 @@ class TestDeterministicPipeline:
             count_dict = {row[0]: row[1] for row in counts}
             
             # These counts should be exactly reproducible from test HTML files
+            # Updated counts reflect new raw_words table with boolean flags for filtering
             assert count_dict['sentences'] == 314, f"Expected 314 sentences, got {count_dict['sentences']}"
-            assert count_dict['words'] == 2282, f"Expected 2282 unique words, got {count_dict['words']}"  
-            assert count_dict['word_occurrences'] == 4127, f"Expected 4127 word occurrences, got {count_dict['word_occurrences']}"
-            assert count_dict['vocabulary_words'] == 250, f"Expected 250 vocabulary words, got {count_dict['vocabulary_words']}"
+            assert count_dict['raw_words'] == 2506, f"Expected 2506 total raw words (with flags), got {count_dict['raw_words']}"  
+            assert count_dict['word_occurrences'] == 1829, f"Expected 1829 quality word occurrences, got {count_dict['word_occurrences']}"
+            assert count_dict['vocabulary_words'] == 174, f"Expected 174 vocabulary words, got {count_dict['vocabulary_words']}"
     
     def test_specific_word_frequencies(self):
         """Test that specific French words appear with expected frequencies."""
@@ -138,21 +139,22 @@ class TestDeterministicPipeline:
             from sqlalchemy import text
             
             # Test specific word frequencies - these should be deterministic
+            # Updated to test quality words (removed 'selon' as it was correctly filtered as generic)
             word_frequencies = session.execute(text("""
                 SELECT french_word, total_occurrences, appears_in_articles, appears_in_sentences
                 FROM dbt_test.vocabulary_for_flashcards 
-                WHERE french_word IN ('nouvelle', 'après', 'selon', 'politique', 'france')
+                WHERE french_word IN ('nouvelle', 'après', 'politique', 'france', 'défense')
                 ORDER BY total_occurrences DESC
             """)).fetchall()
             
             frequency_dict = {row[0]: {'total': row[1], 'articles': row[2], 'sentences': row[3]} 
                             for row in word_frequencies}
             
-            # These exact counts come from your test HTML files
+            # These exact counts come from your test HTML files with enhanced filtering
             expected_frequencies = {
                 'nouvelle': {'total': 23, 'articles': 4, 'sentences': 21},
                 'après': {'total': 15, 'articles': 8, 'sentences': 15}, 
-                'selon': {'total': 14, 'articles': 8, 'sentences': 13},
+                'défense': {'total': 9, 'articles': 3, 'sentences': 9},
                 'politique': {'total': 7, 'articles': 4, 'sentences': 7},
                 'france': {'total': 6, 'articles': 4, 'sentences': 6},
             }
