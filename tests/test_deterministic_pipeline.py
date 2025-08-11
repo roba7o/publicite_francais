@@ -23,6 +23,10 @@ class TestDeterministicPipeline:
         os.environ['DATABASE_ENV'] = 'test'
         os.environ['OFFLINE'] = 'True'
         
+        # Initialize database for tests
+        from database import initialize_database
+        initialize_database()
+        
     def test_html_file_counts(self):
         """Test that we have the expected number of HTML test files."""
         from pathlib import Path
