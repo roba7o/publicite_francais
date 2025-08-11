@@ -10,7 +10,7 @@ Stopwords and junk word configurations are in french_flashcards/config/ as JSON 
 """
 
 from .settings import DEBUG, OFFLINE
-from .website_parser_scrapers_config import SCRAPER_CONFIGS
+from .source_configs import SCRAPER_CONFIGS
 
 __all__ = [
     "DEBUG", 

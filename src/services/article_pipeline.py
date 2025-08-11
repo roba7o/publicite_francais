@@ -1,59 +1,118 @@
 """
 Database-focused processor that stores raw article data to PostgreSQL.
 
-This is the database equivalent of ArticleProcessor that:
-- Uses your existing scrapers (unchanged)
-- Uses Database parsers (extends DatabaseBaseParser)
-- Stores raw data directly to database via to_database()
-- NO word frequencies, NO text analysis
+Simplified processor that handles:
+- Scraper/parser creation
+- Content acquisition (live/offline)
+- Article processing and storage
+- Database operations
 
 All text processing is moved to dbt/SQL.
 """
 
 import time
 from typing import Any, List, Tuple
-
 from bs4 import BeautifulSoup
 
 from config.settings import DATABASE_ENABLED, OFFLINE
-from core.class_registry import get_scraper_class, get_parser_class, extract_class_name
-from database import ArticleRepository
-from utils.consolidated_output import ConsolidatedOutput
 from utils.validators import DataValidator
 
 
 class DatabaseProcessor:
     """
-    Database-focused processor for raw data collection only.
-
-    This replaces the complex ArticleProcessor with:
-    - Raw data extraction only
-    - Direct database storage via DatabaseBaseParser
-    - No text processing pipeline
-    - Uses your existing scrapers
+    Simplified database processor with consolidated functionality.
+    
+    Handles the complete pipeline: scraper creation → content acquisition → article processing.
     """
 
-    def get_scraper_class_safe(self, class_path: str) -> Any:
-        """Get scraper class from registry with error handling."""
-        class_name = extract_class_name(class_path)
-        scraper_class = get_scraper_class(class_name)
-        if not scraper_class:
-            raise ImportError(f"Scraper class not found: {class_name}")
-        return scraper_class
-    
-    def get_parser_class_safe(self, class_path: str) -> Any:
-        """Get parser class from registry with error handling."""
-        class_name = extract_class_name(class_path)
-        parser_class = get_parser_class(class_name)
-        if not parser_class:
-            raise ImportError(f"Parser class not found: {class_name}")
-        return parser_class
-
     def __init__(self):
-        """Initialize processor with database repository."""
-        self.article_repo = ArticleRepository()
-        self.output = ConsolidatedOutput("database_processor")
+        """Initialize processor with default dependencies."""
+        from utils.lazy_imports import get_article_repository, get_shared_output
+        
+        self.article_repo = get_article_repository()()
+        self.output = get_shared_output()
     
+    def create_scraper(self, config: dict) -> Any:
+        """Create scraper from configuration."""
+        from utils.lazy_imports import get_simple_factory
+        
+        create_component = get_simple_factory()
+        return create_component(
+            config["scraper_class"], 
+            **(config.get("scraper_kwargs", {}))
+        )
+    
+    def create_parser(self, config: dict, source_id: str) -> Any:
+        """Create database parser from configuration.""" 
+        from utils.lazy_imports import get_simple_factory
+        
+        parser_class_path = config.get("parser_class")
+        if not parser_class_path:
+            self.output.error(f"No parser_class specified in config for source: {config['name']}",
+                             extra_data={"source": config['name'], "operation": "create_parser"})
+            return None
+
+        try:
+            create_component = get_simple_factory()
+            parser_kwargs = config.get("parser_kwargs", {})
+            return create_component(parser_class_path, source_id, **parser_kwargs)
+            
+        except ImportError as e:
+            self.output.error(f"Failed to create database parser {parser_class_path}: {e}",
+                             extra_data={"parser_class": parser_class_path, "error": str(e), "operation": "create_parser"})
+            return None
+
+    def acquire_content(self, scraper: Any, parser: Any, source_name: str) -> List[Tuple[BeautifulSoup, str]]:
+        """Get content sources based on mode (offline/live)."""
+        if OFFLINE:
+            return parser.get_test_sources_from_directory(source_name)
+        else:
+            return self._get_live_sources(scraper, parser, source_name)
+    
+    def _get_live_sources(self, scraper: Any, parser: Any, source_name: str) -> List[Tuple[BeautifulSoup, str]]:
+        """Get live sources from web scraping."""
+        urls = scraper.get_article_urls()
+        if not urls:
+            self.output.warning("URL discovery returned no results", 
+                               extra_data={"source": source_name, "operation": "url_discovery"})
+            return []
+
+        sources = []
+
+        # Process first 5 URLs for testing (can expand later)
+        for url in urls[:5]:
+            try:
+                validated_url = DataValidator.validate_url(url)
+                if not validated_url:
+                    continue
+
+                soup = parser.get_soup_from_url(validated_url)
+                if soup:
+                    sources.append((soup, validated_url))
+
+            except Exception as e:
+                self.output.warning("URL processing error",
+                                   extra_data={"url": url, "source": source_name, "error": str(e), "operation": "url_processing"})
+                continue
+
+        return sources
+
+    def process_article(self, parser, soup: BeautifulSoup, url: str, source_name: str) -> bool:
+        """Process single article - parse and store to database."""
+        try:
+            # Parse article (no text processing)
+            article_data = parser.parse_article(soup)
+            if not article_data:
+                return False
+
+            # Store raw data directly to database
+            return parser.to_database(article_data, url)
+
+        except Exception as e:
+            self.output.error("Article processing failed",
+                             extra_data={"source": source_name, "url": url, "error": str(e), "operation": "article_processing"})
+            return False
+
     def get_source_id(self, source_name: str) -> str:
         """Get source ID from database."""
         source_id = self.article_repo.get_source_id(source_name)
@@ -87,22 +146,17 @@ class DatabaseProcessor:
         start_time = time.time()
 
         try:
-            # Use your existing scraper (unchanged)
-            ScraperClass = self.get_scraper_class_safe(config["scraper_class"])
-            scraper = ScraperClass(**(config.get("scraper_kwargs", {})))
+            # Create scraper
+            scraper = self.create_scraper(config)
 
             # Get source ID from database
             source_id = self.get_source_id(config["name"])
             if not source_id:
-                self.output.error(f"Could not get source ID for {config['name']}",
-                                 extra_data={"source": config["name"], "operation": "get_source_id"})
                 return 0, 0
 
-            # Create database parser using dynamic class loading
-            database_parser = self._create_database_parser(config, source_id)
+            # Create database parser
+            database_parser = self.create_parser(config, source_id)
             if not database_parser:
-                self.output.error(f"Could not create database parser for {config['name']}",
-                                 extra_data={"source": config["name"], "operation": "create_parser"})
                 return 0, 0
 
         except Exception as e:
@@ -110,12 +164,8 @@ class DatabaseProcessor:
                              extra_data={"source": config["name"], "error": str(e), "operation": "initialization"})
             return 0, 0
 
-        # Get content sources (same logic as ArticleProcessor)
-        sources = (
-            self._get_test_sources(database_parser, config["name"])
-            if OFFLINE
-            else self._get_live_sources(scraper, database_parser, config["name"])
-        )
+        # Acquire content sources  
+        sources = self.acquire_content(scraper, database_parser, config["name"])
 
         mode_str = 'offline' if OFFLINE else 'live'
         self.output.info(f"Found {len(sources)} sources for {config['name']} (mode: {mode_str})",
@@ -132,7 +182,7 @@ class DatabaseProcessor:
         # Process each article for database storage
         for soup, source_identifier in sources:
             if soup:
-                success = self._process_article(
+                success = self.process_article(
                     database_parser, soup, source_identifier, config["name"]
                 )
                 if success:
@@ -158,77 +208,20 @@ class DatabaseProcessor:
 
         return processed_count, total_attempted
 
-    def _create_database_parser(self, config: dict, source_id: str):
-        """Create database parser using dynamic class loading from config."""
-        parser_class_path = config.get("parser_class")
-        if not parser_class_path:
-            self.output.error(f"No parser_class specified in config for source: {config['name']}",
-                             extra_data={"source": config['name'], "operation": "create_parser"})
-            return None
+    # Backward compatibility methods for tests
+    def get_scraper_class_safe(self, class_path: str):
+        """Backward compatibility - import class directly."""
+        import importlib
+        module_path, class_name = class_path.rsplit('.', 1) 
+        module = importlib.import_module(module_path)
+        return getattr(module, class_name)
 
-        try:
-            # Registry-based class loading (more robust!)
-            ParserClass = self.get_parser_class_safe(parser_class_path)
-
-            # Create parser with source_id (database parsers use different signature)
-            parser_kwargs = config.get("parser_kwargs", {})
-            return ParserClass(source_id, **parser_kwargs)
-        except Exception as e:
-            self.output.error(f"Failed to create database parser {parser_class_path}: {e}",
-                             extra_data={"parser_class": parser_class_path, "error": str(e), "operation": "create_parser"})
-            return None
-
-    def _get_test_sources(self, parser, source_name: str) -> List[Tuple[BeautifulSoup, str]]:
-        """Get test sources for offline mode."""
-        return parser.get_test_sources_from_directory(source_name)  # type: ignore
-
-    def _get_live_sources(
-        self, scraper: Any, parser, source_name: str
-    ) -> List[Tuple[BeautifulSoup, str]]:
-        """Get live sources (simplified - no complex concurrency for now)."""
-        urls = scraper.get_article_urls()
-        if not urls:
-            self.output.warning("URL discovery returned no results", 
-                               extra_data={"source": source_name, "operation": "url_discovery"})
-            return []
-
-        sources = []
-
-        # Process first 5 URLs for testing (can expand later)
-        for url in urls[:5]:
-            try:
-                validated_url = DataValidator.validate_url(url)
-                if not validated_url:
-                    continue
-
-                soup = parser.get_soup_from_url(validated_url)
-                if soup:
-                    sources.append((soup, validated_url))
-
-            except Exception as e:
-                self.output.warning("URL processing error",
-                                   extra_data={"url": url, "source": source_name, "error": str(e), "operation": "url_processing"})
-                continue
-
-        return sources
-
-    def _process_article(
-        self, parser, soup: BeautifulSoup, url: str, source_name: str
-    ) -> bool:
-        """Process single article - database version."""
-        try:
-            # Parse article (no text processing)
-            article_data = parser.parse_article(soup)
-            if not article_data:
-                return False
-
-            # Store raw data directly to database
-            return parser.to_database(article_data, url)  # type: ignore
-
-        except Exception as e:
-            self.output.error("Article processing failed",
-                             extra_data={"source": source_name, "url": url, "error": str(e), "operation": "article_processing"})
-            return False
+    def get_parser_class_safe(self, class_path: str):
+        """Backward compatibility - import class directly."""
+        import importlib
+        module_path, class_name = class_path.rsplit('.', 1)
+        module = importlib.import_module(module_path) 
+        return getattr(module, class_name)
 
     def process_all_sources(self, source_configs: List[dict]) -> Tuple[int, int]:
         """

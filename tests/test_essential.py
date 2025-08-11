@@ -8,15 +8,15 @@ Focused on database pipeline functionality.
 import pytest
 from unittest.mock import Mock, patch
 
-from core.database_processor import DatabaseProcessor
-from config.website_parser_scrapers_config import SCRAPER_CONFIGS
+from services.article_pipeline import DatabaseProcessor
+from config.source_configs import SCRAPER_CONFIGS
 from models import ArticleData
 
 
 class TestEssential:
     """Essential tests that must pass for the database system to work."""
 
-    def test_database_processor_class_registry(self):
+    def test_article_pipeline_class_registry(self):
         """Test that the DatabaseProcessor can load classes from registry."""
         processor = DatabaseProcessor()
         
@@ -30,7 +30,7 @@ class TestEssential:
         assert parser_class is not None
         assert parser_class.__name__ == "DatabaseSlateFrParser"
 
-    def test_database_processor_disabled_config(self):
+    def test_article_pipeline_disabled_config(self):
         """Test that DatabaseProcessor handles disabled configurations."""
         # Create a disabled source configuration dictionary
         config = {
@@ -46,7 +46,7 @@ class TestEssential:
         assert config["name"] == "DisabledSource"
         assert config['enabled'] is False
 
-    def test_database_processor_initialization(self):
+    def test_article_pipeline_initialization(self):
         """Test DatabaseProcessor can be initialized."""
         processor = DatabaseProcessor()
         assert processor is not None
@@ -73,7 +73,7 @@ class TestEssential:
 
     def test_configuration_loading(self):
         """Test that configurations can be loaded in database architecture."""
-        from config.website_parser_scrapers_config import SCRAPER_CONFIGS
+        from config.source_configs import SCRAPER_CONFIGS
         
         assert isinstance(SCRAPER_CONFIGS, list)
         assert len(SCRAPER_CONFIGS) > 0
@@ -112,8 +112,8 @@ class TestEssential:
 
     def test_mock_classes_aligned_with_architecture(self):
         """Test that mock classes work with the new database architecture."""
-        from core.database_processor import DatabaseProcessor
-        from tests.fixtures.mock_parser import MockDatabaseParser
+        from services.article_pipeline import DatabaseProcessor
+        from tests.fixtures.mock_parser_unified import MockDatabaseParser
         from tests.fixtures.mock_scraper import MockScraper
         from models import ArticleData
         

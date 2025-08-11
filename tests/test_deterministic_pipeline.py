@@ -8,9 +8,9 @@ these counts indicate changes in parsing logic that need investigation.
 
 import pytest
 import subprocess
-from core.database_processor import DatabaseProcessor
-from config.website_parser_scrapers_config import SCRAPER_CONFIGS
-from config.settings import get_schema_name
+from services.article_pipeline import DatabaseProcessor
+from config.source_configs import SCRAPER_CONFIGS
+from config.settings import NEWS_DATA_SCHEMA, DBT_SCHEMA
 
 
 class TestDeterministicPipeline:
@@ -64,10 +64,9 @@ class TestDeterministicPipeline:
         # Clear articles table
         from database import get_database_manager
         db = get_database_manager()
-        news_schema = get_schema_name("news_data")
         with db.get_session() as session:
             from sqlalchemy import text
-            session.execute(text(f"TRUNCATE {news_schema}.articles CASCADE;"))
+            session.execute(text(f"TRUNCATE {NEWS_DATA_SCHEMA}.articles CASCADE;"))
             session.commit()
         
         # Run the database processor on all test files
@@ -179,11 +178,10 @@ class TestDeterministicPipeline:
             from sqlalchemy import text
             
             # Count articles per source
-            news_schema = get_schema_name("news_data")
             source_counts = session.execute(text(f"""
                 SELECT s.name, COUNT(a.id) as article_count
-                FROM {news_schema}.news_sources s
-                LEFT JOIN {news_schema}.articles a ON s.id = a.source_id
+                FROM {NEWS_DATA_SCHEMA}.news_sources s
+                LEFT JOIN {NEWS_DATA_SCHEMA}.articles a ON s.id = a.source_id
                 GROUP BY s.name
                 ORDER BY s.name
             """)).fetchall()
@@ -230,13 +228,11 @@ class TestDeterministicPipeline:
         with db.get_session() as session:
             from sqlalchemy import text
             
-            news_schema = get_schema_name("news_data")
-            dbt_schema = get_schema_name("dbt")
             result = session.execute(text(f"""
                 SELECT 
-                    (SELECT COUNT(*) FROM {news_schema}.articles) as articles,
-                    (SELECT COUNT(*) FROM {dbt_schema}.sentences) as sentences,
-                    (SELECT COUNT(*) FROM {dbt_schema}.vocabulary_for_flashcards) as vocab_words
+                    (SELECT COUNT(*) FROM {NEWS_DATA_SCHEMA}.articles) as articles,
+                    (SELECT COUNT(*) FROM {DBT_SCHEMA}.sentences) as sentences,
+                    (SELECT COUNT(*) FROM {DBT_SCHEMA}.vocabulary_for_flashcards) as vocab_words
             """)).fetchone()
             
             return {'articles': result[0], 'sentences': result[1], 'vocab_words': result[2]}

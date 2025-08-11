@@ -58,6 +58,10 @@ SCHEMA_CONFIG = {
     }
 }
 
+# Pre-computed schema names for current environment
+NEWS_DATA_SCHEMA = SCHEMA_CONFIG["news_data"][DATABASE_ENV]
+DBT_SCHEMA = SCHEMA_CONFIG["dbt"][DATABASE_ENV]
+
 def get_schema_name(schema_type: str, env: str = None) -> str:
     """
     Get schema name for given type and environment.

@@ -10,7 +10,9 @@ from typing import Dict, List
 
 def get_scraper_configs() -> List[Dict]:
     """Get list of scraper configurations as simple dictionaries."""
-    from config.settings import DEBUG
+    from utils.lazy_imports import get_debug_setting
+    
+    DEBUG = get_debug_setting()
 
     return [
         {

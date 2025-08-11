@@ -3,11 +3,10 @@ import time
 import traceback
 from typing import Optional
 
-from config.settings import DATABASE_ENABLED, OFFLINE, get_schema_name
-from config.website_parser_scrapers_config import get_scraper_configs
-from core.database_processor import DatabaseProcessor
+from config.settings import DATABASE_ENABLED, OFFLINE, NEWS_DATA_SCHEMA
+from config.source_configs import get_scraper_configs
+from services.article_pipeline import DatabaseProcessor
 from database import initialize_database
-from utils.consolidated_output import ConsolidatedOutput
 from utils.logging_config_enhanced import configure_debug_mode, setup_logging
 
 
@@ -18,12 +17,14 @@ def main() -> Optional[int]:
     Returns:
         Optional[int]: Exit code (0 for success, 1 for failure, None for normal exit)
     """
-    # Setup consolidated output system (combines CLI + structured logging)
-    output = ConsolidatedOutput("main")  # Auto-detects production/development mode
+    # Use shared output system
+    from utils.lazy_imports import get_shared_output, get_debug_setting
+
+    output = get_shared_output()
 
     try:
         # Setup logging with dynamic DEBUG
-        from config.settings import DEBUG
+        DEBUG = get_debug_setting()
 
         setup_logging()
         if DEBUG:
@@ -113,10 +114,9 @@ def main() -> Optional[int]:
 
         output.info("Check database:",
                    extra_data={"next_step": "database_verification"})
-        news_schema = get_schema_name("news_data")
         output.info(
-            f'docker compose exec postgres psql -U news_user -d french_news -c "SELECT title, LENGTH(full_text), scraped_at FROM {news_schema}.articles ORDER BY scraped_at DESC LIMIT 3;"',
-            extra_data={"command_type": "database_check", "schema_used": news_schema}
+            f'docker compose exec postgres psql -U news_user -d french_news -c "SELECT title, LENGTH(full_text), scraped_at FROM {NEWS_DATA_SCHEMA}.articles ORDER BY scraped_at DESC LIMIT 3;"',
+            extra_data={"command_type": "database_check", "schema_used": NEWS_DATA_SCHEMA}
         )
         output.info("Next: Run dbt transformations with 'make dbt-run'!",
                    extra_data={"next_step": "dbt_transformations"})

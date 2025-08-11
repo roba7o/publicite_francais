@@ -12,20 +12,16 @@ Child parsers only need to implement parse_article().
 
 import time
 from abc import ABC, abstractmethod
-from datetime import datetime
 from pathlib import Path
 from typing import List, Optional, Tuple
-from uuid import uuid4
 
 import requests
 from bs4 import BeautifulSoup
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from config.settings import DATABASE_ENABLED, DEBUG, OFFLINE, get_schema_name
-from database import get_database_manager
+from config.settings import DEBUG, OFFLINE
 from models import ArticleData
-from utils.structured_logger import get_structured_logger
 
 
 class DatabaseBaseParser(ABC):
@@ -57,15 +53,14 @@ class DatabaseBaseParser(ABC):
             source_id: UUID of the news source in database
             delay: Request delay for rate limiting
         """
-        self.logger = get_structured_logger(self.__class__.__name__)
+        from utils.lazy_imports import get_structured_logger, get_article_repository
+        
+        self.logger = get_structured_logger()(self.__class__.__name__)
         self.site_domain = site_domain
         self.source_id = source_id  # UUID from news_sources table
         self.delay = delay
         self.debug = DEBUG
-
-        # Initialize database connection if enabled
-        if DATABASE_ENABLED:
-            self.db = get_database_manager()
+        self.repository = get_article_repository()()
 
     @classmethod
     def get_session(cls):
@@ -212,61 +207,9 @@ class DatabaseBaseParser(ABC):
         """
         pass
 
-    def _parse_article_date(self, date_str: str) -> Optional[str]:
-        """
-        Parse article date string to valid YYYY-MM-DD format or None.
-
-        Args:
-            date_str: Date string from parser (could be "Unknown date", "2025-01-01", etc.)
-
-        Returns:
-            Valid date string in YYYY-MM-DD format or None for invalid dates
-        """
-        if not date_str or date_str.lower() in [
-            "unknown date",
-            "no date found",
-            "unknown",
-            "",
-        ]:
-            return None
-
-        # If already in YYYY-MM-DD format, validate and return
-        if len(date_str) == 10 and date_str.count("-") == 2:
-            try:
-                datetime.strptime(date_str, "%Y-%m-%d")
-                return date_str
-            except ValueError:
-                pass
-
-        # Try to parse other common formats
-        date_formats = [
-            "%Y-%m-%d",
-            "%d/%m/%Y",
-            "%m/%d/%Y",
-            "%Y-%m-%d %H:%M:%S",
-            "%Y-%m-%dT%H:%M:%S",
-        ]
-
-        for fmt in date_formats:
-            try:
-                # Split on T and space to handle datetime strings
-                clean_date = date_str.split("T")[0].split(" ")[0]
-                dt = datetime.strptime(clean_date, fmt)
-                return dt.strftime("%Y-%m-%d")
-            except ValueError:
-                continue
-
-        # If we can't parse it, log a warning and return None
-        self.logger.warning(
-            f"Could not parse article date: '{date_str}', storing as NULL"
-        )
-        return None
-
     def to_database(self, article_data: ArticleData, url: str) -> bool:
         """
-        Store raw article data directly to database.
-
-        NO text processing, NO word frequencies - just raw data.
+        Store raw article data using repository pattern.
 
         Args:
             article_data: Parsed article content
@@ -275,105 +218,4 @@ class DatabaseBaseParser(ABC):
         Returns:
             True if stored successfully, False otherwise
         """
-        if not DATABASE_ENABLED:
-            self.logger.warning("Database not enabled - article not stored")
-            return False
-
-        if not article_data or not article_data.full_text:
-            self.logger.debug("No article data to store")
-            return False
-
-        try:
-            # Parse article date to valid format or None
-            parsed_article_date = self._parse_article_date(article_data.article_date)
-            # Use appropriate schema based on environment
-            schema_name = get_schema_name("news_data")
-
-            with self.db.get_session() as session:
-                from sqlalchemy import text
-
-                # Check for duplicates on both unique constraints
-                existing_url = session.execute(
-                    text(f"""
-                    SELECT id FROM {schema_name}.articles
-                    WHERE source_id = :source_id AND url = :url
-                """),
-                    {"source_id": self.source_id, "url": url},
-                ).fetchone()
-
-                if existing_url:
-                    self.logger.debug(
-                        "Article already exists (duplicate URL)",
-                        extra_data={"url": url, "existing_id": str(existing_url[0])},
-                    )
-                    return False
-
-                # Check for duplicate title+date combination
-                if parsed_article_date:  # Only check if we have a valid date
-                    existing_title_date = session.execute(
-                        text(f"""
-                        SELECT id FROM {schema_name}.articles
-                        WHERE source_id = :source_id AND title = :title AND article_date = :article_date
-                    """),
-                        {
-                            "source_id": self.source_id,
-                            "title": article_data.title,
-                            "article_date": parsed_article_date,
-                        },
-                    ).fetchone()
-
-                    if existing_title_date:
-                        self.logger.debug(
-                            "Article already exists (duplicate title+date)",
-                            extra_data={
-                                "title": article_data.title[:50] + "..."
-                                if len(article_data.title) > 50
-                                else article_data.title,
-                                "article_date": parsed_article_date,
-                                "existing_id": str(existing_title_date[0]),
-                            },
-                        )
-                        return False
-
-                # Insert raw article data (duplicates already handled above)
-                article_id = uuid4()
-                session.execute(
-                    text(f"""
-                    INSERT INTO {schema_name}.articles
-                    (id, source_id, title, url, article_date, scraped_at, full_text, num_paragraphs)
-                    VALUES (:id, :source_id, :title, :url, :article_date, :scraped_at, :full_text, :num_paragraphs)
-                """),
-                    {
-                        "id": str(article_id),
-                        "source_id": self.source_id,
-                        "title": article_data.title,
-                        "url": url,
-                        "article_date": parsed_article_date,  # Now properly parsed or NULL
-                        "scraped_at": datetime.now(),  # When we scraped it (current timestamp)
-                        "full_text": article_data.full_text,
-                        "num_paragraphs": article_data.num_paragraphs,
-                    },
-                )
-
-                session.commit()  # Commit the transaction explicitly
-
-                self.logger.info(
-                    "Raw article stored successfully",
-                    extra_data={
-                        "article_id": str(article_id),
-                        "title": article_data.title[:50] + "..."
-                        if len(article_data.title) > 50
-                        else article_data.title,
-                        "url": url,
-                        "text_length": len(article_data.full_text),
-                    },
-                )
-                return True
-
-        except Exception as e:
-            self.logger.error(
-                "Failed to store raw article",
-                extra_data={"url": url, "error": str(e)},
-                exc_info=True,
-            )
-            return False
+        return self.repository.store_article(article_data, url, self.source_id)

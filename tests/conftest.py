@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 # Import after path setup
 from utils.structured_logger import get_structured_logger
 # ScraperConfig removed - using dictionary configurations
-from core.database_processor import DatabaseProcessor
+from services.article_pipeline import DatabaseProcessor
 
 
 @pytest.fixture(scope="session")
@@ -74,7 +74,7 @@ def mock_scraper_config():
         "name": "TestSource",
         "enabled": True,
         "scraper_class": "tests.fixtures.mock_scraper.MockScraper",
-        "parser_class": "tests.fixtures.mock_parser.MockDatabaseParser",
+        "parser_class": "tests.fixtures.mock_parser_unified.MockDatabaseParser",
         "scraper_kwargs": {"debug": True},
         "parser_kwargs": {}
     }
@@ -83,12 +83,12 @@ def mock_scraper_config():
 @pytest.fixture
 def scraper_configs():
     """All scraper configurations for testing."""
-    from config.website_parser_scrapers_config import SCRAPER_CONFIGS
+    from config.source_configs import SCRAPER_CONFIGS
     return SCRAPER_CONFIGS
 
 
 @pytest.fixture  
-def database_processor():
+def article_pipeline():
     """Database processor for testing database operations."""
     return DatabaseProcessor
 

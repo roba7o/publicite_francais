@@ -13,7 +13,7 @@ import os
 # Add src to path for imports
 sys.path.insert(0, 'src')
 
-from utils.cli_output import CLIOutput
+from utils.consolidated_output import ConsolidatedOutput
 
 
 def demo_basic_messages(cli):
@@ -45,7 +45,7 @@ def main():
     is_production = os.getenv("PRODUCTION", "false").lower() == "true"
     mode_name = "PRODUCTION" if is_production else "DEVELOPMENT"
     
-    cli = CLIOutput()  # Auto-detects mode from environment
+    cli = ConsolidatedOutput("demo")  # Auto-detects mode from environment
     
     print(f"\n🎨 CLI Output Package Demo - {mode_name} Mode")
     print("=" * 60)
