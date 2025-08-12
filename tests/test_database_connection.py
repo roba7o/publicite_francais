@@ -22,26 +22,29 @@ from pathlib import Path
 src_path = Path(__file__).parent / "src"
 sys.path.insert(0, str(src_path))
 
-from database import DatabaseManager, get_database_manager, initialize_database
+from database import get_database_manager, initialize_database, get_session
 from utils.structured_logger import get_structured_logger
+from sqlalchemy import text
 
 
 def test_basic_connection():
     """Test basic database connectivity."""
     print("\033[34m■ Testing basic database connection...\033[0m")
     
-    db = DatabaseManager()
+    # Test database initialization
+    if not initialize_database():
+        print("\033[31m× Failed to initialize database\033[0m")
+        assert False, "Database initialization failed"
     
-    if not db.initialize():
-        print("\033[31m× Failed to initialize database manager\033[0m")
-        return False
-    
-    if db.test_connection():
+    # Test connection
+    try:
+        with get_session() as session:
+            result = session.execute(text("SELECT 1")).scalar()
+            assert result == 1
         print("\033[32m✓ Database connection successful!\033[0m")
-        return True
-    else:
-        print("\033[31m× Database connection failed\033[0m")
-        return False
+    except Exception as e:
+        print(f"\033[31m× Database connection failed: {e}\033[0m")
+        assert False, f"Database connection failed: {e}"
 
 
 def test_raw_connection():
@@ -64,11 +67,10 @@ def test_raw_connection():
             
             cursor.close()
             
-        return True
         
     except Exception as e:
         print(f"\033[31m× Raw connection failed: {e}\033[0m")
-        return False
+        assert False, f"Raw connection failed: {e}"
 
 
 def test_sqlalchemy_connection():
@@ -94,11 +96,10 @@ def test_sqlalchemy_connection():
             for table in tables:
                 print(f"   - {table}")
                 
-        return True
         
     except Exception as e:
         print(f"\033[31m× SQLAlchemy connection failed: {e}\033[0m")
-        return False
+        assert False, f"SQLAlchemy connection failed: {e}"
 
 
 def test_news_sources_data():
@@ -124,11 +125,10 @@ def test_news_sources_data():
                 status = "\033[32m● enabled\033[0m" if enabled else "\033[31m● disabled\033[0m"
                 print(f"   - {name}: {base_url} ({status})")
                 
-        return True
         
     except Exception as e:
         print(f"\033[31m× News sources query failed: {e}\033[0m")
-        return False
+        assert False, f"News sources query failed: {e}"
 
 
 def test_health_check():
@@ -149,11 +149,11 @@ def test_health_check():
             for error in health['errors']:
                 print(f"   - {error}")
                 
-        return health['status'] in ['healthy', 'degraded']
+        assert health['status'] in ['healthy', 'degraded'], f"Database health check failed: {health}"
         
     except Exception as e:
         print(f"\033[31m× Health check failed: {e}\033[0m")
-        return False
+        assert False, f"Health check failed: {e}"
 
 
 def main():
