@@ -20,46 +20,21 @@ from utils.validators import DataValidator
 
 class DatabaseProcessor:
     """
-    Simplified database processor with consolidated functionality.
+    Database pipeline orchestrator focused on processing workflow.
     
-    Handles the complete pipeline: scraper creation → content acquisition → article processing.
+    Orchestrates the complete pipeline: content acquisition → article processing → storage.
+    Uses ComponentFactory for component creation to maintain single responsibility.
     """
 
     def __init__(self):
         """Initialize processor with default dependencies."""
         from database import ArticleRepository
         from utils.terminal_output import output
+        from core.component_factory import ComponentFactory
         
         self.article_repo = ArticleRepository()
         self.output = output
-    
-    def create_scraper(self, config: dict) -> Any:
-        """Create scraper from configuration."""
-        from core.component_loader import create_component
-        
-        return create_component(
-            config["scraper_class"], 
-            **(config.get("scraper_kwargs", {}))
-        )
-    
-    def create_parser(self, config: dict, source_id: str) -> Any:
-        """Create database parser from configuration.""" 
-        from core.component_loader import create_component
-        
-        parser_class_path = config.get("parser_class")
-        if not parser_class_path:
-            self.output.error(f"No parser_class specified in config for source: {config['name']}",
-                             extra_data={"source": config['name'], "operation": "create_parser"})
-            return None
-
-        try:
-            parser_kwargs = config.get("parser_kwargs", {})
-            return create_component(parser_class_path, source_id, **parser_kwargs)
-            
-        except ImportError as e:
-            self.output.error(f"Failed to create database parser {parser_class_path}: {e}",
-                             extra_data={"parser_class": parser_class_path, "error": str(e), "operation": "create_parser"})
-            return None
+        self.component_factory = ComponentFactory()
 
     def acquire_content(self, scraper: Any, parser: Any, source_name: str) -> List[Tuple[BeautifulSoup, str]]:
         """Get content sources based on mode (offline/live)."""
@@ -146,7 +121,7 @@ class DatabaseProcessor:
 
         try:
             # Create scraper
-            scraper = self.create_scraper(config)
+            scraper = self.component_factory.create_scraper(config)
 
             # Get source ID from database
             source_id = self.get_source_id(config["name"])
@@ -154,12 +129,14 @@ class DatabaseProcessor:
                 return 0, 0
 
             # Create database parser
-            database_parser = self.create_parser(config, source_id)
-            if not database_parser:
-                return 0, 0
+            database_parser = self.component_factory.create_parser(config, source_id)
 
-        except Exception as e:
+        except (ValueError, ImportError) as e:
             self.output.error("Component initialization failed",
+                             extra_data={"source": config["name"], "error": str(e), "operation": "initialization"})
+            return 0, 0
+        except Exception as e:
+            self.output.error("Unexpected error during component initialization",
                              extra_data={"source": config["name"], "error": str(e), "operation": "initialization"})
             return 0, 0
 
