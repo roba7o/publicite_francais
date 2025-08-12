@@ -27,9 +27,7 @@ DATABASE_CONFIG = {
     "database": os.getenv("POSTGRES_DB", "french_news"),
     "user": os.getenv("POSTGRES_USER", "news_user"),
     "password": os.getenv("POSTGRES_PASSWORD", "dev_password_123"),
-    "min_connections": int(os.getenv("DB_MIN_CONNECTIONS", 1)),
-    "max_connections": int(os.getenv("DB_MAX_CONNECTIONS", 20)),
-    "connection_timeout": int(os.getenv("DB_TIMEOUT", 30)),
+    # Connection pool settings removed - not used by current SQLAlchemy setup
 }
 
 # Enable database functionality
@@ -60,7 +58,7 @@ SCHEMA_CONFIG = {
 
 # Pre-computed schema names for current environment
 NEWS_DATA_SCHEMA = SCHEMA_CONFIG["news_data"][DATABASE_ENV]
-DBT_SCHEMA = SCHEMA_CONFIG["dbt"][DATABASE_ENV]
+# DBT_SCHEMA removed - not used anywhere in codebase
 
 
 def get_schema_name(schema_type: str, env: str = None) -> str:

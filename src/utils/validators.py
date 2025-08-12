@@ -1,9 +1,7 @@
 import re
 from datetime import datetime
-from typing import Any, Optional
+from typing import Optional
 from urllib.parse import urlparse
-
-from models import ArticleData
 
 
 class DataValidator:
@@ -77,45 +75,4 @@ class DataValidator:
         # Default to today if parsing fails
         return datetime.now().strftime("%Y-%m-%d")
 
-    @staticmethod
-    def validate_article_data(data: Any) -> Optional[ArticleData]:
-        """
-        Validate and normalize ArticleData.
-
-        Args:
-            data: ArticleData instance to validate
-
-        Returns:
-            Validated ArticleData instance or None if invalid
-        """
-        if not isinstance(data, ArticleData):
-            return None
-
-        # Required fields with validation
-        title = DataValidator.validate_title(data.title)
-        if not title:
-            return None  # Reject articles without valid titles
-
-        full_text = data.full_text
-        if not full_text or len(full_text.strip()) < 50:
-            return None  # Reject articles with insufficient content
-
-        # Optional fields with defaults
-        article_date = DataValidator.validate_date(data.article_date)
-        date_scraped = data.date_scraped or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-        # Clean and limit other fields
-        author = data.author[:200] if data.author else None
-        category = data.category[:200] if data.category else None
-        summary = data.summary[:200] if data.summary else None
-
-        return ArticleData(
-            title=title,
-            full_text=full_text.strip(),
-            article_date=article_date or "",
-            date_scraped=date_scraped,
-            num_paragraphs=data.num_paragraphs,
-            author=author,
-            category=category,
-            summary=summary,
-        )
+    # validate_article_data removed - never used in codebase

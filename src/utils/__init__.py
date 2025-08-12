@@ -9,12 +9,10 @@ This module contains utility functions and classes for:
 Note: Text processing is now handled by dbt/SQL for better performance.
 """
 
-from .html_downloader import download_html
 from .structured_logger import get_structured_logger
 from .validators import DataValidator
 
 __all__ = [
     "DataValidator",
     "get_structured_logger",
-    "download_html",
 ]

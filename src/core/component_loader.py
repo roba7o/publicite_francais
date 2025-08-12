@@ -54,6 +54,3 @@ def import_class(class_path: str):
         raise ImportError(f"Failed to import {class_path}: {e}") from e
 
 
-def extract_class_name(full_path: str) -> str:
-    """Extract class name from full module path for backward compatibility."""
-    return full_path.split(".")[-1]

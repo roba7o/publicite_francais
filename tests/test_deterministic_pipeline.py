@@ -10,7 +10,7 @@ import pytest
 import subprocess
 from services.article_pipeline import DatabaseProcessor
 from config.source_configs import SCRAPER_CONFIGS
-from config.settings import NEWS_DATA_SCHEMA, DBT_SCHEMA
+from config.settings import NEWS_DATA_SCHEMA, SCHEMA_CONFIG, DATABASE_ENV
 
 
 class TestDeterministicPipeline:
@@ -111,14 +111,15 @@ class TestDeterministicPipeline:
             from sqlalchemy import text
             
             # Test exact table counts - these are deterministic from test HTML files
-            counts = session.execute(text("""
-                SELECT 'sentences' as table_name, COUNT(*) as count FROM dbt_test.sentences
+            dbt_schema = SCHEMA_CONFIG["dbt"][DATABASE_ENV]
+            counts = session.execute(text(f"""
+                SELECT 'sentences' as table_name, COUNT(*) as count FROM {dbt_schema}.sentences
                 UNION ALL
-                SELECT 'raw_words', COUNT(*) FROM dbt_test.raw_words  
+                SELECT 'raw_words', COUNT(*) FROM {dbt_schema}.raw_words  
                 UNION ALL
-                SELECT 'word_occurrences', COUNT(*) FROM dbt_test.word_occurrences
+                SELECT 'word_occurrences', COUNT(*) FROM {dbt_schema}.word_occurrences
                 UNION ALL
-                SELECT 'vocabulary_words', COUNT(*) FROM dbt_test.vocabulary_for_flashcards
+                SELECT 'vocabulary_words', COUNT(*) FROM {dbt_schema}.vocabulary_for_flashcards
             """)).fetchall()
             
             count_dict = {row[0]: row[1] for row in counts}
@@ -140,9 +141,10 @@ class TestDeterministicPipeline:
             
             # Test specific word frequencies - these should be deterministic
             # Updated to test quality words (removed 'selon' as it was correctly filtered as generic)
-            word_frequencies = session.execute(text("""
+            dbt_schema = SCHEMA_CONFIG["dbt"][DATABASE_ENV]
+            word_frequencies = session.execute(text(f"""
                 SELECT french_word, total_occurrences, appears_in_articles, appears_in_sentences
-                FROM dbt_test.vocabulary_for_flashcards 
+                FROM {dbt_schema}.vocabulary_for_flashcards 
                 WHERE french_word IN ('nouvelle', 'après', 'politique', 'france', 'défense')
                 ORDER BY total_occurrences DESC
             """)).fetchall()
@@ -232,8 +234,8 @@ class TestDeterministicPipeline:
             result = session.execute(text(f"""
                 SELECT 
                     (SELECT COUNT(*) FROM {NEWS_DATA_SCHEMA}.articles) as articles,
-                    (SELECT COUNT(*) FROM {DBT_SCHEMA}.sentences) as sentences,
-                    (SELECT COUNT(*) FROM {DBT_SCHEMA}.vocabulary_for_flashcards) as vocab_words
+                    (SELECT COUNT(*) FROM {SCHEMA_CONFIG["dbt"][DATABASE_ENV]}.sentences) as sentences,
+                    (SELECT COUNT(*) FROM {SCHEMA_CONFIG["dbt"][DATABASE_ENV]}.vocabulary_for_flashcards) as vocab_words
             """)).fetchone()
             
             return {'articles': result[0], 'sentences': result[1], 'vocab_words': result[2]}
