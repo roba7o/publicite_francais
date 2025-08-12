@@ -942,7 +942,7 @@ if __name__ == "__main__":
 
 ### Create Source-Specific Documentation
 
-Create `documentation/sources/example-news.md`:
+Create `docs/sources/example-news.md`:
 
 ```markdown
 # Example News Source Documentation
