@@ -1,13 +1,16 @@
 -- Test database schema for CI/CD testing
 -- This creates minimal schema needed for integration tests
 
+-- Enable UUID extension for unique identifiers
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 -- Create test schemas
 CREATE SCHEMA IF NOT EXISTS news_data_test;
 CREATE SCHEMA IF NOT EXISTS dbt_test;
 
 -- Create news sources table for testing
 CREATE TABLE IF NOT EXISTS news_data_test.news_sources (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(100) NOT NULL UNIQUE,
     base_url VARCHAR(500) NOT NULL,
     enabled BOOLEAN DEFAULT true,
@@ -15,16 +18,18 @@ CREATE TABLE IF NOT EXISTS news_data_test.news_sources (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create articles table for testing
+-- Create articles table for testing (matching production schema)
 CREATE TABLE IF NOT EXISTS news_data_test.articles (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    source_id UUID NOT NULL REFERENCES news_data_test.news_sources(id),
     title TEXT NOT NULL,
-    content TEXT,
-    url VARCHAR(1000) NOT NULL UNIQUE,
-    published_date DATE,
-    source_id UUID REFERENCES news_data_test.news_sources(id),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    url TEXT NOT NULL,
+    article_date DATE,
+    scraped_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    full_text TEXT,
+    num_paragraphs INTEGER,
+    UNIQUE(source_id, url),
+    UNIQUE(source_id, title, article_date)
 );
 
 -- Insert test data (matching exact config names)
@@ -35,10 +40,11 @@ INSERT INTO news_data_test.news_sources (name, base_url, enabled) VALUES
     ('Depeche.fr', 'https://ladepeche.fr', false)
 ON CONFLICT (name) DO NOTHING;
 
--- Create indexes for performance
+-- Create indexes for performance (matching production schema)
 CREATE INDEX IF NOT EXISTS idx_articles_source_id ON news_data_test.articles(source_id);
 CREATE INDEX IF NOT EXISTS idx_articles_url ON news_data_test.articles(url);
-CREATE INDEX IF NOT EXISTS idx_articles_published_date ON news_data_test.articles(published_date);
+CREATE INDEX IF NOT EXISTS idx_articles_article_date ON news_data_test.articles(article_date);
+CREATE INDEX IF NOT EXISTS idx_articles_scraped_at ON news_data_test.articles(scraped_at);
 
 -- Grant permissions (for CI/CD user)
 DO $$
