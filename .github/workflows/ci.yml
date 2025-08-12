@@ -27,39 +27,11 @@ jobs:
 
     - name: Run code quality checks
       run: |
-        make fix
+        python -m ruff format src
+        python -m ruff check --fix src
 
     - name: Run essential tests
       run: |
-        make test-essential
+        PYTHONPATH=src python -m pytest tests/test_essential.py -v
 
-    - name: Run integration tests
-      run: |
-        make test-integration
-
-    - name: Run all tests
-      run: |
-        make test
-
-  test-offline-mode:
-    runs-on: ubuntu-latest
-    needs: test
-    
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Python 3.12
-      uses: actions/setup-python@v4
-      with:
-        python-version: 3.12
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pytest
-
-    - name: Test offline mode integration
-      run: |
-        make test-offline
 

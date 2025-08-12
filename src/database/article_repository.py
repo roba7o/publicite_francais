@@ -8,6 +8,7 @@ a clean interface for article-related database operations.
 from datetime import datetime
 from typing import Optional
 from uuid import uuid4
+
 from sqlalchemy import text
 
 from config.settings import DATABASE_ENABLED, NEWS_DATA_SCHEMA
@@ -16,16 +17,16 @@ from models import ArticleData
 
 class ArticleRepository:
     """Repository for article database operations."""
-    
+
     def __init__(self):
         """Initialize repository with default dependencies."""
         from database import get_database_manager
         from utils.structured_logger import get_structured_logger
-        
+
         self.db = get_database_manager()
         self.logger = get_structured_logger(__name__)
         self.schema_name = NEWS_DATA_SCHEMA
-    
+
     def get_source_id(self, source_name: str) -> Optional[str]:
         """Get source ID from database by name."""
         try:
@@ -37,14 +38,14 @@ class ArticleRepository:
                 """),
                     {"name": source_name},
                 )
-                
+
                 row = result.fetchone()
                 return str(row[0]) if row else None
-                
+
         except Exception as e:
             self.logger.error(
                 "Failed to get source ID",
-                extra_data={"source_name": source_name, "error": str(e)}
+                extra_data={"source_name": source_name, "error": str(e)},
             )
             return None
 
@@ -98,7 +99,9 @@ class ArticleRepository:
         )
         return None
 
-    def store_article(self, article_data: ArticleData, url: str, source_id: str) -> bool:
+    def store_article(
+        self, article_data: ArticleData, url: str, source_id: str
+    ) -> bool:
         """
         Store raw article data directly to database.
 

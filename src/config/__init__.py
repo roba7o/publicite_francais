@@ -13,7 +13,7 @@ from .settings import DEBUG, OFFLINE
 from .source_configs import SCRAPER_CONFIGS
 
 __all__ = [
-    "DEBUG", 
+    "DEBUG",
     "OFFLINE",
     "SCRAPER_CONFIGS",
 ]

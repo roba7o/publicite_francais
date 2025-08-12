@@ -16,7 +16,7 @@ from utils.structured_logger import get_structured_logger
 class ConsolidatedOutput:
     """
     Unified output system combining CLI display and structured logging.
-    
+
     Provides user-friendly terminal output while simultaneously generating
     structured log data for monitoring and debugging.
     """
@@ -31,7 +31,7 @@ class ConsolidatedOutput:
         """
         self.component_name = component_name
         self.logger = get_structured_logger(component_name)
-        
+
         if ascii_art is None:
             # Auto-detect: ASCII art in development, clean in production
             is_production = os.getenv("PRODUCTION", "false").lower() == "true"
@@ -59,7 +59,12 @@ class ConsolidatedOutput:
         print(f"⚠ {message}")
         self.logger.warning(f"Warning: {message}", extra_data=extra_data or {})
 
-    def section_header(self, title: str, subtitle: Optional[str] = None, extra_data: Optional[Dict] = None) -> None:
+    def section_header(
+        self,
+        title: str,
+        subtitle: Optional[str] = None,
+        extra_data: Optional[Dict] = None,
+    ) -> None:
         """Display section header with optional ASCII art and log section start."""
         if self.ascii_art:
             self._ascii_header(title, subtitle)
@@ -67,14 +72,14 @@ class ConsolidatedOutput:
             print(f"\n=== {title} ===")
             if subtitle:
                 print(subtitle)
-        
+
         # Log section start with structured data
         log_data = {"section": title}
         if subtitle:
             log_data["subtitle"] = subtitle
         if extra_data:
             log_data.update(extra_data)
-        
+
         self.logger.info(f"Section started: {title}", extra_data=log_data)
 
     def _ascii_header(self, title: str, subtitle: Optional[str] = None) -> None:
@@ -98,7 +103,9 @@ class ConsolidatedOutput:
         # Bottom border
         print(f"╚{'═' * (width - 2)}╝")
 
-    def completion_summary(self, title: str, stats: Dict[str, Any], extra_data: Optional[Dict] = None) -> None:
+    def completion_summary(
+        self, title: str, stats: Dict[str, Any], extra_data: Optional[Dict] = None
+    ) -> None:
         """Display completion summary with ASCII art and log structured completion data."""
         if self.ascii_art:
             self._ascii_completion(title, stats)
@@ -106,15 +113,12 @@ class ConsolidatedOutput:
             print(f"\n{title}:")
             for key, value in stats.items():
                 print(f"  {key}: {value}")
-        
+
         # Log completion with full structured data
-        log_data = {
-            "completion_title": title,
-            "completion_stats": stats
-        }
+        log_data = {"completion_title": title, "completion_stats": stats}
         if extra_data:
             log_data.update(extra_data)
-        
+
         self.logger.info(f"Process completed: {title}", extra_data=log_data)
 
     def _ascii_completion(self, title: str, stats: Dict[str, Any]) -> None:
@@ -138,15 +142,19 @@ class ConsolidatedOutput:
             print(f"║  {key_part}{' ' * spacing}{value_part}  ║")
 
         print(f"╚{'═' * (width - 2)}╝")
-    
-    def process_start(self, process_name: str, extra_data: Optional[Dict] = None) -> None:
+
+    def process_start(
+        self, process_name: str, extra_data: Optional[Dict] = None
+    ) -> None:
         """Log process start with structured data (logging only, no CLI output)."""
         log_data = {"process": process_name, "status": "started"}
         if extra_data:
             log_data.update(extra_data)
         self.logger.info(f"Process started: {process_name}", extra_data=log_data)
-    
-    def process_complete(self, process_name: str, extra_data: Optional[Dict] = None) -> None:
+
+    def process_complete(
+        self, process_name: str, extra_data: Optional[Dict] = None
+    ) -> None:
         """Log process completion with structured data (logging only, no CLI output)."""
         log_data = {"process": process_name, "status": "completed"}
         if extra_data:

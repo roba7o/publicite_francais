@@ -53,9 +53,9 @@ class DatabaseBaseParser(ABC):
             source_id: UUID of the news source in database
             delay: Request delay for rate limiting
         """
-        from utils.structured_logger import get_structured_logger
         from database.article_repository import ArticleRepository
-        
+        from utils.structured_logger import get_structured_logger
+
         self.logger = get_structured_logger(self.__class__.__name__)
         self.site_domain = site_domain
         self.source_id = source_id  # UUID from news_sources table
