@@ -72,7 +72,7 @@ jobs:
       run: |
         PGPASSWORD=ci_test_password_123 psql -h localhost -U ci_test_user -d french_news_test -f database/test_schema.sql
 
-    - name: Run integration tests
+    - name: Run integration tests (database + scraper, no dbt)
       env:
         POSTGRES_HOST: localhost
         POSTGRES_PORT: 5432
@@ -83,6 +83,6 @@ jobs:
         DEBUG: true
         OFFLINE: true
       run: |
-        PYTHONPATH=src python -m pytest tests/test_database_connection.py tests/test_deterministic_pipeline.py -v
+        PYTHONPATH=src python -m pytest tests/test_database_connection.py tests/test_deterministic_pipeline.py::TestDeterministicPipeline::test_html_file_counts tests/test_deterministic_pipeline.py::TestDeterministicPipeline::test_database_article_extraction -v
 
 

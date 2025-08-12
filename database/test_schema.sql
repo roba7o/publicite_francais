@@ -27,12 +27,12 @@ CREATE TABLE IF NOT EXISTS news_data_test.articles (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Insert test data
+-- Insert test data (matching exact config names)
 INSERT INTO news_data_test.news_sources (name, base_url, enabled) VALUES
-    ('slate.fr', 'https://slate.fr', true),
-    ('franceinfo.fr', 'https://franceinfo.fr', true),
-    ('tf1info.fr', 'https://tf1info.fr', true),
-    ('ladepeche.fr', 'https://ladepeche.fr', false)
+    ('Slate.fr', 'https://slate.fr', true),
+    ('FranceInfo.fr', 'https://franceinfo.fr', true),
+    ('TF1 Info', 'https://tf1info.fr', true),
+    ('Depeche.fr', 'https://ladepeche.fr', false)
 ON CONFLICT (name) DO NOTHING;
 
 -- Create indexes for performance
