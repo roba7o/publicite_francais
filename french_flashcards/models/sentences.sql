@@ -37,4 +37,6 @@ from (
 ) sentence_data
 
 where length(sentence_text) >= 10  -- Minimum sentence length
-  and sentence_text ~ '[àâäçéèêëïîôûùüÿñæœ]'  -- Must contain French characters
+  and sentence_text ~ '[àâäçéèêëïîôûùüÿñæœ]'  -- Must contain French characters  
+  and sentence_text !~ '^[[:space:]]*$'  -- Not just whitespace
+  and sentence_text ~ '[a-zA-ZàâäçéèêëïîôûùüÿñæœÀÂÄÇÉÈÊËÏÎÔÛÙÜŸÑÆŒ]'  -- Contains actual letters

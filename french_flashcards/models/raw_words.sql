@@ -57,8 +57,10 @@ from (
         from {{ ref('sentences') }}
     ) word_splits
     where length(trim(word)) >= 1
+      and trim(word) ~ '^[a-zA-ZàâäçéèêëïîôûùüÿñæœÀÂÄÇÉÈÊËÏÎÔÛÙÜŸÑÆŒ''-]+$'  -- Only letters and hyphens
     group by lower(trim(word))
 ) words
 
-where length(word_clean) > 0
+where length(word_clean) >= 2  -- Minimum 2 characters
+  and word_clean ~ '^[a-zA-ZàâäçéèêëïîôûùüÿñæœÀÂÄÇÉÈÊËÏÎÔÛÙÜŸÑÆŒ''-]+$'  -- Letters only
 order by frequency desc
