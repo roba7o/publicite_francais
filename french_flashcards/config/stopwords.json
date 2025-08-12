@@ -1,0 +1,24 @@
+{
+  "description": "French stopwords configuration for vocabulary filtering",
+  "version": "1.0",
+  "last_updated": "2025-01-11",
+  "categories": {
+    "articles": ["le", "la", "les", "un", "une", "des", "du", "de", "au", "aux"],
+    "pronouns": ["je", "tu", "il", "elle", "nous", "vous", "ils", "elles", "ce", "cette", "ces"],
+    "prepositions": ["à", "dans", "sur", "avec", "sans", "pour", "par", "vers", "chez", "entre"],
+    "conjunctions": ["et", "ou", "mais", "donc", "car", "ni", "or"],
+    "common_verbs": ["est", "sont", "était", "étaient", "être", "avoir", "a", "ont", "avait"],
+    "adverbs": ["comme", "aussi", "bien", "très", "plus", "moins", "tout", "tous", "toute", "toutes", "peu", "beaucoup", "encore", "déjà", "maintenant", "alors"],
+    "numbers": ["deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf", "dix"],
+    "time_words": ["aujourd'hui", "hier", "demain", "semaine", "mois", "année", "jour"],
+    "location_words": ["ici", "là", "où"],
+    "question_words": ["quand", "comment", "pourquoi"],
+    "common_answers": ["si", "non", "oui"],
+    "additional_common": ["que", "qui", "dont", "leur", "leurs", "ses", "son", "sa", "votre", "nos", "vos", "mes", "mon", "ma", "ta", "tes", "ton"]
+  },
+  "notes": {
+    "usage": "Edit this file to add/remove stopwords. dbt will automatically use the updated list.",
+    "learning_tip": "Words in this list won't appear in your flashcards as they're too common for vocabulary learning.",
+    "customization": "Add site-specific or domain-specific words you want to filter out."
+  }
+}

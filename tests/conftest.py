@@ -20,10 +20,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 # Import after path setup
 from utils.structured_logger import get_structured_logger
-from utils.french_text_processor import FrenchTextProcessor
-from utils.csv_writer import DailyCSVWriter
-from config.website_parser_scrapers_config import ScraperConfig
-from core.processor import ArticleProcessor
+# ScraperConfig removed - using dictionary configurations
+from services.article_pipeline import DatabaseProcessor
 
 
 @pytest.fixture(scope="session")
@@ -72,25 +70,27 @@ def sample_article_data():
 @pytest.fixture
 def mock_scraper_config():
     """Mock scraper configuration for testing."""
-    return ScraperConfig(
-        name="TestSource",
-        enabled=True,
-        scraper_class="tests.fixtures.mock_scraper.MockScraper",
-        parser_class="tests.fixtures.mock_parser.MockParser",
-        scraper_kwargs={"debug": True}
-    )
+    return {
+        "name": "TestSource",
+        "enabled": True,
+        "scraper_class": "tests.fixtures.mock_scraper.MockScraper",
+        "parser_class": "tests.fixtures.mock_parser_unified.MockDatabaseParser",
+        "scraper_kwargs": {"debug": True},
+        "parser_kwargs": {}
+    }
 
 
 @pytest.fixture
-def french_text_processor():
-    """Initialized French text processor for testing."""
-    return FrenchTextProcessor()
+def scraper_configs():
+    """All scraper configurations for testing."""
+    from config.source_configs import SCRAPER_CONFIGS
+    return SCRAPER_CONFIGS
 
 
-@pytest.fixture
-def csv_writer(temp_output_dir):
-    """CSV writer with temporary output directory."""
-    return DailyCSVWriter(output_dir=temp_output_dir, debug=True)
+@pytest.fixture  
+def article_pipeline():
+    """Database processor for testing database operations."""
+    return DatabaseProcessor
 
 
 @pytest.fixture
@@ -209,7 +209,7 @@ def invalid_html_content():
         "<html><body>",  # Incomplete HTML
         "Not HTML at all",  # Plain text
         "<html><body>" + "x" * 10000 + "</body></html>",  # Very large content
-        "<html><body>🚫💥⚠️</body></html>",  # Special characters
+        "<html><body>×※⚠</body></html>",  # Special characters
     ]
 
 
