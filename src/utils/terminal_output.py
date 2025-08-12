@@ -3,6 +3,8 @@ Consolidated output system that combines structured logging with CLI display.
 
 This module unifies the CLI output and structured logging into a single system
 that provides both user-friendly terminal output and structured log data.
+
+Provides a shared instance for the entire application to eliminate duplicate creation patterns.
 """
 
 import os
@@ -150,3 +152,7 @@ class ConsolidatedOutput:
         if extra_data:
             log_data.update(extra_data)
         self.logger.info(f"Process completed: {process_name}", extra_data=log_data)
+
+
+# Shared instance for the entire application
+output = ConsolidatedOutput("database_pipeline")

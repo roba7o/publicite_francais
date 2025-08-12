@@ -18,7 +18,7 @@ def main() -> Optional[int]:
         Optional[int]: Exit code (0 for success, 1 for failure, None for normal exit)
     """
     # Use shared output system
-    from utils.shared_output import output
+    from utils.terminal_output import output
     from config.settings import DEBUG
 
     try:

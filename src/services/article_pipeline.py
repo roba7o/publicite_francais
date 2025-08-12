@@ -28,7 +28,7 @@ class DatabaseProcessor:
     def __init__(self):
         """Initialize processor with default dependencies."""
         from database import ArticleRepository
-        from utils.shared_output import output
+        from utils.terminal_output import output
         
         self.article_repo = ArticleRepository()
         self.output = output
