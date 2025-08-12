@@ -49,8 +49,14 @@ tests:  ## Run all tests (alias for test)
 test-essential:  ## Run essential working tests only
 	PATH=./venv/bin:$$PATH PYTHONPATH=$(SRC) ./venv/bin/pytest -v tests/test_essential.py
 
+test-db:  ## Run database connection tests
+	PATH=./venv/bin:$$PATH PYTHONPATH=$(SRC) ./venv/bin/pytest -v tests/test_database_connection.py
+
 test-integration:  ## Run integration tests only
-	PATH=./venv/bin:$$PATH PYTHONPATH=$(SRC) ./venv/bin/pytest -v tests/integration/
+	PATH=./venv/bin:$$PATH PYTHONPATH=$(SRC) ./venv/bin/pytest -v tests/test_deterministic_pipeline.py
+
+test-all-local:  ## Run all tests locally (fast - no Docker)
+	PATH=./venv/bin:$$PATH PYTHONPATH=$(SRC) ./venv/bin/pytest -v tests/test_essential.py tests/test_database_connection.py tests/test_deterministic_pipeline.py
 
 test-offline:  ## Run the offline mode integration test
 	PATH=./venv/bin:$$PATH PYTHONPATH=$(SRC) ./venv/bin/pytest -v tests/integration/test_offline_mode.py::TestOfflineMode::test_make_run_offline_integration
