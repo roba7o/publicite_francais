@@ -54,7 +54,7 @@ python -c "from config.settings import DEBUG, OFFLINE; print(f'DEBUG={DEBUG}, OF
 ls -la src/output/
 
 # Check if sources are enabled
-python -c "from config.website_parser_scrapers_config import SCRAPER_CONFIGS; print([c.name for c in SCRAPER_CONFIGS if c.enabled])"
+python -c "from config.source_configs import SCRAPER_CONFIGS; print([c['name'] for c in SCRAPER_CONFIGS if c['enabled']])"
 
 # Test offline mode
 OFFLINE=True DEBUG=True python -m main
@@ -79,7 +79,8 @@ make test-essential
 ls -la src/test_data/raw_url_soup/
 
 # Test individual components
-python -c "from utils.french_text_processor import FrenchTextProcessor; p=FrenchTextProcessor(); print(p.count_word_frequency('test français'))"
+# FrenchTextProcessor was replaced by dbt processing
+make dbt-run
 ```
 
 ---
@@ -156,12 +157,12 @@ python -c "from utils.french_text_processor import FrenchTextProcessor; p=French
 
 2. **Check Configuration**:
    ```python
-   from config.website_parser_scrapers_config import SCRAPER_CONFIGS
+   from config.source_configs import SCRAPER_CONFIGS
    for config in SCRAPER_CONFIGS:
-       if config.enabled:
-           print(f"Source: {config.name}")
-           print(f"Scraper: {config.scraper_class}")
-           print(f"Parser: {config.parser_class}")
+       if config['enabled']:
+           print(f"Source: {config['name']}")
+           print(f"Scraper: {config['scraper_class']}")
+           print(f"Parser: {config['parser_class']}")
    ```
 
 3. **Verify File Structure**:
@@ -197,8 +198,9 @@ python -c "from utils.french_text_processor import FrenchTextProcessor; p=French
    ```python
    def process_source(config):
        # Import only when needed
-       ScraperClass = ArticleProcessor.import_class(config.scraper_class)
-       ParserClass = ArticleProcessor.import_class(config.parser_class)
+       from core.component_loader import import_class
+       ScraperClass = import_class(config['scraper_class'])
+       ParserClass = import_class(config['parser_class'])
    ```
 
 ---
@@ -306,35 +308,35 @@ python -c "from utils.french_text_processor import FrenchTextProcessor; p=French
 
 1. **Check Source Configuration**:
    ```python
-   from config.website_parser_scrapers_config import SCRAPER_CONFIGS
+   from config.source_configs import SCRAPER_CONFIGS
    
    print(f"Total configs: {len(SCRAPER_CONFIGS)}")
    enabled = [c for c in SCRAPER_CONFIGS if c.enabled]
    print(f"Enabled configs: {len(enabled)}")
    
    for config in enabled:
-       print(f"  - {config.name}")
+       print(f"  - {config['name']}")
    ```
 
 2. **Enable Sources**:
    ```python
    # Temporarily enable all sources
-   from config.website_parser_scrapers_config import SCRAPER_CONFIGS
+   from config.source_configs import SCRAPER_CONFIGS
    for config in SCRAPER_CONFIGS:
-       config.enabled = True
+       config['enabled'] = True
    print("All sources enabled")
    ```
 
 3. **Validate Configuration**:
    ```python
-   from config.website_parser_scrapers_config import SCRAPER_CONFIGS
+   from config.source_configs import SCRAPER_CONFIGS
    
    for config in SCRAPER_CONFIGS:
        # Check required fields
-       assert config.name, f"Missing name in config"
-       assert config.scraper_class, f"Missing scraper_class in {config.name}"
-       assert config.parser_class, f"Missing parser_class in {config.name}"
-       print(f"✓ {config.name} configuration valid")
+       assert config['name'], f"Missing name in config"
+       assert config['scraper_class'], f"Missing scraper_class in {config['name']}"
+       assert config['parser_class'], f"Missing parser_class in {config['name']}"
+       print(f"✓ {config['name']} configuration valid")
    ```
 
 ---
@@ -857,7 +859,7 @@ python -c "from utils.french_text_processor import FrenchTextProcessor; p=French
    # Test basic imports
    try:
        from utils.csv_writer import DailyCSVWriter
-       from utils.french_text_processor import FrenchTextProcessor
+       # FrenchTextProcessor removed - use dbt instead
        from config.settings import DEBUG, OFFLINE
        print("All imports successful")
    except Exception as e:
@@ -888,12 +890,10 @@ python -c "from utils.french_text_processor import FrenchTextProcessor; p=French
 
 1. **Test Components Individually**:
    ```python
-   # Test text processor
-   from utils.french_text_processor import FrenchTextProcessor
-   processor = FrenchTextProcessor()
-   
-   result = processor.count_word_frequency("Voici un test en français.")
-   print(f"Text processor result: {result}")
+   # Test text processing via dbt
+   import subprocess
+   result = subprocess.run(['make', 'dbt-run'], capture_output=True, text=True)
+   print(f"dbt processing result: {result.returncode}")
    
    # Test CSV writer
    from utils.csv_writer import DailyCSVWriter

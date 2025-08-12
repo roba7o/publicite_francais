@@ -420,18 +420,17 @@ class ExampleNewsArticleParser:
 
 ### Add to Scraper Configuration
 
-Edit `src/config/website_parser_scrapers_config.py`:
+Edit `src/config/source_configs.py`:
 
 ```python
-# Add to SCRAPER_CONFIGS list
-ScraperConfig(
-    name="Example News",
-    enabled=True,  # Set to False initially for testing
-    scraper_class="scrapers.example_news_scraper.ExampleNewsURLScraper",
-    parser_class="parsers.example_news_parser.ExampleNewsArticleParser",
-    scraper_kwargs={"debug": True},
-    parser_kwargs={"delay": 2.0}
-),
+# Add to get_scraper_configs() return list
+{
+    "name": "Example News",
+    "enabled": True,  # Set to False initially for testing
+    "scraper_class": "scrapers.example_news_scraper.ExampleNewsURLScraper",
+    "parser_class": "parsers.example_news_parser.ExampleNewsArticleParser",
+    "scraper_kwargs": {"debug": DEBUG},
+},
 ```
 
 ### Initial Testing Configuration
@@ -439,14 +438,13 @@ ScraperConfig(
 For initial testing, keep the source disabled:
 
 ```python
-ScraperConfig(
-    name="Example News",
-    enabled=False,  # Keep disabled during development
-    scraper_class="scrapers.example_news_scraper.ExampleNewsURLScraper",
-    parser_class="parsers.example_news_parser.ExampleNewsArticleParser",
-    scraper_kwargs={"debug": True},
-    parser_kwargs={"delay": 3.0}  # Longer delay during testing
-),
+{
+    "name": "Example News",
+    "enabled": False,  # Keep disabled during development
+    "scraper_class": "scrapers.example_news_scraper.ExampleNewsURLScraper",
+    "parser_class": "parsers.example_news_parser.ExampleNewsArticleParser",
+    "scraper_kwargs": {"debug": DEBUG},
+},
 ```
 
 ---
@@ -751,7 +749,7 @@ OFFLINE=True DEBUG=True python -m main
 
 ```python
 # test_integration.py
-from config.website_parser_scrapers_config import get_source_config
+from config.source_configs import get_scraper_configs
 from core.processor import ArticleProcessor
 
 # Test configuration loading
@@ -784,7 +782,7 @@ else:
 ```bash
 # Test just your source
 python -c "
-from config.website_parser_scrapers_config import SCRAPER_CONFIGS
+from config.source_configs import SCRAPER_CONFIGS
 from core.processor import ArticleProcessor
 
 # Find your config
