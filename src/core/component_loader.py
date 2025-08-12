@@ -23,6 +23,23 @@ def create_component(class_path: str, *args, **kwargs) -> Any:
     Raises:
         ImportError: If module or class cannot be imported
     """
+    component_class = import_class(class_path)
+    return component_class(*args, **kwargs)
+
+
+def import_class(class_path: str):
+    """
+    Import a class from full class path without instantiating it.
+    
+    Args:
+        class_path: Full module path like 'scrapers.slate_fr_scraper.SlateFrURLScraper'
+        
+    Returns:
+        The imported class (not an instance)
+        
+    Raises:
+        ImportError: If module or class cannot be imported
+    """
     if '.' not in class_path:
         raise ImportError(f"Invalid class path: {class_path}. Expected format: 'module.class'")
     
@@ -30,8 +47,7 @@ def create_component(class_path: str, *args, **kwargs) -> Any:
     
     try:
         module = importlib.import_module(module_path)
-        component_class = getattr(module, class_name)
-        return component_class(*args, **kwargs)
+        return getattr(module, class_name)
     except (ImportError, AttributeError) as e:
         raise ImportError(f"Failed to import {class_path}: {e}")
 

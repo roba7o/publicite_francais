@@ -19,7 +19,6 @@ def get_scraper_configs() -> List[Dict]:
             "scraper_class": "scrapers.slate_fr_scraper.SlateFrURLScraper",
             "parser_class": "parsers.database_slate_fr_parser.DatabaseSlateFrParser",
             "scraper_kwargs": {"debug": DEBUG},
-            "parser_kwargs": {},
         },
         {
             "name": "FranceInfo.fr", 
@@ -27,7 +26,6 @@ def get_scraper_configs() -> List[Dict]:
             "scraper_class": "scrapers.france_info_scraper.FranceInfoURLScraper",
             "parser_class": "parsers.database_france_info_parser.DatabaseFranceInfoParser",
             "scraper_kwargs": {"debug": DEBUG},
-            "parser_kwargs": {},
         },
         {
             "name": "TF1 Info",
@@ -35,7 +33,6 @@ def get_scraper_configs() -> List[Dict]:
             "scraper_class": "scrapers.tf1_info_scraper.TF1InfoURLScraper", 
             "parser_class": "parsers.database_tf1_info_parser.DatabaseTF1InfoParser",
             "scraper_kwargs": {"debug": DEBUG},
-            "parser_kwargs": {},
         },
         {
             "name": "Depeche.fr",
@@ -43,7 +40,6 @@ def get_scraper_configs() -> List[Dict]:
             "scraper_class": "scrapers.ladepeche_fr_scraper.LadepecheFrURLScraper",
             "parser_class": "parsers.database_ladepeche_fr_parser.DatabaseLadepecheFrParser", 
             "scraper_kwargs": {"debug": DEBUG},
-            "parser_kwargs": {},
         },
     ]
 

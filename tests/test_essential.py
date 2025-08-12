@@ -17,16 +17,16 @@ class TestEssential:
     """Essential tests that must pass for the database system to work."""
 
     def test_article_pipeline_class_registry(self):
-        """Test that the DatabaseProcessor can load classes from registry."""
-        processor = DatabaseProcessor()
+        """Test that the component loader can load classes from class paths."""
+        from core.component_loader import import_class
         
         # Test scraper class loading
-        scraper_class = processor.get_scraper_class_safe("scrapers.slate_fr_scraper.SlateFrURLScraper")
+        scraper_class = import_class("scrapers.slate_fr_scraper.SlateFrURLScraper")
         assert scraper_class is not None
         assert scraper_class.__name__ == "SlateFrURLScraper"
         
         # Test parser class loading  
-        parser_class = processor.get_parser_class_safe("parsers.database_slate_fr_parser.DatabaseSlateFrParser")
+        parser_class = import_class("parsers.database_slate_fr_parser.DatabaseSlateFrParser")
         assert parser_class is not None
         assert parser_class.__name__ == "DatabaseSlateFrParser"
 
@@ -91,7 +91,7 @@ class TestEssential:
         assert 'scraper_class' in config
         assert 'parser_class' in config
         assert 'scraper_kwargs' in config
-        assert 'parser_kwargs' in config
+        # parser_kwargs is optional (handled by config.get("parser_kwargs", {}))
 
     def test_offline_mode_setting(self):
         """Test that offline mode setting can be imported."""

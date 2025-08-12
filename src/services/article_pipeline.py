@@ -207,20 +207,6 @@ class DatabaseProcessor:
 
         return processed_count, total_attempted
 
-    # Backward compatibility methods for tests
-    def get_scraper_class_safe(self, class_path: str):
-        """Backward compatibility - import class directly."""
-        import importlib
-        module_path, class_name = class_path.rsplit('.', 1) 
-        module = importlib.import_module(module_path)
-        return getattr(module, class_name)
-
-    def get_parser_class_safe(self, class_path: str):
-        """Backward compatibility - import class directly."""
-        import importlib
-        module_path, class_name = class_path.rsplit('.', 1)
-        module = importlib.import_module(module_path) 
-        return getattr(module, class_name)
 
     def process_all_sources(self, source_configs: List[dict]) -> Tuple[int, int]:
         """
