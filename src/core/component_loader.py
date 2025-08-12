@@ -52,5 +52,3 @@ def import_class(class_path: str):
         return getattr(module, class_name)
     except (ImportError, AttributeError) as e:
         raise ImportError(f"Failed to import {class_path}: {e}") from e
-
-
