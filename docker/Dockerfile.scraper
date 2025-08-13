@@ -7,16 +7,15 @@ RUN apt-get update && apt-get install -y \
 # Create app directory
 WORKDIR /app
 
-# Copy pyproject.toml and install Python packages
+# Copy pyproject.toml and source directory
 COPY pyproject.toml .
-RUN pip install --no-cache-dir .
-
-# Copy source code
 COPY src/ ./src/
-COPY database_main.py .
+
+# Install Python packages
+RUN pip install --no-cache-dir .
 
 # Set PYTHONPATH
 ENV PYTHONPATH=/app/src
 
 # Default command
-CMD ["python", "database_main.py"]
+CMD ["python", "-m", "main"]

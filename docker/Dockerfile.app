@@ -10,8 +10,9 @@ ENV PYTHONUNBUFFERED=1
 # Set working dir to src
 WORKDIR /app/src
 
-# Copy pyproject.toml first (leverage layer cache)
+# Copy pyproject.toml and source
 COPY pyproject.toml /app/
+COPY src/ /app/src/
 
 # Install dependencies
 RUN pip install --no-cache-dir /app
@@ -19,7 +20,5 @@ RUN pip install --no-cache-dir /app
 # Tell Python to treat /app/src as a root for imports
 ENV PYTHONPATH=/app/src
 
-# In dev, the code is volume-mounted, so we don't COPY src/
-
 # Run your package as a module
-CMD ["python", "-m", "article_scrapers.main"]
+CMD ["python", "-m", "main"]
