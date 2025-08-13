@@ -1,8 +1,9 @@
 FROM python:3.12-slim
 
-# Install system dependencies
+# Install system dependencies for PostgreSQL
 RUN apt-get update && apt-get install -y \
-    git \
+    build-essential \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Create app directory
@@ -13,15 +14,18 @@ COPY pyproject.toml .
 COPY src/ ./src/
 
 # Install Python packages
-RUN pip install --no-cache-dir .
+RUN pip install --no-cache-dir -e .
 RUN pip install --no-cache-dir dbt-postgres==1.9.0
 
 # Copy dbt project
 COPY french_flashcards/ ./french_flashcards/
-COPY .dbt/ /root/.dbt/
 
-# Set working directory for dbt
+# Set working directory to dbt project
 WORKDIR /app/french_flashcards
 
-# Default command
+# Health check to ensure dbt can connect
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD dbt debug || exit 1
+
+# Default command - run dbt models
 CMD ["dbt", "run"]

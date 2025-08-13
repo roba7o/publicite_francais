@@ -40,13 +40,13 @@ jobs:
     
     services:
       postgres:
-        image: postgres:13
+        image: postgres:17-alpine
         env:
           POSTGRES_PASSWORD: ci_test_password_123
-          POSTGRES_USER: ci_test_user
-          POSTGRES_DB: french_news_test
+          POSTGRES_USER: news_user
+          POSTGRES_DB: french_news
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U news_user -d french_news"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -68,19 +68,71 @@ jobs:
 
     - name: Set up test database schema
       run: |
-        PGPASSWORD=ci_test_password_123 psql -h localhost -U ci_test_user -d french_news_test -f database/test_schema.sql
+        PGPASSWORD=ci_test_password_123 psql -h localhost -U news_user -d french_news -f database/test_schema.sql
 
     - name: Run integration tests (database + scraper, no dbt)
       env:
         POSTGRES_HOST: localhost
         POSTGRES_PORT: 5432
-        POSTGRES_DB: french_news_test
-        POSTGRES_USER: ci_test_user
+        POSTGRES_DB: french_news
+        POSTGRES_USER: news_user
         POSTGRES_PASSWORD: ci_test_password_123
         DATABASE_ENV: test
         DEBUG: true
         OFFLINE: true
       run: |
         PYTHONPATH=src python -m pytest tests/test_database_connection.py tests/test_deterministic_pipeline.py::TestDeterministicPipeline::test_html_file_counts tests/test_deterministic_pipeline.py::TestDeterministicPipeline::test_database_article_extraction -v
+
+  # Container build tests - Critical for catching missing file issues
+  test-containers:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Create .env file for container builds
+      run: |
+        cat > .env << 'EOF'
+        POSTGRES_HOST=localhost
+        POSTGRES_PORT=5432
+        POSTGRES_DB=french_news
+        POSTGRES_USER=news_user
+        POSTGRES_PASSWORD=ci_container_test_password
+        DEBUG=true
+        OFFLINE=true
+        DATABASE_ENV=test
+        EOF
+
+    - name: Test container builds (catch missing files early)
+      run: |
+        echo "Testing all Docker container builds..."
+        docker compose build --quiet app || (echo "App container build failed!" && exit 1)
+        docker compose build --quiet dbt || (echo "dbt container build failed!" && exit 1)
+        echo "All containers build successfully"
+
+    - name: Test container health checks
+      run: |
+        echo "Starting containers with health checks..."
+        docker compose up -d postgres
+        
+        # Wait for postgres to be healthy
+        echo "Waiting for postgres health check..."
+        timeout 60s bash -c 'until docker compose ps postgres --format json | jq -r ".[0].Health" | grep -q "healthy"; do sleep 2; done'
+        
+        # Test app container can start
+        echo "Testing app container startup..."
+        timeout 30s docker compose run --rm app python -c "import sys; sys.path.insert(0, '/app/src'); from main import main; print('App container health: OK')" || (echo "App container startup failed!" && exit 1)
+
+        # Test dbt container can connect
+        echo "Testing dbt container connection..."
+        timeout 30s docker compose run --rm dbt dbt debug || (echo "dbt container connection failed!" && exit 1)
+        
+        echo "All container health checks passed"
+
+    - name: Cleanup containers
+      if: always()
+      run: |
+        docker compose down -v
+        docker system prune -f
 
 

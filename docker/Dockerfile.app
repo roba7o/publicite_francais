@@ -1,24 +1,26 @@
-FROM python:3.12-slim-bullseye
+FROM python:3.12-slim
 
-# Upgrade OS packages (optional in dev, but fine here)
-RUN apt-get update && apt-get upgrade -y && apt-get clean
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
-# Prevent .pyc files and enable unbuffered output
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+# Create app directory
+WORKDIR /app
 
-# Set working dir to src
-WORKDIR /app/src
+# Copy pyproject.toml and source directory
+COPY pyproject.toml .
+COPY src/ ./src/
 
-# Copy pyproject.toml and source
-COPY pyproject.toml /app/
-COPY src/ /app/src/
+# Install Python packages
+RUN pip install --no-cache-dir -e .
 
-# Install dependencies
-RUN pip install --no-cache-dir /app
-
-# Tell Python to treat /app/src as a root for imports
+# Set PYTHONPATH
 ENV PYTHONPATH=/app/src
 
-# Run your package as a module
+# Health check to ensure the app can start
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD python -c "import sys; sys.path.insert(0, '/app/src'); from main import main; print('App health: OK')" || exit 1
+
+# Default command - run the main scraper
 CMD ["python", "-m", "main"]
