@@ -406,8 +406,7 @@ jobs:
           
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
-          pip install -r requirements-dev.txt
+          pip install -e .[dev]
           
       - name: Run unit tests
         run: pytest tests/test_essential.py -v

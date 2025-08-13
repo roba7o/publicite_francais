@@ -10,11 +10,11 @@ ENV PYTHONUNBUFFERED=1
 # Set working dir to src
 WORKDIR /app/src
 
-# Copy only requirements first (leverage layer cache)
-COPY requirements.txt /app/
+# Copy pyproject.toml first (leverage layer cache)
+COPY pyproject.toml /app/
 
 # Install dependencies
-RUN pip install --no-cache-dir -r /app/requirements.txt
+RUN pip install --no-cache-dir /app
 
 # Tell Python to treat /app/src as a root for imports
 ENV PYTHONPATH=/app/src

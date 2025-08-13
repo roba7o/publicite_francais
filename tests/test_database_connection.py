@@ -11,7 +11,7 @@ Usage:
     
 Requirements:
     - PostgreSQL container running (docker compose up -d postgres)
-    - Dependencies installed (pip install -r requirements.txt)
+    - Dependencies installed (pip install -e .)
 """
 
 import sys
@@ -209,7 +209,7 @@ def main():
     print("\033[33m◆ Prerequisites:\033[0m")
     print("   - PostgreSQL container should be running")
     print("   - Run: docker compose up -d postgres")
-    print("   - Dependencies installed: pip install -r requirements.txt")
+    print("   - Dependencies installed: pip install -e .")
     print()
     
     test_results = []
