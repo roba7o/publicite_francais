@@ -117,7 +117,7 @@ jobs:
         
         # Wait for postgres to be healthy
         echo "Waiting for postgres health check..."
-        timeout 60s bash -c 'until docker compose ps postgres --format json | jq -r ".[0].Health" | grep -q "healthy"; do sleep 2; done'
+        timeout 60s bash -c 'until docker compose ps postgres --format json | jq -r ".Health" | grep -q "healthy"; do sleep 2; done'
         
         # Test app container can start
         echo "Testing app container startup..."
