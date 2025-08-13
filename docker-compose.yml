@@ -23,7 +23,7 @@ services:
   scraper:
     build:
       context: .
-      dockerfile: Dockerfile.scraper
+      dockerfile: docker/Dockerfile.scraper
     container_name: french_news_scraper
     depends_on:
       postgres:
@@ -41,7 +41,7 @@ services:
   dbt:
     build:
       context: .
-      dockerfile: Dockerfile.dbt
+      dockerfile: docker/Dockerfile.dbt
     container_name: french_news_dbt
     depends_on:
       postgres:
