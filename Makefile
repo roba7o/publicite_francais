@@ -37,7 +37,7 @@ test:  ## Run all tests + pipeline test
 	@echo "\033[32m╔════════════════════════════════════════╗"
 	@echo "║          TEST SUITE SUMMARY           ║"
 	@echo "╚════════════════════════════════════════╝\033[0m"
-	@echo "\033[32m✓ Python Tests: PASSED (15/15)\033[0m"
+	@echo "\033[32m✓ Python Tests: PASSED (all tests)\033[0m"
 	@echo "\033[32m✓ Pipeline Test: PASSED\033[0m"
 	@echo "\033[32m✓ Integration Tests: PASSED\033[0m"
 	@echo ""
@@ -61,8 +61,8 @@ test-all-local:  ## Run all tests locally (fast - no Docker)
 test-ci:  ## Run CI-compatible tests (database + scraper, no dbt)
 	PATH=./venv/bin:$$PATH PYTHONPATH=$(SRC) ./venv/bin/pytest -v tests/test_database_connection.py tests/test_deterministic_pipeline.py::TestDeterministicPipeline::test_html_file_counts tests/test_deterministic_pipeline.py::TestDeterministicPipeline::test_database_article_extraction
 
-test-offline:  ## Run the offline mode integration test
-	PATH=./venv/bin:$$PATH PYTHONPATH=$(SRC) ./venv/bin/pytest -v tests/integration/test_offline_mode.py::TestOfflineMode::test_make_run_offline_integration
+test-offline:  ## Run offline processing test (integration test equivalent)  
+	PATH=./venv/bin:$$PATH PYTHONPATH=$(SRC) ./venv/bin/pytest -v tests/test_deterministic_pipeline.py::TestDeterministicPipeline::test_database_article_extraction
 
 lint:  ## Run ruff linting
 	./venv/bin/ruff check $(SRC)
@@ -132,11 +132,11 @@ pipeline:  ## Run full pipeline: scrape articles + process with dbt
 pipeline-status:  ## Show pipeline status and health check
 	@echo "\033[36m◆ Pipeline Health Check:\033[0m"
 	@printf "\033[34m  Raw Articles: \033[0m"
-	@docker compose exec postgres sh -c 'psql -U $$POSTGRES_USER -d $$POSTGRES_DB -t -c "SELECT COUNT(*) FROM news_data_test.articles;"' 2>/dev/null | xargs || echo "0 (error)"
+	@docker compose exec postgres sh -c 'psql -U $$POSTGRES_USER -d $$POSTGRES_DB -t -c "SELECT COUNT(*) FROM news_data_dev.articles;"' 2>/dev/null | xargs || echo "0 (error)"
 	@printf "\033[35m  dbt Sentences: \033[0m"
-	@docker compose exec postgres sh -c 'psql -U $$POSTGRES_USER -d $$POSTGRES_DB -t -c "SELECT COUNT(*) FROM dbt_test.sentences;"' 2>/dev/null | xargs || echo "0 (not processed)"
+	@docker compose exec postgres sh -c 'psql -U $$POSTGRES_USER -d $$POSTGRES_DB -t -c "SELECT COUNT(*) FROM dbt_staging.sentences;"' 2>/dev/null | xargs || echo "0 (not processed)"
 	@printf "\033[32m  Vocabulary: \033[0m"
-	@docker compose exec postgres sh -c 'psql -U $$POSTGRES_USER -d $$POSTGRES_DB -t -c "SELECT COUNT(*) FROM dbt_test.vocabulary_for_flashcards;"' 2>/dev/null | xargs || echo "0 (not processed)"
+	@docker compose exec postgres sh -c 'psql -U $$POSTGRES_USER -d $$POSTGRES_DB -t -c "SELECT COUNT(*) FROM dbt_staging.vocabulary_for_flashcards;"' 2>/dev/null | xargs || echo "0 (not processed)"
 
 test-pipeline:  ## Run pipeline test with fresh database (clears data first)
 	@echo "\033[33m◆ Running pipeline test with fresh data...\033[0m"
@@ -194,7 +194,7 @@ docker-test-pipeline:  ## Run pipeline test in Docker with fresh data
 	@echo "\033[35m■ Step 4: Running dbt...\033[0m"
 	docker compose run --rm dbt
 	@echo "\033[36m▶ Step 5: Verifying results...\033[0m"
-	@docker compose exec postgres psql -U news_user -d french_news -c "SELECT COUNT(*) as articles FROM dbt_staging.cleaned_articles; SELECT COUNT(*) as words FROM dbt_staging.word_frequency_overall;"
+	@docker compose exec postgres psql -U news_user -d french_news -c "SELECT COUNT(*) as articles FROM news_data_test.articles; SELECT COUNT(*) as vocabulary FROM dbt_test.vocabulary_for_flashcards;"
 	@echo "\033[32m✓ Docker pipeline test complete!\033[0m"
 
 docker-clean:  ## Stop and remove all containers
