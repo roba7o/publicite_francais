@@ -27,15 +27,25 @@ DBT_DIR := french_flashcards
 .DEFAULT_GOAL := help
 
 # Declare phony targets to avoid conflicts with files/directories
-.PHONY: run test test-essential test-ci lint format fix clean db-start db-stop db-clean dbt-debug dbt-run pipeline test-pipeline test-workflow docker-build docker-test-build docker-pipeline version-check help
+.PHONY: run test pipeline help test-essential lint format fix clean db-start db-stop db-clean dbt-debug dbt-run test-pipeline docker-build docker-pipeline version-check
 
-# ========== Local venv commands ==========
+# ==================== CORE COMMANDS (Daily Usage) ====================
 
-run:  ## Run main script locally (must be inside venv)
+run:  ## Run scraper locally
 	PYTHONPATH=$(SRC) $(PYTHON) -m $(MAIN_MODULE)
 
+pipeline:  ## Full end-to-end pipeline (scrape + dbt) 
+	@echo "\033[33m◆ Ensuring database is running...\033[0m"
+	@$(MAKE) db-start > /dev/null 2>&1
+	@echo "\033[34m■ Step 1: Scraping articles...\033[0m"
+	@$(MAKE) run || (echo "\033[31m✗ Scraping failed\033[0m" && exit 1)
+	@echo "\033[32m  ✓ Articles scraped successfully\033[0m"
+	@echo "\033[35m■ Step 2: Processing with dbt...\033[0m"
+	cd $(DBT_DIR) && ../$(DBT) run || (echo "\033[31m✗ dbt processing failed\033[0m" && exit 1)
+	@echo "\033[32m  ✓ dbt processing successful\033[0m"
+	@echo "\033[32m✓ Pipeline complete!\033[0m"
 
-test:  ## Run all tests + pipeline test (starts database automatically)
+test:  ## Run all tests (starts database automatically)
 	@echo "\033[33m◆ Ensuring database is running for tests...\033[0m"
 	@$(MAKE) db-start > /dev/null 2>&1
 	@echo "\033[33m◆ Running Python tests...\033[0m"
@@ -52,18 +62,62 @@ test:  ## Run all tests + pipeline test (starts database automatically)
 	@echo ""
 	@echo "\033[36m▶ ALL TESTS PASSED - 100% SUCCESS RATE\033[0m"
 
-test-essential:  ## Run essential working tests only
-	PYTHONPATH=$(SRC) $(PYTEST) -v tests/test_essential.py
+help:  ## Show available commands
+	@echo ""
+	@echo "\033[1m\033[36m========== CORE COMMANDS (Daily Usage) ==========\033[0m"
+	@echo "\033[36mrun         \033[0m Run scraper locally"
+	@echo "\033[36mpipeline    \033[0m Full end-to-end pipeline (scrape + dbt)"
+	@echo "\033[36mtest        \033[0m Run all tests (starts database automatically)"
+	@echo "\033[36mhelp        \033[0m Show available commands"
+	@echo ""
+	@echo "\033[1m\033[33m========== UTILITY COMMANDS (Helpers & Maintenance) ==========\033[0m"
+	@echo ""
+	@echo "\033[33mDatabase utilities:\033[0m"
+	@echo "  \033[36mdb-start        \033[0m Start PostgreSQL database only"
+	@echo "  \033[36mdb-stop         \033[0m Stop all containers"
+	@echo "  \033[36mdb-clean        \033[0m Stop and remove all containers and volumes"
+	@echo ""
+	@echo "\033[33mCode quality utilities:\033[0m"
+	@echo "  \033[36mlint            \033[0m Run ruff linting"
+	@echo "  \033[36mformat          \033[0m Auto-format code with ruff"
+	@echo "  \033[36mfix             \033[0m Auto-format code and run all checks"
+	@echo "  \033[36mclean           \033[0m Remove __pycache__, .pyc files, and test artifacts"
+	@echo ""
+	@echo "\033[33mDevelopment utilities:\033[0m"
+	@echo "  \033[36mtest-essential  \033[0m Run essential working tests only"
+	@echo "  \033[36mtest-pipeline   \033[0m Run pipeline test with fresh database (clears data first)"
+	@echo "  \033[36mdbt-run         \033[0m Run dbt models (text processing pipeline)"
+	@echo "  \033[36mdbt-debug       \033[0m Test dbt database connection"
+	@echo "  \033[36mversion-check   \033[0m Compare local vs Docker versions for consistency"
+	@echo ""
+	@echo "\033[33mDocker utilities:\033[0m"
+	@echo "  \033[36mdocker-build    \033[0m Build all container images"
+	@echo "  \033[36mdocker-pipeline \033[0m Run full containerized pipeline (all services)"
+	@echo ""
 
-test-ci:  ## Run CI-compatible tests (database + scraper, no dbt)
-	PYTHONPATH=$(SRC) $(PYTEST) -v tests/test_database_connection.py tests/test_deterministic_pipeline.py::TestDeterministicPipeline::test_html_file_counts tests/test_deterministic_pipeline.py::TestDeterministicPipeline::test_database_article_extraction
+# ==================== UTILITY COMMANDS (Helpers & Maintenance) ====================
 
+# Database utilities
+db-start:  ## Start PostgreSQL database only
+	@echo "\033[34m◆ Starting PostgreSQL database...\033[0m"
+	docker compose up -d postgres
+	@echo "\033[33m⧗ Waiting for database to be ready...\033[0m"
+	@docker compose exec postgres sh -c 'until pg_isready -U news_user -d french_news; do sleep 1; done'
+	@echo "\033[32m✓ Database ready!\033[0m"
+
+db-stop:  ## Stop all containers
+	docker compose down
+
+db-clean:  ## Stop and remove all containers and volumes
+	docker compose down -v
+	docker compose rm -f
+
+# Code quality utilities
 lint:  ## Run ruff linting
 	$(RUFF) check $(SRC) tests
 
 format:  ## Auto-format code with ruff
 	$(RUFF) format $(SRC) tests
-
 
 fix:  ## Auto-format code and run all checks
 	@echo "\033[36m▶ Formatting code with ruff...\033[0m"
@@ -82,22 +136,9 @@ clean:  ## Remove __pycache__, .pyc files, and test artifacts
 	find . -type d -name "htmlcov" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name ".mypy_cache" -exec rm -rf {} + 2>/dev/null || true
 
-# ========== dbt commands ==========
-
-dbt-run:  ## Run dbt models (text processing pipeline)
-	cd $(DBT_DIR) && ../$(DBT) run
-
-dbt-debug:  ## Test dbt database connection
-	cd $(DBT_DIR) && ../$(DBT) debug
-
-pipeline:  ## Run full pipeline: scrape articles + process with dbt
-	@echo "\033[34m■ Step 1: Scraping articles...\033[0m"
-	@$(MAKE) run || (echo "\033[31m✗ Scraping failed\033[0m" && exit 1)
-	@echo "\033[32m  ✓ Articles scraped successfully\033[0m"
-	@echo "\033[35m■ Step 2: Processing with dbt...\033[0m"
-	cd $(DBT_DIR) && ../$(DBT) run || (echo "\033[31m✗ dbt processing failed\033[0m" && exit 1)
-	@echo "\033[32m  ✓ dbt processing successful\033[0m"
-	@echo "\033[32m✓ Pipeline complete!\033[0m"
+# Development utilities
+test-essential:  ## Run essential working tests only
+	PYTHONPATH=$(SRC) $(PYTEST) -v tests/test_essential.py
 
 
 test-pipeline:  ## Run pipeline test with fresh database (clears data first)
@@ -119,39 +160,27 @@ test-pipeline:  ## Run pipeline test with fresh database (clears data first)
 	@docker compose exec postgres sh -c 'psql -U $$POSTGRES_USER -d $$POSTGRES_DB -c "SELECT COUNT(*) as sentences FROM dbt_test.sentences; SELECT COUNT(*) as vocabulary_words FROM dbt_test.vocabulary_for_flashcards;"' 2>/dev/null
 	@echo "\033[32m✓ Pipeline test complete!\033[0m"
 
-test-workflow:  ## Complete test workflow with HTML test files
-	@echo "\033[33m◆ Running complete test workflow...\033[0m"
-	$(MAKE) test-pipeline
-	@echo "\033[33m◆ Running dbt tests on test data...\033[0m"
-	cd $(DBT_DIR) && ../$(DBT) test --target test
-	@echo "\033[36m▶ Test workflow complete! Clean with: make dbt-clean-test\033[0m"
 
-# ========== Database commands ==========
+dbt-run:  ## Run dbt models (text processing pipeline)
+	cd $(DBT_DIR) && ../$(DBT) run
 
-db-start:  ## Start PostgreSQL database only
-	@echo "\033[34m◆ Starting PostgreSQL database...\033[0m"
-	docker compose up -d postgres
-	@echo "\033[33m⧗ Waiting for database to be ready...\033[0m"
-	@docker compose exec postgres sh -c 'until pg_isready -U news_user -d french_news; do sleep 1; done'
-	@echo "\033[32m✓ Database ready!\033[0m"
+dbt-debug:  ## Test dbt database connection
+	cd $(DBT_DIR) && ../$(DBT) debug
 
-db-stop:  ## Stop all containers
-	docker compose down
+version-check:  ## Compare local vs Docker versions for consistency
+	@echo "\033[36m◆ Environment Version Comparison\033[0m"
+	@echo "\033[33m├─ Local Python:\033[0m $(shell $(PYTHON) --version)"
+	@echo "\033[33m├─ Docker Python:\033[0m $(shell docker run --rm python:3.12-slim python --version 2>/dev/null || echo 'Docker not available')"
+	@echo "\033[33m├─ Local dbt:\033[0m $(shell $(DBT) --version 2>/dev/null | head -1 || echo 'dbt not installed')"
+	@echo "\033[33m└─ Docker dbt:\033[0m dbt-postgres==1.9.0 (pinned in Dockerfile)"
+	@echo ""
+	@echo "\033[32m✓ Versions should match for consistent behavior\033[0m"
 
-db-clean:  ## Stop and remove all containers and volumes
-	docker compose down -v
-	docker compose rm -f
-
-# ========== Container commands ==========
-
+# Docker utilities  
 docker-build:  ## Build all container images
 	@echo "\033[34m◆ Building container images...\033[0m"
 	docker compose build
 
-docker-test-build:  ## Test that all containers build successfully
-	@echo "\033[33m◆ Testing container builds...\033[0m"
-	@docker compose build --quiet || (echo "\033[31m✗ Container build failed\033[0m" && exit 1)
-	@echo "\033[32m✓ All containers build successfully\033[0m"
 
 docker-pipeline:  ## Run full containerized pipeline (all services)
 	@echo "\033[36m◆ Running full containerized pipeline...\033[0m"
@@ -164,42 +193,3 @@ docker-pipeline:  ## Run full containerized pipeline (all services)
 	@echo "\033[35m■ Step 3: Running dbt transformations...\033[0m"
 	docker compose run --rm dbt
 	@echo "\033[32m✓ Containerized pipeline complete!\033[0m"
-
-# ========== Utilities ==========
-
-version-check:  ## Compare local vs Docker versions for consistency
-	@echo "\033[36m◆ Environment Version Comparison\033[0m"
-	@echo "\033[33m├─ Local Python:\033[0m $(shell $(PYTHON) --version)"
-	@echo "\033[33m├─ Docker Python:\033[0m $(shell docker run --rm python:3.12-slim python --version 2>/dev/null || echo 'Docker not available')"
-	@echo "\033[33m├─ Local dbt:\033[0m $(shell $(DBT) --version 2>/dev/null | head -1 || echo 'dbt not installed')"
-	@echo "\033[33m└─ Docker dbt:\033[0m dbt-postgres==1.9.0 (pinned in Dockerfile)"
-	@echo ""
-	@echo "\033[32m✓ Versions should match for consistent behavior\033[0m"
-
-help:  ## Show this help message
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' Makefile | sed 's/:.*## /|/' | awk -F'|' '{printf "\033[36m%-18s\033[0m %s\n", $$1, $$2}'
-
-
-# ========== Quick Reference ==========
-# 
-# Development:
-#   make run              # Run script locally  
-#   make test             # Run all tests
-#   make test-essential   # Run essential tests only
-#   make fix              # Auto-format and lint code
-#   make version-check    # Compare local vs Docker versions
-#   make clean            # Remove cache files
-#
-# Pipeline:
-#   make pipeline         # Run full pipeline (scrape + dbt)
-#   make test-pipeline    # Test pipeline with fresh data
-#   make test-workflow    # Complete test workflow
-#
-# Database:
-#   make db-start         # Start PostgreSQL database
-#   make dbt-run          # Run dbt transformations
-#   make dbt-debug        # Test dbt connection
-#
-# Docker:
-#   make docker-build     # Build containers
-#   make docker-pipeline  # Run containerized pipeline
