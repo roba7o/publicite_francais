@@ -1,5 +1,10 @@
 # ========= Makefile for article_scrapers project =========
 
+# Check if .env file exists before proceeding
+ifeq (,$(wildcard .env))
+$(error .env file missing! Run 'cp .env.example .env' and configure it first)
+endif
+
 # Load environment variables from .env file
 # sed prints var names to stdout, shell (make function $ which is used to run unix commands) is then called by make to export them
 # This allows us to use environment variables in the Makefile without hardcoding them
