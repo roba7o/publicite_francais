@@ -12,10 +12,13 @@ include .env
 export $(shell sed 's/=.*//' .env)
 
 # Project configuration
+# ensures the Makefile uses the virtual environment's Python and tools
 PYTHON := ./venv/bin/python
 PYTEST := ./venv/bin/pytest
 RUFF := ./venv/bin/ruff
 DBT := ./venv/bin/dbt
+
+# Project structure variables
 SRC := src
 MAIN_MODULE := main
 DBT_DIR := french_flashcards
@@ -36,7 +39,7 @@ test:  ## Run all tests + pipeline test (starts database automatically)
 	@echo "\033[33m◆ Ensuring database is running for tests...\033[0m"
 	@$(MAKE) db-start > /dev/null 2>&1
 	@echo "\033[33m◆ Running Python tests...\033[0m"
-	@PATH=./venv/bin:$$PATH PYTHONPATH=$(SRC) $(PYTEST) -v
+	PYTHONPATH=$(SRC) $(PYTEST) -v
 	@echo "\033[33m◆ Running pipeline integration test...\033[0m"
 	@$(MAKE) test-pipeline
 	@echo ""
@@ -50,23 +53,23 @@ test:  ## Run all tests + pipeline test (starts database automatically)
 	@echo "\033[36m▶ ALL TESTS PASSED - 100% SUCCESS RATE\033[0m"
 
 test-essential:  ## Run essential working tests only
-	PATH=./venv/bin:$$PATH PYTHONPATH=$(SRC) $(PYTEST) -v tests/test_essential.py
+	PYTHONPATH=$(SRC) $(PYTEST) -v tests/test_essential.py
 
 test-ci:  ## Run CI-compatible tests (database + scraper, no dbt)
-	PATH=./venv/bin:$$PATH PYTHONPATH=$(SRC) $(PYTEST) -v tests/test_database_connection.py tests/test_deterministic_pipeline.py::TestDeterministicPipeline::test_html_file_counts tests/test_deterministic_pipeline.py::TestDeterministicPipeline::test_database_article_extraction
+	PYTHONPATH=$(SRC) $(PYTEST) -v tests/test_database_connection.py tests/test_deterministic_pipeline.py::TestDeterministicPipeline::test_html_file_counts tests/test_deterministic_pipeline.py::TestDeterministicPipeline::test_database_article_extraction
 
 lint:  ## Run ruff linting
-	$(RUFF) check $(SRC)
+	$(RUFF) check $(SRC) tests
 
 format:  ## Auto-format code with ruff
-	$(RUFF) format $(SRC)
+	$(RUFF) format $(SRC) tests
 
 
 fix:  ## Auto-format code and run all checks
 	@echo "\033[36m▶ Formatting code with ruff...\033[0m"
-	$(RUFF) format $(SRC)
+	$(RUFF) format $(SRC) tests
 	@echo "\033[33m▶ Running ruff linting...\033[0m"
-	$(RUFF) check --fix $(SRC)
+	$(RUFF) check --fix $(SRC) tests
 	@echo "\033[33m▶ Skipping mypy (learning project - type hints not enforced)...\033[0m"
 	@echo "\033[32m✓ Code quality checks passed!\033[0m"
 
@@ -89,7 +92,7 @@ dbt-debug:  ## Test dbt database connection
 
 pipeline:  ## Run full pipeline: scrape articles + process with dbt
 	@echo "\033[34m■ Step 1: Scraping articles...\033[0m"
-	PYTHONPATH=$(SRC) $(PYTHON) -m $(MAIN_MODULE) || (echo "\033[31m✗ Scraping failed\033[0m" && exit 1)
+	@$(MAKE) run || (echo "\033[31m✗ Scraping failed\033[0m" && exit 1)
 	@echo "\033[32m  ✓ Articles scraped successfully\033[0m"
 	@echo "\033[35m■ Step 2: Processing with dbt...\033[0m"
 	cd $(DBT_DIR) && ../$(DBT) run || (echo "\033[31m✗ dbt processing failed\033[0m" && exit 1)
@@ -107,7 +110,7 @@ test-pipeline:  ## Run pipeline test with fresh database (clears data first)
 	@printf "\033[32m  ✓ Database cleared - "
 	@docker compose exec postgres sh -c 'psql -U $$POSTGRES_USER -d $$POSTGRES_DB -t -c "SELECT COUNT(*) FROM news_data_test.articles;"' | xargs | awk '{print $$1 " articles remaining\033[0m"}'
 	@echo "\033[34m■ Step 3: Scraping test articles...\033[0m"
-	@PYTHONPATH=$(SRC) $(PYTHON) -m $(MAIN_MODULE) > /dev/null 2>&1 || (echo "\033[31m✗ Scraping failed\033[0m" && exit 1)
+	@$(MAKE) run > /dev/null 2>&1 || (echo "\033[31m✗ Scraping failed\033[0m" && exit 1)
 	@echo "\033[32m  ✓ Articles scraped successfully\033[0m"
 	@echo "\033[35m■ Step 4: Processing with dbt (test target)...\033[0m"
 	@cd $(DBT_DIR) && ../$(DBT) run --target test > /dev/null 2>&1 || (echo "\033[31m✗ dbt processing failed\033[0m" && exit 1)
