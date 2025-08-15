@@ -131,7 +131,7 @@ make dbt-run
    source venv/bin/activate  # Linux/Mac
    # or
    venv\Scripts\activate     # Windows
-   pip install -r requirements.txt
+   pip install -e .
    ```
 
 ### ImportError: Dynamic Class Loading
@@ -1085,8 +1085,8 @@ make dbt-run
        && rm -rf /var/lib/apt/lists/*
    
    # Copy requirements first for better caching
-   COPY requirements.txt .
-   RUN pip install -r requirements.txt
+   COPY pyproject.toml .
+   RUN pip install .
    
    # Copy application code
    COPY . .
@@ -1286,7 +1286,7 @@ monitor_thread.start()
 
 1. **Virtual Environment**: `source venv/bin/activate`
 2. **Working Directory**: `cd /path/to/project && python -m main`
-3. **Dependencies**: `pip install -r requirements.txt`
+3. **Dependencies**: `pip install -e .`
 4. **Permissions**: `chmod 755 src/output/`
 5. **Test Mode**: `OFFLINE=True DEBUG=True python -m main`
 
@@ -1297,7 +1297,7 @@ monitor_thread.start()
 rm -rf venv
 python -m venv venv
 source venv/bin/activate
-pip install -r requirements.txt
+pip install -e .
 OFFLINE=True DEBUG=True python -m main
 ```
 

@@ -3,7 +3,7 @@ Test suite for French Article Scraper.
 
 This test suite provides comprehensive coverage including:
 - Unit tests for individual components
-- Integration tests for processing pipelines  
+- Integration tests for processing pipelines
 - End-to-end tests using real test data
 - Performance benchmarks
 - Error scenario testing

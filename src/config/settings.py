@@ -7,6 +7,11 @@ of the entire scraping system, including database connectivity.
 
 import os
 
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
 # Enable debug logging for detailed output
 DEBUG = os.getenv("DEBUG", "true").lower() == "true"
 
@@ -26,7 +31,7 @@ DATABASE_CONFIG = {
     "port": int(os.getenv("POSTGRES_PORT", 5432)),
     "database": os.getenv("POSTGRES_DB", "french_news"),
     "user": os.getenv("POSTGRES_USER", "news_user"),
-    "password": os.getenv("POSTGRES_PASSWORD", "dev_password_123"),
+    "password": os.getenv("POSTGRES_PASSWORD"),
     # Connection pool settings removed - not used by current SQLAlchemy setup
 }
 

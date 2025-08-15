@@ -5,7 +5,7 @@ french_flashcards:
       type: postgres
       host: "{{ env_var('POSTGRES_HOST', 'localhost') }}"
       user: "{{ env_var('POSTGRES_USER', 'news_user') }}"
-      password: "{{ env_var('POSTGRES_PASSWORD', 'dev_password_123') }}"
+      password: "{{ env_var('POSTGRES_PASSWORD') }}"
       port: "{{ env_var('POSTGRES_PORT', '5432') | as_number }}"
       dbname: "{{ env_var('POSTGRES_DB', 'french_news') }}"
       schema: dbt_staging
@@ -16,7 +16,7 @@ french_flashcards:
       type: postgres
       host: "{{ env_var('POSTGRES_HOST', 'localhost') }}"
       user: "{{ env_var('POSTGRES_USER', 'news_user') }}"
-      password: "{{ env_var('POSTGRES_PASSWORD', 'dev_password_123') }}"
+      password: "{{ env_var('POSTGRES_PASSWORD') }}"
       port: "{{ env_var('POSTGRES_PORT', '5432') | as_number }}"
       dbname: "{{ env_var('POSTGRES_DB', 'french_news') }}"
       schema: dbt_test
@@ -27,7 +27,7 @@ french_flashcards:
       type: postgres
       host: "{{ env_var('POSTGRES_HOST', 'localhost') }}"
       user: "{{ env_var('POSTGRES_USER', 'news_user') }}"
-      password: "{{ env_var('POSTGRES_PASSWORD', 'dev_password_123') }}"
+      password: "{{ env_var('POSTGRES_PASSWORD') }}"
       port: "{{ env_var('POSTGRES_PORT', '5432') | as_number }}"
       dbname: "{{ env_var('POSTGRES_DB', 'french_news') }}"
       schema: dbt_prod
