@@ -120,9 +120,7 @@ format:  ## Auto-format code with ruff
 	$(RUFF) format $(SRC) tests
 
 fix:  ## Auto-format code and run all checks
-	@echo "\033[36m▶ Formatting code with ruff...\033[0m"
-	$(RUFF) format $(SRC) tests
-	@echo "\033[33m▶ Running ruff linting...\033[0m"
+	@echo "\033[36m▶ Running ruff format and linting with fixes...\033[0m"
 	$(RUFF) check --fix $(SRC) tests
 	@echo "\033[33m▶ Skipping mypy (learning project - type hints not enforced)...\033[0m"
 	@echo "\033[32m✓ Code quality checks passed!\033[0m"

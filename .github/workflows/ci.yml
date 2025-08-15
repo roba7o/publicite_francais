@@ -27,8 +27,7 @@ jobs:
 
     - name: Run code quality checks
       run: |
-        python -m ruff format src
-        python -m ruff check --fix src
+        python -m ruff check --fix src tests
 
     - name: Run essential tests (no database)
       run: |
