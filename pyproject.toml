@@ -7,7 +7,9 @@ name = "publicite-francais"
 version = "0.1.0"
 description = "French article scraper for vocabulary learning"
 readme = "README.md"
-requires-python = ">=3.12,<3.13"
+authors = [{name = "roba7o"}]
+license = {text = "MIT"}
+requires-python = ">=3.12"
 dependencies = [
     "requests>=2.25.1",
     "beautifulsoup4>=4.9.3",
@@ -34,7 +36,7 @@ where = ["src"]
 
 [tool.ruff]
 line-length = 88
-target-version = "py38"
+target-version = "py312"
 src = ["src", "tests"]
 
 [tool.ruff.lint]
@@ -56,7 +58,7 @@ quote-style = "double"
 indent-style = "space"
 
 [tool.mypy]
-python_version = "3.8"
+python_version = "3.12"
 warn_unused_configs = false
 disallow_untyped_defs = false
 disallow_incomplete_defs = false  
