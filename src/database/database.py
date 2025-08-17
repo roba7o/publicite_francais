@@ -83,14 +83,17 @@ def get_session() -> Generator[Session, None, None]:
     - Rolls back all changes if any exceptions occur
     - Always closes the session properly, even during failures
 
-    Raises:
-        RuntimeError: If database wasn't initialized first
-        Any database exceptions: Will trigger rollback then be re-raised
-
     Example (successful operation):
+    NEEDS WITH AS ITS A CONTEXT MANAGER!!!!!!
+    The context manager's __enter__() and __exit__() methods only trigger inside a with block.
         with get_session() as s:
             s.execute(text("UPDATE users SET active = True"))
             # Auto-committed when block exits
+
+    Example wrong usage:
+    session = get_session()  #  WRONG - returns a generator, not a usable session
+    session.execute(...)     #  Fails - (no execute() method on the generator)
+
 
     Example (failed operation):
         with get_session() as s:
@@ -102,20 +105,59 @@ def get_session() -> Generator[Session, None, None]:
             "Database not initialized. Call initialize_database() first."
         )
 
-    session = _SessionLocal()
+    session = _SessionLocal()  # fresh session from the session factory
     try:
-        yield session
-        session.commit()
+        yield session  # hands session to the caller, the with statement can now use it. Fucntion pauses.
+        session.commit()  # saves
     except Exception:
-        session.rollback()
+        session.rollback()  # discards
         raise
     finally:
-        session.close()
+        session.close()  # always closes the session, even if there was an error
 
 
-# Backwards compatibility for existing code
+# Backwards compatibility for existing code (technical debt can be refactored later)
 def get_database_manager():
-    """Backwards compatibility shim."""
+    """
+    Backwards compatibility shim for old database manager pattern.
+
+    This function exists to maintain compatibility with existing code that was written
+    before the database architecture was simplified. It provides the same interface
+    as the old database manager but delegates to the new simplified get_session() function.
+
+    Legacy Pattern (what existing code expects):
+        from database import get_database_manager
+        manager = get_database_manager()
+        with manager.get_session() as session:
+            session.execute(text("SELECT 1"))
+
+    Modern Pattern (preferred for new code):
+        from database import get_session
+        with get_session() as session:
+            session.execute(text("SELECT 1"))
+
+    Currently Used In:
+        - src/database/article_repository.py (line 27):
+          self.db = get_database_manager()
+        - tests/test_deterministic_pipeline.py (multiple locations):
+          db = get_database_manager()
+          with db.get_session() as session: ...
+        - tests/test_database_connection.py:
+          Similar database manager usage pattern
+
+    Migration Path:
+        1. Update article_repository.py to use get_session() directly
+        2. Update test files to use get_session() directly
+        3. Remove this backwards compatibility function
+
+    Returns:
+        SimpleManager: Object with get_session() method that delegates to the
+                      modern get_session() context manager function
+
+    Note:
+        This is technical debt that should be removed once all existing code
+        has been migrated to use the direct get_session() function.
+    """
 
     class SimpleManager:
         def get_session(self):
