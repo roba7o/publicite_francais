@@ -1,29 +1,30 @@
 import sys
 import time
 import traceback
-from typing import Optional
 
-from config.settings import DATABASE_ENABLED, NEWS_DATA_SCHEMA, OFFLINE
+from config.settings import (
+    DATABASE_ENABLED,
+    DEBUG,
+    MIN_SUCCESS_RATE_THRESHOLD,
+    NEWS_DATA_SCHEMA,
+    OFFLINE,
+)
 from config.source_configs import get_scraper_configs
 from database import initialize_database
 from services.article_pipeline import DatabaseProcessor
 from utils.logging_config_enhanced import configure_debug_mode, setup_logging
+from utils.terminal_output import output
 
 
-def main() -> Optional[int]:
+def main() -> int | None:
     """
     Main entry point - Database pipeline orchestration
 
     Returns:
         Optional[int]: Exit code (0 for success, 1 for failure, None for normal exit)
     """
-    # Use shared output system
-    from config.settings import DEBUG
-    from utils.terminal_output import output
-
     try:
-        # Setup logging with dynamic DEBUG
-
+        # Setup logging
         setup_logging()
         if DEBUG:
             configure_debug_mode(enabled=True)
@@ -44,11 +45,6 @@ def main() -> Optional[int]:
             return 1
 
         # Initialize database
-        output.info(
-            "Initializing database connection...",
-            extra_data={"step": "database_initialization"},
-        )
-
         if not initialize_database():
             output.error(
                 "Database initialization failed",
@@ -61,48 +57,37 @@ def main() -> Optional[int]:
             extra_data={"step": "database_initialization", "status": "success"},
         )
 
-        # Get consolidated source configurations
+        # Get source configurations and start processing
         source_configs = get_scraper_configs()
-
-        output.info(
-            f"Found {len(source_configs)} enabled news sources",
-            extra_data={"source_count": len(source_configs), "step": "source_loading"},
-        )
-
-        # Process articles with error handling
         start_time = time.time()
+
         output.process_start(
             "article_processing",
-            extra_data={"source_count": len(source_configs), "mode": mode},
-        )
-
-        output.info(
-            f"Processing {len(source_configs)} news sources...",
-            extra_data={"sources_to_process": len(source_configs)},
-        )
-
-        processor = DatabaseProcessor()
-        processed, attempted = processor.process_all_sources(source_configs)
-
-        elapsed_time = time.time() - start_time
-        success_rate = (processed / attempted * 100) if attempted > 0 else 0
-
-        output.process_complete(
-            "article_processing",
             extra_data={
-                "articles_processed": processed,
-                "articles_attempted": attempted,
-                "success_rate_percent": round(success_rate, 1),
-                "elapsed_time_seconds": round(elapsed_time, 1),
+                "source_count": len(source_configs),
                 "mode": mode,
+                "step": "processing_start",
             },
         )
 
-        output.success(
-            "Database collection completed", extra_data={"final_status": "success"}
-        )
+        # Execute pipeline
+        processor = DatabaseProcessor()
+        processed, attempted = processor.process_all_sources(source_configs)
 
-        # Display completion summary
+        # Calculate results
+        elapsed_time = time.time() - start_time
+        success_rate = (processed / attempted * 100) if attempted > 0 else 0
+
+        # Single consolidated completion report
+        completion_data = {
+            "articles_processed": processed,
+            "articles_attempted": attempted,
+            "success_rate_percent": round(success_rate, 1),
+            "elapsed_time_seconds": round(elapsed_time, 1),
+            "mode": mode,
+            "pipeline_completion": True,
+        }
+
         output.completion_summary(
             "Collection Results",
             {
@@ -111,40 +96,21 @@ def main() -> Optional[int]:
                 "Processing Time": f"{elapsed_time:.1f}s",
                 "Mode": mode.upper(),
             },
-            extra_data={
-                "pipeline_completion": True,
-                "total_processed": processed,
-                "total_attempted": attempted,
-                "success_rate": success_rate,
-                "elapsed_seconds": elapsed_time,
-            },
+            extra_data=completion_data,
         )
 
-        # Check if pipeline was successful
-        if success_rate < 50.0:
+        # Quality check
+        if success_rate < MIN_SUCCESS_RATE_THRESHOLD:
             output.warning(
                 f"Low success rate ({success_rate:.1f}%) - check logs for issues",
                 extra_data={
                     "success_rate": success_rate,
-                    "threshold": 50.0,
+                    "threshold": MIN_SUCCESS_RATE_THRESHOLD,
                     "status": "low_success_rate",
                 },
             )
 
-        output.info(
-            "Check database:", extra_data={"next_step": "database_verification"}
-        )
-        output.info(
-            f'docker compose exec postgres psql -U news_user -d french_news -c "SELECT title, LENGTH(full_text), scraped_at FROM {NEWS_DATA_SCHEMA}.articles ORDER BY scraped_at DESC LIMIT 3;"',
-            extra_data={
-                "command_type": "database_check",
-                "schema_used": NEWS_DATA_SCHEMA,
-            },
-        )
-        output.info(
-            "Next: Run dbt transformations with 'make dbt-run'!",
-            extra_data={"next_step": "dbt_transformations"},
-        )
+        _show_next_steps()
 
         return 0
 
@@ -161,6 +127,26 @@ def main() -> Optional[int]:
             extra_data={"error": str(e), "traceback": traceback.format_exc()},
         )
         return 1
+
+
+def _show_next_steps() -> None:
+    """Display next steps for user after pipeline completion."""
+    db_check_cmd = (
+        f"docker compose exec postgres psql -U news_user -d french_news "
+        f'-c "SELECT title, LENGTH(full_text), scraped_at FROM {NEWS_DATA_SCHEMA}.articles '
+        f'ORDER BY scraped_at DESC LIMIT 3;"'
+    )
+
+    output.info(
+        "Next steps:",
+        extra_data={
+            "database_check_command": db_check_cmd,
+            "dbt_command": "make dbt-run",
+            "next_steps": ["database_verification", "dbt_transformations"],
+        },
+    )
+    output.info(f"Check database: {db_check_cmd}")
+    output.info("Run dbt transformations: make dbt-run")
 
 
 if __name__ == "__main__":

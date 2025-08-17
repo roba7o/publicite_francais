@@ -178,25 +178,87 @@ class DatabaseLadepecheFrParser(DatabaseBaseParser):
 
     def _extract_date(self, soup: BeautifulSoup) -> str:
         """
-        Extract the article's date. Tries multiple selectors and formats.
+        Extract the article's date. Tries multiple Ladepeche.fr-specific patterns first.
         """
+        # Try Ladepeche.fr-specific patterns first
+        
+        # 1. Check JavaScript dataLayer for date
+        scripts = soup.find_all('script')
+        for script in scripts:
+            if script.string and 'dataLayer' in script.string and '"date":' in script.string:
+                import json
+                try:
+                    # Extract dataLayer JSON from script
+                    script_content = script.string.strip()
+                    if script_content.startswith('var dataLayer = '):
+                        json_str = script_content[16:]  # Remove 'var dataLayer = '
+                        if json_str.endswith(';'):
+                            json_str = json_str[:-1]  # Remove trailing semicolon
+                        data = json.loads(json_str)
+                        if isinstance(data, list) and len(data) > 0:
+                            article_data = data[0].get('article', {})
+                            if 'date' in article_data:
+                                date_val = article_data['date']
+                                # Format: "20250117" -> "2025-01-17"
+                                if isinstance(date_val, str) and len(date_val) == 8 and date_val.isdigit():
+                                    try:
+                                        dt_obj = datetime.strptime(date_val, "%Y%m%d")
+                                        return dt_obj.strftime("%Y-%m-%d")
+                                    except ValueError:
+                                        pass
+                except (json.JSONDecodeError, KeyError, IndexError):
+                    pass
+        
+        # 2. Check JSON-LD structured data
+        json_ld_scripts = soup.find_all('script', type='application/ld+json')
+        for script in json_ld_scripts:
+            if script.string:
+                try:
+                    data = json.loads(script.string)
+                    if isinstance(data, dict) and 'datePublished' in data:
+                        date_str = data['datePublished']
+                        # Format: "2025-01-17T18:20:03+00:00"
+                        try:
+                            dt_obj = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+                            return dt_obj.strftime("%Y-%m-%d")
+                        except ValueError:
+                            pass
+                except json.JSONDecodeError:
+                    pass
+        
+        # 3. Extract from URL in meta tags
+        url_metas = soup.find_all('meta', {'property': ['og:url', 'twitter:url']})
+        for meta in url_metas:
+            content = meta.get('content', '')
+            if content:
+                # Look for date pattern /YYYY/MM/DD/ in URL
+                import re
+                date_match = re.search(r'/(?P<year>\d{4})/(?P<month>\d{1,2})/(?P<day>\d{1,2})/', content)
+                if date_match:
+                    try:
+                        year = int(date_match.group('year'))
+                        month = int(date_match.group('month'))
+                        day = int(date_match.group('day'))
+                        dt_obj = datetime(year, month, day)
+                        return dt_obj.strftime("%Y-%m-%d")
+                    except ValueError:
+                        pass
+        
+        # 4. Fallback to standard selectors
         date_selectors = [
             "time[datetime]",
             ".article-date time",
             ".date-publication",
             ".published-date",
-            "[data-time]",  # Added for robustness, covers the
-            # "20250712190208" case
+            "[data-time]",
             'meta[property="article:published_time"]',
             'meta[itemprop="datePublished"]',
         ]
 
-        # Initialize date_str to None before the loop
-        date_str: Optional[str] = None
-
         for selector in date_selectors:
             element = soup.select_one(selector)
             if element:
+                date_str = None
                 if hasattr(element, "has_attr") and element.has_attr("datetime"):
                     datetime_attr = element.get("datetime")
                     if isinstance(datetime_attr, str):
@@ -216,58 +278,29 @@ class DatabaseLadepecheFrParser(DatabaseBaseParser):
                 else:
                     date_str = element.get_text(strip=True)
 
-                # Now, if date_str has a value, attempt to parse it
                 if date_str:
-                    # Format: 20250712190208 -> 2025-07-12 19:02:08
-                    if len(date_str) == 14 and date_str.isdigit():
+                    # Try various date formats
+                    date_formats = [
+                        "%Y%m%d%H%M%S",  # 20250712190208
+                        "%Y-%m-%dT%H:%M:%S%z",  # ISO 8601 with timezone
+                        "%Y-%m-%dT%H:%M:%S",  # ISO 8601 without timezone
+                        "%d/%m/%Y",  # DD/MM/YYYY
+                        "%Y-%m-%d",  # YYYY-MM-DD
+                    ]
+                    
+                    for fmt in date_formats:
                         try:
-                            # Parse as datetime object first to ensure
-                            # validity, then format
-                            dt_obj = datetime.strptime(date_str, "%Y%m%d%H%M%S")
+                            if fmt == "%Y-%m-%dT%H:%M:%S%z":
+                                dt_obj = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+                            else:
+                                dt_obj = datetime.strptime(date_str, fmt)
                             return dt_obj.strftime("%Y-%m-%d")
                         except ValueError:
-                            self.logger.debug(
-                                f"Failed to parse '{date_str}' as YYYYMMDDHHMMSS."
-                            )
-                            # Continue to try other formats if this one fails
-
-                    # ISO 8601 format (e.g., 2023-10-26T10:00:00+02:00)
-                    try:
-                        dt_obj = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
-                        return dt_obj.strftime("%Y-%m-%d")
-                    except ValueError:
-                        self.logger.debug(f"Failed to parse '{date_str}' as ISO 8601.")
-                        pass  # Try other parsing methods
-
-                    # Simple date format (e.g., "12/07/2025" or
-                    # "Octobre 26, 2023")
-                    # Add more common French date formats as needed.
-                    # For "DD/MM/YYYY"
-                    try:
-                        dt_obj = datetime.strptime(date_str, "%d/%m/%Y")
-                        return dt_obj.strftime("%Y-%m-%d")
-                    except ValueError:
-                        pass
-                    # For "YYYY-MM-DD"
-                    try:
-                        dt_obj = datetime.strptime(date_str, "%Y-%m-%d")
-                        return dt_obj.strftime("%Y-%m-%d")
-                    except ValueError:
-                        pass
-
-                    # If a string was found but couldn't be parsed into a
-                    # standard date format,
-                    # return it as is, logging a warning.
-                    self.logger.warning(
-                        f"Date string '{date_str}' found but could not be "
-                        "parsed into a standard format. Returning raw string."
-                    )
-                    # Return raw string if no known format matches
-                    return date_str
+                            continue
 
         self.logger.debug(
-            "Article date not found or parsed using common selectors and "
-            "formats. Falling back to 'Unknown date'."
+            "Article date not found using Ladepeche.fr-specific patterns or standard selectors. "
+            "Falling back to 'Unknown date'."
         )
         return "Unknown date"
 

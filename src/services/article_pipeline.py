@@ -90,13 +90,44 @@ class DatabaseProcessor:
     ) -> bool:
         """Process single article - parse and store to database."""
         try:
+            # Log article processing start with shortened URL
+            url_display = url.split('/')[-1][:50] + "..." if len(url.split('/')[-1]) > 50 else url.split('/')[-1]
+            self.output.info(
+                f"Processing: {url_display}",
+                extra_data={
+                    "source": source_name,
+                    "url": url,
+                    "operation": "article_start",
+                },
+            )
+            
             # Parse article (no text processing)
             article_data = parser.parse_article(soup)
             if not article_data:
+                self.output.warning(
+                    f"Failed to parse: {url_display}",
+                    extra_data={
+                        "source": source_name,
+                        "url": url,
+                        "operation": "parse_failed",
+                    },
+                )
                 return False
 
             # Store raw data directly to database
-            return parser.to_database(article_data, url)
+            success = parser.to_database(article_data, url)
+            if success:
+                self.output.success(
+                    f"Stored: {article_data.title[:50]}{'...' if len(article_data.title) > 50 else ''}",
+                    extra_data={
+                        "source": source_name,
+                        "url": url,
+                        "title": article_data.title,
+                        "word_count": len(article_data.full_text.split()),
+                        "operation": "article_complete",
+                    },
+                )
+            return success
 
         except Exception as e:
             self.output.error(

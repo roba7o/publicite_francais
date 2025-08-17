@@ -65,6 +65,9 @@ SCHEMA_CONFIG = {
 NEWS_DATA_SCHEMA = SCHEMA_CONFIG["news_data"][DATABASE_ENV]
 # DBT_SCHEMA removed - not used anywhere in codebase
 
+# Pipeline quality thresholds
+MIN_SUCCESS_RATE_THRESHOLD = 50.0
+
 
 def get_schema_name(schema_type: str, env: str = None) -> str:
     """
