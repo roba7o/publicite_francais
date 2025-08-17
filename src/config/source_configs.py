@@ -1,8 +1,6 @@
 """
-Configuration for news source scrapers in database architecture.
+Contains the full path to scraper/parsers for the database architecture.
 
-This module defines which news sources to process using the consolidated
-database-focused scraper architecture. Text processing is handled by dbt/SQL.
 """
 
 from typing import Dict, List
