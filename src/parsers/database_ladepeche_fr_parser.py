@@ -181,26 +181,35 @@ class DatabaseLadepecheFrParser(DatabaseBaseParser):
         Extract the article's date. Tries multiple Ladepeche.fr-specific patterns first.
         """
         # Try Ladepeche.fr-specific patterns first
-        
+
         # 1. Check JavaScript dataLayer for date
-        scripts = soup.find_all('script')
+        scripts = soup.find_all("script")
         for script in scripts:
-            if script.string and 'dataLayer' in script.string and '"date":' in script.string:
+            if (
+                script.string
+                and "dataLayer" in script.string
+                and '"date":' in script.string
+            ):
                 import json
+
                 try:
                     # Extract dataLayer JSON from script
                     script_content = script.string.strip()
-                    if script_content.startswith('var dataLayer = '):
+                    if script_content.startswith("var dataLayer = "):
                         json_str = script_content[16:]  # Remove 'var dataLayer = '
-                        if json_str.endswith(';'):
+                        if json_str.endswith(";"):
                             json_str = json_str[:-1]  # Remove trailing semicolon
                         data = json.loads(json_str)
                         if isinstance(data, list) and len(data) > 0:
-                            article_data = data[0].get('article', {})
-                            if 'date' in article_data:
-                                date_val = article_data['date']
+                            article_data = data[0].get("article", {})
+                            if "date" in article_data:
+                                date_val = article_data["date"]
                                 # Format: "20250117" -> "2025-01-17"
-                                if isinstance(date_val, str) and len(date_val) == 8 and date_val.isdigit():
+                                if (
+                                    isinstance(date_val, str)
+                                    and len(date_val) == 8
+                                    and date_val.isdigit()
+                                ):
                                     try:
                                         dt_obj = datetime.strptime(date_val, "%Y%m%d")
                                         return dt_obj.strftime("%Y-%m-%d")
@@ -208,42 +217,47 @@ class DatabaseLadepecheFrParser(DatabaseBaseParser):
                                         pass
                 except (json.JSONDecodeError, KeyError, IndexError):
                     pass
-        
+
         # 2. Check JSON-LD structured data
-        json_ld_scripts = soup.find_all('script', type='application/ld+json')
+        json_ld_scripts = soup.find_all("script", type="application/ld+json")
         for script in json_ld_scripts:
             if script.string:
                 try:
                     data = json.loads(script.string)
-                    if isinstance(data, dict) and 'datePublished' in data:
-                        date_str = data['datePublished']
+                    if isinstance(data, dict) and "datePublished" in data:
+                        date_str = data["datePublished"]
                         # Format: "2025-01-17T18:20:03+00:00"
                         try:
-                            dt_obj = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+                            dt_obj = datetime.fromisoformat(
+                                date_str.replace("Z", "+00:00")
+                            )
                             return dt_obj.strftime("%Y-%m-%d")
                         except ValueError:
                             pass
                 except json.JSONDecodeError:
                     pass
-        
+
         # 3. Extract from URL in meta tags
-        url_metas = soup.find_all('meta', {'property': ['og:url', 'twitter:url']})
+        url_metas = soup.find_all("meta", {"property": ["og:url", "twitter:url"]})
         for meta in url_metas:
-            content = meta.get('content', '')
+            content = meta.get("content", "")
             if content:
                 # Look for date pattern /YYYY/MM/DD/ in URL
                 import re
-                date_match = re.search(r'/(?P<year>\d{4})/(?P<month>\d{1,2})/(?P<day>\d{1,2})/', content)
+
+                date_match = re.search(
+                    r"/(?P<year>\d{4})/(?P<month>\d{1,2})/(?P<day>\d{1,2})/", content
+                )
                 if date_match:
                     try:
-                        year = int(date_match.group('year'))
-                        month = int(date_match.group('month'))
-                        day = int(date_match.group('day'))
+                        year = int(date_match.group("year"))
+                        month = int(date_match.group("month"))
+                        day = int(date_match.group("day"))
                         dt_obj = datetime(year, month, day)
                         return dt_obj.strftime("%Y-%m-%d")
                     except ValueError:
                         pass
-        
+
         # 4. Fallback to standard selectors
         date_selectors = [
             "time[datetime]",
@@ -287,11 +301,13 @@ class DatabaseLadepecheFrParser(DatabaseBaseParser):
                         "%d/%m/%Y",  # DD/MM/YYYY
                         "%Y-%m-%d",  # YYYY-MM-DD
                     ]
-                    
+
                     for fmt in date_formats:
                         try:
                             if fmt == "%Y-%m-%dT%H:%M:%S%z":
-                                dt_obj = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+                                dt_obj = datetime.fromisoformat(
+                                    date_str.replace("Z", "+00:00")
+                                )
                             else:
                                 dt_obj = datetime.strptime(date_str, fmt)
                             return dt_obj.strftime("%Y-%m-%d")

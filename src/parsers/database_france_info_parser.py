@@ -83,33 +83,34 @@ class DatabaseFranceInfoParser(DatabaseBaseParser):
         title_tag = soup.find("h1", class_="c-title-editorial__title")
         if title_tag and isinstance(title_tag, Tag):
             return title_tag.get_text(strip=True)
-        
+
         # Try JSON-LD structured data (for test files)
-        json_ld_scripts = soup.find_all('script', type='application/ld+json')
+        json_ld_scripts = soup.find_all("script", type="application/ld+json")
         for script in json_ld_scripts:
             if script.string:
                 try:
                     import json
+
                     data = json.loads(script.string)
-                    if isinstance(data, dict) and 'headline' in data:
-                        return data['headline'].strip()
+                    if isinstance(data, dict) and "headline" in data:
+                        return data["headline"].strip()
                 except json.JSONDecodeError:
                     continue
-        
+
         # Try Open Graph title
-        og_title = soup.find('meta', property='og:title')
-        if og_title and og_title.get('content'):
-            return og_title.get('content').strip()
-        
+        og_title = soup.find("meta", property="og:title")
+        if og_title and og_title.get("content"):
+            return og_title.get("content").strip()
+
         # Try HTML title tag as fallback
-        title_tag = soup.find('title')
+        title_tag = soup.find("title")
         if title_tag:
             title = title_tag.get_text(strip=True)
             # Clean up site name if present
-            if ' - Franceinfo' in title:
-                title = title.replace(' - Franceinfo', '').strip()
+            if " - Franceinfo" in title:
+                title = title.replace(" - Franceinfo", "").strip()
             return title
-        
+
         return "No title found"
 
     def _extract_date(self, soup: BeautifulSoup) -> str:
@@ -130,16 +131,17 @@ class DatabaseFranceInfoParser(DatabaseBaseParser):
             date_text = date_tag.get_text(strip=True)
             if date_text:
                 return date_text
-        
+
         # Try JSON-LD structured data (for test files)
-        json_ld_scripts = soup.find_all('script', type='application/ld+json')
+        json_ld_scripts = soup.find_all("script", type="application/ld+json")
         for script in json_ld_scripts:
             if script.string:
                 try:
                     import json
+
                     data = json.loads(script.string)
-                    if isinstance(data, dict) and 'datePublished' in data:
-                        date_str = data['datePublished']
+                    if isinstance(data, dict) and "datePublished" in data:
+                        date_str = data["datePublished"]
                         try:
                             dt = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
                             return dt.strftime("%Y-%m-%d")

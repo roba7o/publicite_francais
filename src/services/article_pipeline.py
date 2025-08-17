@@ -91,7 +91,11 @@ class DatabaseProcessor:
         """Process single article - parse and store to database."""
         try:
             # Log article processing start with shortened URL
-            url_display = url.split('/')[-1][:50] + "..." if len(url.split('/')[-1]) > 50 else url.split('/')[-1]
+            url_display = (
+                url.split("/")[-1][:50] + "..."
+                if len(url.split("/")[-1]) > 50
+                else url.split("/")[-1]
+            )
             self.output.info(
                 f"Processing: {url_display}",
                 extra_data={
@@ -100,7 +104,7 @@ class DatabaseProcessor:
                     "operation": "article_start",
                 },
             )
-            
+
             # Parse article (no text processing)
             article_data = parser.parse_article(soup)
             if not article_data:
