@@ -10,12 +10,12 @@ Simplified processor that handles:
 All text processing is moved to dbt/SQL.
 """
 
+import os
 import time
 from typing import Any
 
 from bs4 import BeautifulSoup
 
-from config.settings import TEST_MODE
 from utils.validators import DataValidator
 
 
@@ -41,7 +41,7 @@ class DatabaseProcessor:
         self, scraper: Any, parser: Any, source_name: str
     ) -> list[tuple[BeautifulSoup, str]]:
         """Get content sources based on mode (offline/live)."""
-        if TEST_MODE:
+        if os.getenv("TEST_MODE", "false").lower() == "true":
             return parser.get_test_sources_from_directory(source_name)
         else:
             return self._get_live_sources(scraper, parser, source_name)
@@ -216,7 +216,7 @@ class DatabaseProcessor:
         # Acquire content sources
         sources = self.acquire_content(scraper, database_parser, config["name"])
 
-        mode_str = "offline" if TEST_MODE else "live"
+        mode_str = "offline" if os.getenv("TEST_MODE", "false").lower() == "true" else "live"
         self.output.info(
             f"Found {len(sources)} sources for {config['name']} (mode: {mode_str})",
             extra_data={
@@ -284,7 +284,7 @@ class DatabaseProcessor:
             config for config in source_configs if config.get("enabled", True)
         ]
 
-        mode_str = "offline" if TEST_MODE else "live"
+        mode_str = "offline" if os.getenv("TEST_MODE", "false").lower() == "true" else "live"
         self.output.process_start(
             "database_processing",
             extra_data={

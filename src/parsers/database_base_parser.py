@@ -10,6 +10,7 @@ This parser provides:
 Child parsers only need to implement parse_article().
 """
 
+import os
 import time
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -19,7 +20,7 @@ from bs4 import BeautifulSoup
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from config.settings import DEBUG, TEST_MODE
+from config.settings import DEBUG
 from models import ArticleData
 
 
@@ -101,7 +102,7 @@ class DatabaseBaseParser(ABC):
         """
         Fetch and parse HTML (same logic as BaseParser).
         """
-        if TEST_MODE:
+        if os.getenv("TEST_MODE", "false").lower() == "true":
             self.logger.warning(
                 "URL fetch attempted in offline mode",
                 extra_data={"url": url, "mode": "offline"},

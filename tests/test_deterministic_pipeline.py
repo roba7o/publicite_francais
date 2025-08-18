@@ -24,7 +24,7 @@ class TestDeterministicPipeline:
         import os
 
         os.environ["DATABASE_ENV"] = "test"
-        os.environ["OFFLINE"] = "True"
+        os.environ["TEST_MODE"] = "true"
 
         # Initialize database for tests
         from database import initialize_database
