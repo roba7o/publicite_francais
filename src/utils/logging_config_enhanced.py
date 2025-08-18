@@ -1,26 +1,5 @@
 """
 Enhanced logging configuration for the French article scraper.
-
-This module provides backward-compatible enhanced logging that integrates
-with the new structured logging system while maintaining compatibility
-with existing code.
-
-Usage:
-    # Simple setup (backward compatible)
-    >>> from utils.logging_config_enhanced import setup_logging
-    >>> setup_logging()
-
-    # Advanced setup with structured logging
-    >>> setup_logging(
-    ...     level="DEBUG", use_structured=True, enable_file_logging=True
-    ... )
-
-    # Component-specific log levels
-    >>> from utils.logging_config_enhanced import configure_component_levels
-    >>> configure_component_levels({
-    ...     "article_scrapers.core": "DEBUG",
-    ...     "article_scrapers.parsers": "INFO"
-    ... })
 """
 
 import logging
@@ -28,23 +7,13 @@ import logging
 from config.settings import DEBUG
 
 
-def setup_logging(
-    level: str | int | None = None,
-    use_structured: bool = True,
-    enable_file_logging: bool = True,
-    console_format: str = "human",
-    log_directory: str | None = None,
-) -> None:
+def setup_logging(level: str | int | None = None) -> None:
     """
-    Setup enhanced logging configuration with backward compatibility.
+    Setup enhanced logging configuration.
 
     Args:
         level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
                Defaults to DEBUG if DEBUG=True, INFO otherwise
-        use_structured: Whether to use structured JSON logging for files
-        enable_file_logging: Whether to write logs to files
-        console_format: Console output format ("human" or "structured")
-        log_directory: Directory for log files (defaults to "logs")
     """
     # Determine default log level based on configuration
     if level is None:

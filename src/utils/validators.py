@@ -73,5 +73,3 @@ class DataValidator:
 
         # Default to today if parsing fails
         return datetime.now().strftime("%Y-%m-%d")
-
-    # validate_article_data removed - never used in codebase

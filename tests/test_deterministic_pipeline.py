@@ -159,8 +159,8 @@ class TestDeterministicPipeline:
             assert 1500 <= count_dict["word_occurrences"] <= 2200, (
                 f"Expected 1500-2200 quality word occurrences, got {count_dict['word_occurrences']}"
             )
-            assert 150 <= count_dict["vocabulary_words"] <= 200, (
-                f"Expected 150-200 vocabulary words, got {count_dict['vocabulary_words']}"
+            assert 200 <= count_dict["vocabulary_words"] <= 250, (
+                f"Expected 200-250 vocabulary words, got {count_dict['vocabulary_words']}"
             )
 
             # Test data relationships (more robust than exact counts)

@@ -49,6 +49,11 @@ SCHEMA_CONFIG = {
     "test": os.getenv("NEWS_DATA_TEST_SCHEMA", "news_data_test"),
     "dev": os.getenv("NEWS_DATA_DEV_SCHEMA", "news_data_dev"),
     "prod": os.getenv("NEWS_DATA_PROD_SCHEMA", "news_data_prod"),
+    "dbt": {
+        "test": "dbt_test",
+        "dev": "dbt_staging",
+        "prod": "dbt_prod",
+    },
 }
 
 # Pre-computed schema name for current environment
