@@ -28,7 +28,7 @@ select
     ) as longest_example,
     
     -- Source variety
-    count(distinct occurrences.source_id) as appears_in_sources
+    count(distinct occurrences.source_name) as appears_in_sources
 
 from {{ ref('raw_words') }} words
 

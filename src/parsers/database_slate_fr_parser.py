@@ -26,14 +26,16 @@ class DatabaseSlateFrParser(DatabaseBaseParser):
     The HTML parsing logic is identical to your existing parser.
     """
 
-    def __init__(self, source_id: str) -> None:
+    def __init__(self, source_name: str, debug: bool = False) -> None:
         """
-        Initialize with source ID from database.
+        Initialize Slate.fr parser.
 
         Args:
-            source_id: UUID of Slate.fr source from news_sources table
+            source_name: Name of the source (should be "Slate.fr")
+            debug: Enable debug logging (default: False)
         """
-        super().__init__(site_domain="slate.fr", source_id=source_id)
+        super().__init__(site_domain="slate.fr", source_name=source_name)
+        self.debug = debug
 
     def parse_article(self, soup: BeautifulSoup) -> ArticleData | None:
         """

@@ -4,7 +4,7 @@
 select 
     {{ dbt_utils.generate_surrogate_key(['id', 'sentence_position']) }} as sentence_id,
     id as article_id,
-    source_id,
+    source_name,
     title as article_title,
     url,
     sentence_position,
@@ -14,7 +14,7 @@ select
 from (
     select 
         id,
-        source_id,
+        source_name,
         title,
         url,
         row_number() over (partition by id order by id) as sentence_position,
@@ -22,7 +22,7 @@ from (
     from (
         select 
             id,
-            source_id,
+            source_name,
             title,
             url,
             unnest(string_to_array(

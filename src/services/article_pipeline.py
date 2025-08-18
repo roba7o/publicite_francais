@@ -145,7 +145,6 @@ class DatabaseProcessor:
             )
             return False
 
-
     def process_source(self, config: dict) -> tuple[int, int]:
         """
         Process a single source - database version.
@@ -174,13 +173,8 @@ class DatabaseProcessor:
             # Create scraper
             scraper = self.component_factory.create_scraper(config)
 
-            # Get source ID from database
-            source_id = config["source_id"]
-            if not source_id:
-                return 0, 0
-
-            # Create database parser
-            database_parser = self.component_factory.create_parser(config, source_id)
+            # Create database parser - much simpler, no database lookup needed!
+            database_parser = self.component_factory.create_parser(config)
 
         except (ValueError, ImportError) as e:
             self.output.error(
@@ -206,7 +200,9 @@ class DatabaseProcessor:
         # Acquire content sources
         sources = self.acquire_content(scraper, database_parser, config["name"])
 
-        mode_str = "offline" if os.getenv("TEST_MODE", "false").lower() == "true" else "live"
+        mode_str = (
+            "offline" if os.getenv("TEST_MODE", "false").lower() == "true" else "live"
+        )
         self.output.info(
             f"Found {len(sources)} sources for {config['name']} (mode: {mode_str})",
             extra_data={
@@ -274,7 +270,9 @@ class DatabaseProcessor:
             config for config in source_configs if config.get("enabled", True)
         ]
 
-        mode_str = "offline" if os.getenv("TEST_MODE", "false").lower() == "true" else "live"
+        mode_str = (
+            "offline" if os.getenv("TEST_MODE", "false").lower() == "true" else "live"
+        )
         self.output.process_start(
             "database_processing",
             extra_data={

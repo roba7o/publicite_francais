@@ -84,7 +84,9 @@ class TestDeterministicPipeline:
         with db.get_session() as session:
             from sqlalchemy import text
 
-            session.execute(text(f"TRUNCATE {self._get_test_schema()}.articles CASCADE;"))
+            session.execute(
+                text(f"TRUNCATE {self._get_test_schema()}.articles CASCADE;")
+            )
             session.commit()
 
         # Run the database processor on all test files
@@ -252,14 +254,13 @@ class TestDeterministicPipeline:
         with db.get_session() as session:
             from sqlalchemy import text
 
-            # Count articles per source
+            # Count articles per source using simplified schema
             source_counts = session.execute(
                 text(f"""
-                SELECT s.name, COUNT(a.id) as article_count
-                FROM {self._get_test_schema()}.news_sources s
-                LEFT JOIN {self._get_test_schema()}.articles a ON s.id = a.source_id
-                GROUP BY s.name
-                ORDER BY s.name
+                SELECT source_name, COUNT(*) as article_count
+                FROM {self._get_test_schema()}.articles
+                GROUP BY source_name
+                ORDER BY source_name
             """)
             ).fetchall()
 

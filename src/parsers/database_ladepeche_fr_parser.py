@@ -27,9 +27,10 @@ class DatabaseLadepecheFrParser(DatabaseBaseParser):
     The HTML parsing logic is identical to your existing parser.
     """
 
-    def __init__(self, source_id: str) -> None:
-        """Initialize with source ID for database storage."""
-        super().__init__(site_domain="ladepeche.fr", source_id=source_id)
+    def __init__(self, source_name: str, debug: bool = False) -> None:
+        """Initialize Ladepeche.fr parser."""
+        super().__init__(site_domain="ladepeche.fr", source_name=source_name)
+        self.debug = debug
         self.logger.info("DatabaseLadepecheFrParser initialized.")
 
     def parse_article(self, soup: BeautifulSoup) -> ArticleData | None:

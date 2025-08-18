@@ -6,7 +6,7 @@ select
     sentences.sentence_id,
     words.word_id,
     sentences.article_id,
-    sentences.source_id,
+    sentences.source_name,
     words.word_clean,
     sentences.sentence_text,
     word_positions.word_position

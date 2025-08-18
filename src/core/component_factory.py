@@ -23,7 +23,7 @@ class ComponentFactory:
         kwargs = config.get("scraper_kwargs", {})
         return create_component(class_path, **kwargs)
 
-    def create_parser(self, config: dict, source_id: str) -> Any:
+    def create_parser(self, config: dict) -> Any:
         """Create database parser from configuration."""
         class_path = config.get("parser_class")
         if not class_path:
@@ -31,6 +31,6 @@ class ComponentFactory:
                 f"No parser_class specified in config for source: {config['name']}"
             )
 
-        # Parser only needs source_id - site_domain is hardcoded in each parser
+        # Parser gets source_name from config - much simpler!
         kwargs = config.get("parser_kwargs", {})
-        return create_component(class_path, source_id, **kwargs)
+        return create_component(class_path, config["name"], **kwargs)

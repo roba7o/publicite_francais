@@ -44,13 +44,13 @@ class DatabaseBaseParser(ABC):
     # Shared session for HTTP requests (same as BaseParser)
     _session = None
 
-    def __init__(self, site_domain: str, source_id: str, delay: float = 1.0):
+    def __init__(self, site_domain: str, source_name: str, delay: float = 1.0):
         """
         Initialize database parser.
 
         Args:
             site_domain: Domain name for logging purposes
-            source_id: UUID of the news source in database
+            source_name: Name of the source (e.g., "Slate.fr")
             delay: Request delay for rate limiting
         """
         from database.article_repository import ArticleRepository
@@ -58,7 +58,7 @@ class DatabaseBaseParser(ABC):
 
         self.logger = get_structured_logger(self.__class__.__name__)
         self.site_domain = site_domain
-        self.source_id = source_id  # UUID from news_sources table
+        self.source_name = source_name  # Simple source name like "Slate.fr"
         self.delay = delay
         self.debug = DEBUG
         self.repository = ArticleRepository()
@@ -217,4 +217,4 @@ class DatabaseBaseParser(ABC):
         Returns:
             True if stored successfully, False otherwise
         """
-        return self.repository.store_article(article_data, url, self.source_id)
+        return self.repository.store_article(article_data, url, self.source_name)

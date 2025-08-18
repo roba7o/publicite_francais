@@ -31,7 +31,9 @@ class ArticleRepository:
         import os
 
         # Replicate settings.py logic but evaluate dynamically
-        database_env = os.getenv("DATABASE_ENV") or ("test" if os.getenv("TEST_MODE", "false").lower() == "true" else "dev")
+        database_env = os.getenv("DATABASE_ENV") or (
+            "test" if os.getenv("TEST_MODE", "false").lower() == "true" else "dev"
+        )
 
         schema_config = {
             "test": os.getenv("NEWS_DATA_TEST_SCHEMA", "news_data_test"),
@@ -92,17 +94,18 @@ class ArticleRepository:
         return None
 
     def store_article(
-        self, article_data: ArticleData, url: str, source_id: str
+        self, article_data: ArticleData, url: str, source_name: str
     ) -> bool:
         """
         Store raw article data directly to database.
 
-        NO text processing, NO word frequencies - just raw data.
+        Simple storage: source_name + url + article data.
+        Duplicate detection by URL only.
 
         Args:
             article_data: Parsed article content
             url: Article URL for duplicate detection
-            source_id: UUID of the news source
+            source_name: Name of the source (e.g., "Slate.fr")
 
         Returns:
             True if stored successfully, False otherwise
@@ -118,13 +121,13 @@ class ArticleRepository:
             parsed_article_date = self._parse_article_date(article_data.article_date)
 
             with self.db.get_session() as session:
-                # Check for duplicates on both unique constraints
+                # Simple URL-only duplicate check
                 existing_url = session.execute(
                     text(f"""
                     SELECT id FROM {self.schema_name}.articles
-                    WHERE source_id = :source_id AND url = :url
+                    WHERE url = :url
                 """),
-                    {"source_id": source_id, "url": url},
+                    {"url": url},
                 ).fetchone()
 
                 if existing_url:
@@ -134,48 +137,21 @@ class ArticleRepository:
                     )
                     return False
 
-                # Check for duplicate title+date combination
-                if parsed_article_date:  # Only check if we have a valid date
-                    existing_title_date = session.execute(
-                        text(f"""
-                        SELECT id FROM {self.schema_name}.articles
-                        WHERE source_id = :source_id AND title = :title AND article_date = :article_date
-                    """),
-                        {
-                            "source_id": source_id,
-                            "title": article_data.title,
-                            "article_date": parsed_article_date,
-                        },
-                    ).fetchone()
-
-                    if existing_title_date:
-                        self.logger.debug(
-                            "Article already exists (duplicate title+date)",
-                            extra_data={
-                                "title": article_data.title[:50] + "..."
-                                if len(article_data.title) > 50
-                                else article_data.title,
-                                "article_date": parsed_article_date,
-                                "existing_id": str(existing_title_date[0]),
-                            },
-                        )
-                        return False
-
-                # Insert raw article data (duplicates already handled above)
+                # Insert raw article data - much simpler!
                 article_id = uuid4()
                 session.execute(
                     text(f"""
                     INSERT INTO {self.schema_name}.articles
-                    (id, source_id, title, url, article_date, scraped_at, full_text, num_paragraphs)
-                    VALUES (:id, :source_id, :title, :url, :article_date, :scraped_at, :full_text, :num_paragraphs)
+                    (id, title, url, source_name, article_date, scraped_at, full_text, num_paragraphs)
+                    VALUES (:id, :title, :url, :source_name, :article_date, :scraped_at, :full_text, :num_paragraphs)
                 """),
                     {
                         "id": str(article_id),
-                        "source_id": source_id,
                         "title": article_data.title,
                         "url": url,
-                        "article_date": parsed_article_date,  # Now properly parsed or NULL
-                        "scraped_at": datetime.now(),  # When we scraped it (current timestamp)
+                        "source_name": source_name,
+                        "article_date": parsed_article_date,
+                        "scraped_at": datetime.now(),
                         "full_text": article_data.full_text,
                         "num_paragraphs": article_data.num_paragraphs,
                     },
@@ -184,9 +160,10 @@ class ArticleRepository:
                 session.commit()  # Commit the transaction explicitly
 
                 self.logger.info(
-                    "Raw article stored successfully",
+                    "Article stored successfully",
                     extra_data={
                         "article_id": str(article_id),
+                        "source_name": source_name,
                         "title": article_data.title[:50] + "..."
                         if len(article_data.title) > 50
                         else article_data.title,
@@ -198,8 +175,8 @@ class ArticleRepository:
 
         except Exception as e:
             self.logger.error(
-                "Failed to store raw article",
-                extra_data={"url": url, "error": str(e)},
+                "Failed to store article",
+                extra_data={"url": url, "source_name": source_name, "error": str(e)},
                 exc_info=True,
             )
             return False

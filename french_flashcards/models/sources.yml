@@ -21,4 +21,4 @@ sources:
             tests:
               - not_null
           - name: article_date
-          - name: source_id
+          - name: source_name

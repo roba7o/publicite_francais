@@ -49,7 +49,7 @@ test:  ## Run all tests (starts database automatically)
 	@echo "\033[33m◆ Ensuring database is running for tests...\033[0m"
 	@$(MAKE) db-start > /dev/null 2>&1
 	@echo "\033[33m◆ Running Python tests...\033[0m"
-	TEST_MODE=true PYTHONPATH=$(SRC) $(PYTEST) -v
+	@TEST_MODE=true PYTHONPATH=$(SRC) $(PYTEST) -v
 	@echo "\033[33m◆ Running pipeline integration test...\033[0m"
 	@$(MAKE) test-pipeline
 	@echo ""
