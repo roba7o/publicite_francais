@@ -2,7 +2,6 @@
 Grabbing top 8 articles from ladepeche.fr which are then passed on to parser
 """
 
-from typing import List
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
@@ -15,7 +14,7 @@ class LadepecheFrURLScraper(BaseScraper):
         super().__init__(debug)
         self.base_url = "https://www.ladepeche.fr"
 
-    def get_article_urls(self) -> List[str]:
+    def get_article_urls(self) -> list[str]:
         """
         Get the URLs of the top 8 articles from the Ladepeche.fr homepage.
         """

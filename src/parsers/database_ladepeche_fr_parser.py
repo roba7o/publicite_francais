@@ -9,7 +9,6 @@ This is the database equivalent of LadepecheFrArticleParser that:
 
 import re
 from datetime import datetime
-from typing import List, Optional
 
 from bs4 import BeautifulSoup
 
@@ -32,7 +31,7 @@ class DatabaseLadepecheFrParser(DatabaseBaseParser):
         super().__init__(site_domain="ladepeche.fr", source_id=source_id)
         self.logger.info("DatabaseLadepecheFrParser initialized.")
 
-    def parse_article(self, soup: BeautifulSoup) -> Optional[ArticleData]:
+    def parse_article(self, soup: BeautifulSoup) -> ArticleData | None:
         """
         Parse Ladepeche.fr article from BeautifulSoup object.
 
@@ -88,12 +87,12 @@ class DatabaseLadepecheFrParser(DatabaseBaseParser):
             self.logger.error(f"Error parsing Ladepeche.fr article: {e}", exc_info=True)
             return None
 
-    def _extract_paragraphs(self, content_area: BeautifulSoup) -> List[str]:
+    def _extract_paragraphs(self, content_area: BeautifulSoup) -> list[str]:
         """
         Extract text from paragraphs within the main content area, filtering
         out non-content.
         """
-        paragraphs: List[str] = []
+        paragraphs: list[str] = []
 
         # Common classes for non-content elements to skip. Extend as needed.
         skip_classes = [

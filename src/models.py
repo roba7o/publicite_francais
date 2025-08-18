@@ -4,7 +4,7 @@ Data models for the article scraper system.
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any
 
 __all__ = ["ArticleData"]
 
@@ -25,10 +25,10 @@ class ArticleData:
     date_scraped: str  # Format: YYYY-MM-DD or YYYY-MM-DD HH:MM:SS
 
     # Optional fields
-    num_paragraphs: Optional[int] = None
-    author: Optional[str] = None
-    category: Optional[str] = None
-    summary: Optional[str] = None
+    num_paragraphs: int | None = None
+    author: str | None = None
+    category: str | None = None
+    summary: str | None = None
 
     def __post_init__(self) -> None:
         """Validate and normalize data after initialization."""
@@ -36,7 +36,7 @@ class ArticleData:
         if not self.date_scraped:
             self.date_scraped = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Convert ArticleData to dictionary for backward compatibility.
 
@@ -55,7 +55,7 @@ class ArticleData:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ArticleData":
+    def from_dict(cls, data: dict[str, Any]) -> "ArticleData":
         """
         Create ArticleData from dictionary.
 

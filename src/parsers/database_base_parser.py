@@ -13,7 +13,6 @@ Child parsers only need to implement parse_article().
 import time
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import List, Optional, Tuple
 
 import requests
 from bs4 import BeautifulSoup
@@ -100,7 +99,7 @@ class DatabaseBaseParser(ABC):
 
     def get_soup_from_url(
         self, url: str, max_retries: int = 3
-    ) -> Optional[BeautifulSoup]:
+    ) -> BeautifulSoup | None:
         """
         Fetch and parse HTML (same logic as BaseParser).
         """
@@ -147,7 +146,7 @@ class DatabaseBaseParser(ABC):
 
     def get_test_sources_from_directory(
         self, source_name: str
-    ) -> List[Tuple[Optional[BeautifulSoup], str]]:
+    ) -> list[tuple[BeautifulSoup | None, str]]:
         """Load test files for offline mode (same as BaseParser)."""
         current_file_dir = Path(__file__).parent
         project_root_dir = current_file_dir.parent.parent
@@ -164,7 +163,7 @@ class DatabaseBaseParser(ABC):
             )
             return []
 
-        soup_sources: List[Tuple[Optional[BeautifulSoup], str]] = []
+        soup_sources: list[tuple[BeautifulSoup | None, str]] = []
         try:
             from test_data.url_mapping import URL_MAPPING
 
@@ -187,7 +186,7 @@ class DatabaseBaseParser(ABC):
         return soup_sources
 
     @abstractmethod
-    def parse_article(self, soup: BeautifulSoup) -> Optional[ArticleData]:
+    def parse_article(self, soup: BeautifulSoup) -> ArticleData | None:
         """
         Extract raw article data from HTML.
 

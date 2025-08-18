@@ -14,8 +14,8 @@ so main.py calls initialize_database() to set up the session factory, but never 
 
 """
 
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Generator
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session, sessionmaker

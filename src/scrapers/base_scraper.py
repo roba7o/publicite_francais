@@ -7,7 +7,6 @@ different news site scrapers and makes it easier to add new sources.
 """
 
 from abc import ABC, abstractmethod
-from typing import List, Optional
 
 import requests
 
@@ -39,7 +38,7 @@ class BaseScraper(ABC):
                 return ["url1", "url2"]
     """
 
-    def __init__(self, debug: Optional[bool] = None) -> None:
+    def __init__(self, debug: bool | None = None) -> None:
         """
         Initialize the base scraper.
 
@@ -64,7 +63,7 @@ class BaseScraper(ABC):
         }
 
     @abstractmethod
-    def get_article_urls(self) -> List[str]:
+    def get_article_urls(self) -> list[str]:
         """
         Extract article URLs from the news site.
 
@@ -111,7 +110,7 @@ class BaseScraper(ABC):
             )
             raise
 
-    def _log_results(self, urls: List[str]) -> None:
+    def _log_results(self, urls: list[str]) -> None:
         """
         Log scraping results consistently.
 

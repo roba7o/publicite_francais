@@ -24,17 +24,16 @@ Usage:
 """
 
 import logging
-from typing import Dict, Optional, Union
 
 from config.settings import DEBUG
 
 
 def setup_logging(
-    level: Optional[Union[str, int]] = None,
+    level: str | int | None = None,
     use_structured: bool = True,
     enable_file_logging: bool = True,
     console_format: str = "human",
-    log_directory: Optional[str] = None,
+    log_directory: str | None = None,
 ) -> None:
     """
     Setup enhanced logging configuration with backward compatibility.
@@ -66,7 +65,7 @@ def setup_logging(
 
 def _setup_component_log_levels() -> None:
     """Setup appropriate log levels for different components."""
-    component_levels: Dict[str, Union[str, int]] = {
+    component_levels: dict[str, str | int] = {
         # Core processing - more verbose in debug mode
         "article_scrapers.core.processor": (logging.DEBUG if DEBUG else logging.INFO),
         # Database operations - moderate verbosity
@@ -102,7 +101,7 @@ def configure_debug_mode(enabled: bool = True) -> None:
     """
     if enabled:
         # Set debug level for all application components
-        debug_components: Dict[str, Union[str, int]] = {
+        debug_components: dict[str, str | int] = {
             "article_scrapers": logging.DEBUG,
             "article_scrapers.core": logging.DEBUG,
             "article_scrapers.parsers": logging.DEBUG,
@@ -120,7 +119,7 @@ def configure_debug_mode(enabled: bool = True) -> None:
         )
     else:
         # Normal operation levels
-        normal_components: Dict[str, Union[str, int]] = {
+        normal_components: dict[str, str | int] = {
             "article_scrapers": logging.INFO,
             "urllib3": logging.WARNING,
             "requests": logging.WARNING,

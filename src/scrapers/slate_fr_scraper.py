@@ -1,4 +1,3 @@
-from typing import List, Optional
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup, Tag
@@ -7,11 +6,11 @@ from scrapers.base_scraper import BaseScraper
 
 
 class SlateFrURLScraper(BaseScraper):
-    def __init__(self, debug: Optional[bool] = None) -> None:
+    def __init__(self, debug: bool | None = None) -> None:
         super().__init__(debug)
         self.base_url = "https://www.slate.fr"
 
-    def get_article_urls(self) -> List[str]:
+    def get_article_urls(self) -> list[str]:
         try:
             response = self._make_request(self.base_url)
             soup = BeautifulSoup(response.content, "html.parser")

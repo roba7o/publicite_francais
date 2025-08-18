@@ -3,10 +3,9 @@ Contains the full path to scraper/parsers for the database architecture.
 
 """
 
-from typing import Dict, List
 
 
-def get_scraper_configs() -> List[Dict]:
+def get_scraper_configs() -> list[dict]:
     """Get list of scraper configurations as simple dictionaries."""
     from config.settings import DEBUG
 

@@ -3,7 +3,6 @@ TF1 Info Scraper - Extracts article URLs from TF1 Info homepage
 """
 
 import json
-from typing import List
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
@@ -16,7 +15,7 @@ class TF1InfoURLScraper(BaseScraper):
         super().__init__(debug)
         self.base_url = "https://www.tf1info.fr/"
 
-    def get_article_urls(self, max_articles=8) -> List[str]:
+    def get_article_urls(self, max_articles=8) -> list[str]:
         """
         Extract article URLs from TF1 Info homepage
         Args:

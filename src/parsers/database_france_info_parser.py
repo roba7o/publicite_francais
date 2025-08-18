@@ -9,7 +9,6 @@ This is the database equivalent of FranceInfoArticleParser that:
 
 import re
 from datetime import datetime
-from typing import List, Optional
 
 from bs4 import BeautifulSoup, Tag
 
@@ -31,7 +30,7 @@ class DatabaseFranceInfoParser(DatabaseBaseParser):
         """Initialize with source ID for database storage."""
         super().__init__(site_domain="franceinfo.fr", source_id=source_id)
 
-    def parse_article(self, soup: BeautifulSoup) -> Optional[ArticleData]:
+    def parse_article(self, soup: BeautifulSoup) -> ArticleData | None:
         """
         Parse FranceInfo article from BeautifulSoup object.
 
@@ -61,9 +60,9 @@ class DatabaseFranceInfoParser(DatabaseBaseParser):
             self.logger.error(f"Error parsing FranceInfo article: {e}")
             return None
 
-    def _extract_paragraphs(self, content_div: Tag) -> List[str]:
+    def _extract_paragraphs(self, content_div: Tag) -> list[str]:
         """Extract paragraphs from article content div."""
-        paragraphs: List[str] = []
+        paragraphs: list[str] = []
         for element in content_div.find_all(["p", "h2", "li"]):
             if isinstance(element, Tag):
                 if element.name == "h2":

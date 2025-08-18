@@ -8,7 +8,6 @@ This is the database equivalent of SlateFrArticleParser that:
 """
 
 from datetime import datetime
-from typing import List, Optional
 
 from bs4 import BeautifulSoup, Tag
 
@@ -35,7 +34,7 @@ class DatabaseSlateFrParser(DatabaseBaseParser):
         """
         super().__init__(site_domain="slate.fr", source_id=source_id)
 
-    def parse_article(self, soup: BeautifulSoup) -> Optional[ArticleData]:
+    def parse_article(self, soup: BeautifulSoup) -> ArticleData | None:
         """
         Parse Slate.fr article - identical logic to SlateFrArticleParser.
 
@@ -64,9 +63,9 @@ class DatabaseSlateFrParser(DatabaseBaseParser):
             self.logger.error(f"Error parsing Slate.fr article: {e}")
             return None
 
-    def _extract_paragraphs(self, article_tag: Tag) -> List[str]:
+    def _extract_paragraphs(self, article_tag: Tag) -> list[str]:
         """Extract paragraphs - identical logic to SlateFrArticleParser."""
-        paragraphs: List[str] = []
+        paragraphs: list[str] = []
         for p in article_tag.find_all("p"):
             if isinstance(p, Tag) and not p.get("class"):
                 text = p.get_text(separator=" ", strip=True)

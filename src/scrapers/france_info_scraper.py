@@ -1,6 +1,5 @@
 import random
 import time
-from typing import List
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup, Tag
@@ -13,7 +12,7 @@ class FranceInfoURLScraper(BaseScraper):
         super().__init__(debug)
         self.base_url = "https://www.franceinfo.fr/"
 
-    def get_article_urls(self, max_articles=8) -> List[str]:
+    def get_article_urls(self, max_articles=8) -> list[str]:
         try:
             time.sleep(random.uniform(1, 3))
             response = self._make_request(self.base_url)

@@ -4,7 +4,7 @@ Component factory for creating scrapers and parsers from configuration.
 Separates component creation concerns from orchestration logic.
 """
 
-from typing import Any, Optional
+from typing import Any
 
 from core.component_loader import create_component
 
@@ -18,7 +18,7 @@ class ComponentFactory:
             config["scraper_class"], **(config.get("scraper_kwargs", {}))
         )
 
-    def create_parser(self, config: dict, source_id: str) -> Optional[Any]:
+    def create_parser(self, config: dict, source_id: str) -> Any | None:
         """Create database parser from configuration."""
         parser_class_path = config.get("parser_class")
         if not parser_class_path:

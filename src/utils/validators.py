@@ -1,12 +1,11 @@
 import re
 from datetime import datetime
-from typing import Optional
 from urllib.parse import urlparse
 
 
 class DataValidator:
     @staticmethod
-    def validate_url(url: str) -> Optional[str]:
+    def validate_url(url: str) -> str | None:
         if not url or not isinstance(url, str):
             return None
 
@@ -31,7 +30,7 @@ class DataValidator:
             return None
 
     @staticmethod
-    def validate_title(title: str) -> Optional[str]:
+    def validate_title(title: str) -> str | None:
         if not title or not isinstance(title, str):
             return None
 
@@ -46,7 +45,7 @@ class DataValidator:
         return title
 
     @staticmethod
-    def validate_date(date_str: str) -> Optional[str]:
+    def validate_date(date_str: str) -> str | None:
         if not date_str or not isinstance(date_str, str):
             return datetime.now().strftime("%Y-%m-%d")
 

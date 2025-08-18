@@ -6,7 +6,6 @@ a clean interface for article-related database operations.
 """
 
 from datetime import datetime
-from typing import Optional
 from uuid import uuid4
 
 from sqlalchemy import text
@@ -27,7 +26,7 @@ class ArticleRepository:
         self.logger = get_structured_logger(__name__)
         self.schema_name = NEWS_DATA_SCHEMA
 
-    def get_source_id(self, source_name: str) -> Optional[str]:
+    def get_source_id(self, source_name: str) -> str | None:
         """Get source ID from database by name."""
         try:
             with self.db.get_session() as session:
@@ -49,7 +48,7 @@ class ArticleRepository:
             )
             return None
 
-    def _parse_article_date(self, date_str: str) -> Optional[str]:
+    def _parse_article_date(self, date_str: str) -> str | None:
         """
         Parse article date string to valid YYYY-MM-DD format or None.
 

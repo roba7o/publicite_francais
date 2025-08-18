@@ -11,7 +11,7 @@ All text processing is moved to dbt/SQL.
 """
 
 import time
-from typing import Any, List, Tuple
+from typing import Any
 
 from bs4 import BeautifulSoup
 
@@ -39,7 +39,7 @@ class DatabaseProcessor:
 
     def acquire_content(
         self, scraper: Any, parser: Any, source_name: str
-    ) -> List[Tuple[BeautifulSoup, str]]:
+    ) -> list[tuple[BeautifulSoup, str]]:
         """Get content sources based on mode (offline/live)."""
         if OFFLINE:
             return parser.get_test_sources_from_directory(source_name)
@@ -48,7 +48,7 @@ class DatabaseProcessor:
 
     def _get_live_sources(
         self, scraper: Any, parser: Any, source_name: str
-    ) -> List[Tuple[BeautifulSoup, str]]:
+    ) -> list[tuple[BeautifulSoup, str]]:
         """Get live sources from web scraping."""
         urls = scraper.get_article_urls()
         if not urls:
@@ -156,7 +156,7 @@ class DatabaseProcessor:
             return ""
         return source_id
 
-    def process_source(self, config: dict) -> Tuple[int, int]:
+    def process_source(self, config: dict) -> tuple[int, int]:
         """
         Process a single source - database version.
 
@@ -278,7 +278,7 @@ class DatabaseProcessor:
 
         return processed_count, total_attempted
 
-    def process_all_sources(self, source_configs: List[dict]) -> Tuple[int, int]:
+    def process_all_sources(self, source_configs: list[dict]) -> tuple[int, int]:
         """
         Process all sources - database version.
         """

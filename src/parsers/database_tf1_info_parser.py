@@ -9,7 +9,6 @@ This is the database equivalent of TF1InfoArticleParser that:
 
 import re
 from datetime import datetime
-from typing import List, Optional
 
 from bs4 import BeautifulSoup, Tag
 
@@ -31,7 +30,7 @@ class DatabaseTF1InfoParser(DatabaseBaseParser):
         """Initialize with source ID for database storage."""
         super().__init__(site_domain="tf1info.fr", source_id=source_id)
 
-    def parse_article(self, soup: BeautifulSoup) -> Optional[ArticleData]:
+    def parse_article(self, soup: BeautifulSoup) -> ArticleData | None:
         """
         Parse TF1 Info article from BeautifulSoup object.
 
@@ -68,7 +67,7 @@ class DatabaseTF1InfoParser(DatabaseBaseParser):
             self.logger.error(f"Error parsing TF1 Info article: {e}")
             return None
 
-    def _extract_paragraphs(self, content_div: Tag) -> List[str]:
+    def _extract_paragraphs(self, content_div: Tag) -> list[str]:
         """Extract paragraphs from article content div."""
         paragraphs = []
         text_elements = content_div.find_all(["p", "h2", "h3", "li"])
