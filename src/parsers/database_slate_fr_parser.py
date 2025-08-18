@@ -13,6 +13,7 @@ from bs4 import BeautifulSoup, Tag
 
 from models import ArticleData
 from parsers.database_base_parser import DatabaseBaseParser
+from utils.validators import DataValidator
 
 
 class DatabaseSlateFrParser(DatabaseBaseParser):
@@ -51,11 +52,18 @@ class DatabaseSlateFrParser(DatabaseBaseParser):
             if not full_text:
                 return None
 
+            # Extract and validate title and date
+            raw_title = self._extract_title(soup)
+            validated_title = DataValidator.validate_title(raw_title)
+
+            raw_date = self._extract_date(soup)
+            validated_date = DataValidator.validate_date(raw_date)
+
             return ArticleData(
                 full_text=full_text,
                 num_paragraphs=len(paragraphs),
-                title=self._extract_title(soup),
-                article_date=self._extract_date(soup),
+                title=validated_title or "Untitled Article",
+                article_date=validated_date,
                 date_scraped=datetime.now().strftime("%Y-%m-%d"),
             )
 
