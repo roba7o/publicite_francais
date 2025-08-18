@@ -31,7 +31,7 @@ DATABASE_CONFIG = {
     "port": int(os.getenv("POSTGRES_PORT", 5432)),
     "database": os.getenv("POSTGRES_DB", "french_news"),
     "user": os.getenv("POSTGRES_USER", "news_user"),
-    "password": os.getenv("POSTGRES_PASSWORD"),
+    "password": os.getenv("POSTGRES_PASSWORD", ""),
     # Connection pool settings removed - not used by current SQLAlchemy setup
 }
 

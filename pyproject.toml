@@ -89,3 +89,10 @@ markers = [
     "performance: marks tests as performance tests",
 ]
 
+[tool.pylsp-mypy]
+enabled = false
+
+[tool.pyright]
+reportArgumentType = "none"
+reportOptionalMemberAccess = "none"
+
