@@ -145,16 +145,6 @@ class DatabaseProcessor:
             )
             return False
 
-    def get_source_id(self, source_name: str) -> str:
-        """Get source ID from database."""
-        source_id = self.article_repo.get_source_id(source_name)
-        if not source_id:
-            self.output.error(
-                f"Source not found in database: {source_name}",
-                extra_data={"source_name": source_name, "operation": "get_source_id"},
-            )
-            return ""
-        return source_id
 
     def process_source(self, config: dict) -> tuple[int, int]:
         """
@@ -185,7 +175,7 @@ class DatabaseProcessor:
             scraper = self.component_factory.create_scraper(config)
 
             # Get source ID from database
-            source_id = self.get_source_id(config["name"])
+            source_id = config["source_id"]
             if not source_id:
                 return 0, 0
 

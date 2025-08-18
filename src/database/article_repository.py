@@ -10,7 +10,6 @@ from uuid import uuid4
 
 from sqlalchemy import text
 
-from config.settings import NEWS_DATA_SCHEMA
 from models import ArticleData
 
 
@@ -24,29 +23,23 @@ class ArticleRepository:
 
         self.db = get_database_manager()
         self.logger = get_structured_logger(__name__)
-        self.schema_name = NEWS_DATA_SCHEMA
+        # Dynamic schema evaluation to support test mode
+        self.schema_name = self._get_current_schema()
 
-    def get_source_id(self, source_name: str) -> str | None:
-        """Get source ID from database by name."""
-        try:
-            with self.db.get_session() as session:
-                result = session.execute(
-                    text(f"""
-                    SELECT id FROM {self.schema_name}.news_sources
-                    WHERE name = :name
-                """),
-                    {"name": source_name},
-                )
+    def _get_current_schema(self) -> str:
+        """Get current schema name dynamically based on environment."""
+        import os
 
-                row = result.fetchone()
-                return str(row[0]) if row else None
+        # Replicate settings.py logic but evaluate dynamically
+        database_env = os.getenv("DATABASE_ENV") or ("test" if os.getenv("TEST_MODE", "false").lower() == "true" else "dev")
 
-        except Exception as e:
-            self.logger.error(
-                "Failed to get source ID",
-                extra_data={"source_name": source_name, "error": str(e)},
-            )
-            return None
+        schema_config = {
+            "test": os.getenv("NEWS_DATA_TEST_SCHEMA", "news_data_test"),
+            "dev": os.getenv("NEWS_DATA_DEV_SCHEMA", "news_data_dev"),
+            "prod": os.getenv("NEWS_DATA_PROD_SCHEMA", "news_data_prod"),
+        }
+
+        return schema_config[database_env]
 
     def _parse_article_date(self, date_str: str) -> str | None:
         """

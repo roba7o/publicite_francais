@@ -14,22 +14,23 @@ class ComponentFactory:
 
     def create_scraper(self, config: dict) -> Any:
         """Create scraper from configuration."""
-        return create_component(
-            config["scraper_class"], **(config.get("scraper_kwargs", {}))
-        )
+        class_path = config.get("scraper_class")
+        if not class_path:
+            raise ValueError(
+                f"No scraper_class specified in config for source: {config['name']}"
+            )
 
-    def create_parser(self, config: dict, source_id: str) -> Any | None:
+        kwargs = config.get("scraper_kwargs", {})
+        return create_component(class_path, **kwargs)
+
+    def create_parser(self, config: dict, source_id: str) -> Any:
         """Create database parser from configuration."""
-        parser_class_path = config.get("parser_class")
-        if not parser_class_path:
+        class_path = config.get("parser_class")
+        if not class_path:
             raise ValueError(
                 f"No parser_class specified in config for source: {config['name']}"
             )
 
-        try:
-            parser_kwargs = config.get("parser_kwargs", {})
-            return create_component(parser_class_path, source_id, **parser_kwargs)
-        except ImportError as e:
-            raise ImportError(
-                f"Failed to create database parser {parser_class_path}: {e}"
-            ) from e
+        # Parser only needs source_id - site_domain is hardcoded in each parser
+        kwargs = config.get("parser_kwargs", {})
+        return create_component(class_path, source_id, **kwargs)

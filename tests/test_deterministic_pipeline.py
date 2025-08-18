@@ -6,11 +6,11 @@ the expected results from the known HTML test files. Any changes to
 these counts indicate changes in parsing logic that need investigation.
 """
 
+import os
 import subprocess
 
 import pytest
 
-from config.settings import DATABASE_ENV, NEWS_DATA_SCHEMA, SCHEMA_CONFIG
 from config.source_configs import SCRAPER_CONFIGS
 from services.article_pipeline import DatabaseProcessor
 
@@ -21,8 +21,6 @@ class TestDeterministicPipeline:
     @pytest.fixture(autouse=True)
     def setup_database(self):
         """Ensure we're using the test database environment."""
-        import os
-
         os.environ["DATABASE_ENV"] = "test"
         os.environ["TEST_MODE"] = "true"
 
@@ -30,6 +28,15 @@ class TestDeterministicPipeline:
         from database import initialize_database
 
         initialize_database()
+
+    def _get_test_schema(self) -> str:
+        """Get current schema name dynamically for tests."""
+        # Should be test schema since we set DATABASE_ENV=test in setup_database
+        return os.getenv("NEWS_DATA_TEST_SCHEMA", "news_data_test")
+
+    def _get_dbt_test_schema(self) -> str:
+        """Get dbt schema for test environment."""
+        return "dbt_test"
 
     def test_html_file_counts(self):
         """Test that we have the expected number of HTML test files."""
@@ -77,7 +84,7 @@ class TestDeterministicPipeline:
         with db.get_session() as session:
             from sqlalchemy import text
 
-            session.execute(text(f"TRUNCATE {NEWS_DATA_SCHEMA}.articles CASCADE;"))
+            session.execute(text(f"TRUNCATE {self._get_test_schema()}.articles CASCADE;"))
             session.commit()
 
         # Run the database processor on all test files
@@ -104,7 +111,7 @@ class TestDeterministicPipeline:
         # Check that articles are actually in the database
         with db.get_session() as session:
             article_count = session.execute(
-                text(f"SELECT COUNT(*) FROM {NEWS_DATA_SCHEMA}.articles")
+                text(f"SELECT COUNT(*) FROM {self._get_test_schema()}.articles")
             ).scalar()
             assert article_count == processed_count, (
                 f"Database has {article_count} articles but processor reported {processed_count}"
@@ -133,7 +140,7 @@ class TestDeterministicPipeline:
             from sqlalchemy import text
 
             # Test exact table counts - these are deterministic from test HTML files
-            dbt_schema = SCHEMA_CONFIG["dbt"][DATABASE_ENV]
+            dbt_schema = self._get_dbt_test_schema()
             counts = session.execute(
                 text(f"""
                 SELECT 'sentences' as table_name, COUNT(*) as count FROM {dbt_schema}.sentences
@@ -184,7 +191,7 @@ class TestDeterministicPipeline:
             from sqlalchemy import text
 
             # Test vocabulary quality instead of exact word frequencies
-            dbt_schema = SCHEMA_CONFIG["dbt"][DATABASE_ENV]
+            dbt_schema = self._get_dbt_test_schema()
 
             # Check that we have some common French words with reasonable frequencies
             vocab_stats = session.execute(
@@ -249,8 +256,8 @@ class TestDeterministicPipeline:
             source_counts = session.execute(
                 text(f"""
                 SELECT s.name, COUNT(a.id) as article_count
-                FROM {NEWS_DATA_SCHEMA}.news_sources s
-                LEFT JOIN {NEWS_DATA_SCHEMA}.articles a ON s.id = a.source_id
+                FROM {self._get_test_schema()}.news_sources s
+                LEFT JOIN {self._get_test_schema()}.articles a ON s.id = a.source_id
                 GROUP BY s.name
                 ORDER BY s.name
             """)
@@ -289,7 +296,7 @@ class TestDeterministicPipeline:
             from sqlalchemy import text
 
             # Test data integrity across all tables
-            dbt_schema = SCHEMA_CONFIG["dbt"][DATABASE_ENV]
+            dbt_schema = self._get_dbt_test_schema()
 
             # Check for data consistency
             integrity_checks = session.execute(
@@ -298,7 +305,7 @@ class TestDeterministicPipeline:
                     'articles_have_content' as check_name,
                     COUNT(*) FILTER (WHERE full_text IS NOT NULL AND length(full_text) > 100) as pass_count,
                     COUNT(*) as total_count
-                FROM {NEWS_DATA_SCHEMA}.articles
+                FROM {self._get_test_schema()}.articles
 
                 UNION ALL
 
@@ -330,7 +337,7 @@ class TestDeterministicPipeline:
             pipeline_flow = session.execute(
                 text(f"""
                 SELECT
-                    (SELECT COUNT(*) FROM {NEWS_DATA_SCHEMA}.articles) as articles,
+                    (SELECT COUNT(*) FROM {self._get_test_schema()}.articles) as articles,
                     (SELECT COUNT(*) FROM {dbt_schema}.sentences) as sentences,
                     (SELECT COUNT(*) FROM {dbt_schema}.raw_words) as raw_words,
                     (SELECT COUNT(*) FROM {dbt_schema}.vocabulary_for_flashcards) as vocabulary
