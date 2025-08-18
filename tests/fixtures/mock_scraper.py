@@ -5,7 +5,6 @@ These mock scrapers simulate real scraper behavior without making
 actual HTTP requests, allowing for reliable and fast testing.
 """
 
-from typing import List
 from unittest.mock import Mock
 
 
@@ -16,7 +15,7 @@ class MockScraper:
         self.debug = debug
         self.logger = Mock()
 
-    def get_article_urls(self) -> List[str]:
+    def get_article_urls(self) -> list[str]:
         """Return mock article URLs."""
         return [
             "https://test.example.com/article-1",
@@ -32,7 +31,7 @@ class MockFailingScraper:
         self.debug = debug
         self.logger = Mock()
 
-    def get_article_urls(self) -> List[str]:
+    def get_article_urls(self) -> list[str]:
         """Simulate scraper failure."""
         raise ConnectionError("Mock connection failure")
 
@@ -44,7 +43,7 @@ class MockSlowScraper:
         self.debug = debug
         self.logger = Mock()
 
-    def get_article_urls(self) -> List[str]:
+    def get_article_urls(self) -> list[str]:
         """Return URLs after simulated delay."""
         import time
 
@@ -59,6 +58,6 @@ class MockEmptyScraper:
         self.debug = debug
         self.logger = Mock()
 
-    def get_article_urls(self) -> List[str]:
+    def get_article_urls(self) -> list[str]:
         """Return empty list."""
         return []

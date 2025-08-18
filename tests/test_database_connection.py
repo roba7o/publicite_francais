@@ -17,14 +17,19 @@ Requirements:
 import sys
 from pathlib import Path
 
+from sqlalchemy import text
+
 # Add src directory to Python path for imports
 src_path = Path(__file__).parent / "src"
 sys.path.insert(0, str(src_path))
 
-from sqlalchemy import text
-
-from database import get_database_manager, get_session, initialize_database
-from utils.structured_logger import get_structured_logger
+# Import after path modification
+from database import (  # noqa: E402
+    get_database_manager,
+    get_session,
+    initialize_database,
+)
+from utils.structured_logger import get_structured_logger  # noqa: E402
 
 
 def test_basic_connection():
@@ -44,7 +49,7 @@ def test_basic_connection():
         print("\033[32m✓ Database connection successful!\033[0m")
     except Exception as e:
         print(f"\033[31m× Database connection failed: {e}\033[0m")
-        raise AssertionError(f"Database connection failed: {e}")
+        raise AssertionError(f"Database connection failed: {e}") from e
 
 
 def test_raw_connection():
@@ -69,7 +74,7 @@ def test_raw_connection():
 
     except Exception as e:
         print(f"\033[31m× Database manager test failed: {e}\033[0m")
-        raise AssertionError(f"Database manager test failed: {e}")
+        raise AssertionError(f"Database manager test failed: {e}") from e
 
 
 def test_sqlalchemy_connection():
@@ -99,7 +104,7 @@ def test_sqlalchemy_connection():
 
     except Exception as e:
         print(f"\033[31m× SQLAlchemy connection failed: {e}\033[0m")
-        raise AssertionError(f"SQLAlchemy connection failed: {e}")
+        raise AssertionError(f"SQLAlchemy connection failed: {e}") from e
 
 
 def test_news_sources_data():
@@ -221,7 +226,7 @@ def test_health_check():
 
     except Exception as e:
         print(f"\033[31m× Health check failed: {e}\033[0m")
-        raise AssertionError(f"Health check failed: {e}")
+        raise AssertionError(f"Health check failed: {e}") from e
 
 
 def main():

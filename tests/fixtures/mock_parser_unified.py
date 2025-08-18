@@ -5,7 +5,6 @@ Single class that can simulate different parser behaviors through configuration,
 replacing the multiple separate mock parser classes.
 """
 
-from typing import List, Optional, Tuple
 from unittest.mock import Mock
 
 from bs4 import BeautifulSoup
@@ -74,7 +73,7 @@ class ConfigurableMockParser:
             },
         }
 
-    def parse_article(self, soup: BeautifulSoup) -> Optional[ArticleData]:
+    def parse_article(self, soup: BeautifulSoup) -> ArticleData | None:
         """Parse article based on behavior configuration."""
         if self.behavior in ["failure", "empty"]:
             return None
@@ -84,7 +83,7 @@ class ConfigurableMockParser:
         )
         return ArticleData(**config)
 
-    def get_soup_from_url(self, url: str) -> Optional[BeautifulSoup]:
+    def get_soup_from_url(self, url: str) -> BeautifulSoup | None:
         """Get soup based on behavior configuration."""
         if self.behavior == "failure":
             return None
@@ -108,7 +107,7 @@ class ConfigurableMockParser:
 
     def get_test_sources_from_directory(
         self, source_name: str
-    ) -> List[Tuple[Optional[BeautifulSoup], str]]:
+    ) -> list[tuple[BeautifulSoup | None, str]]:
         """Get test sources based on behavior configuration."""
         if self.behavior in ["failure", "empty"]:
             return []
