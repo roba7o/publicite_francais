@@ -3,11 +3,10 @@ import time
 import traceback
 
 from config.settings import (
-    DATABASE_ENABLED,
     DEBUG,
     MIN_SUCCESS_RATE_THRESHOLD,
     NEWS_DATA_SCHEMA,
-    OFFLINE,
+    TEST_MODE,
 )
 from config.source_configs import get_scraper_configs
 from database import initialize_database
@@ -29,20 +28,19 @@ def main() -> int | None:
         if DEBUG:
             configure_debug_mode(enabled=True)
 
-        mode = "OFFLINE" if OFFLINE else "LIVE"
+        mode = "TEST" if TEST_MODE else "LIVE"
 
         output.section_header(
             "French News Collection",
             f"Database pipeline in {mode} mode",
-            extra_data={"mode": mode, "database_enabled": DATABASE_ENABLED},
+            extra_data={
+                "mode": mode,
+                "test_mode": TEST_MODE,
+                "database_required": True,
+            },
         )
 
-        if not DATABASE_ENABLED:
-            output.error(
-                "Database not enabled - cannot proceed",
-                extra_data={"database_enabled": False},
-            )
-            return 1
+        # Database is always required (no CSV fallback)
 
         # Initialize database
         if not initialize_database():

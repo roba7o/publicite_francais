@@ -15,10 +15,10 @@ load_dotenv()
 # Enable debug logging for detailed output
 DEBUG = os.getenv("DEBUG", "true").lower() == "true"
 
-# Switch between live scraping and offline test mode
-# True: Use local test files from test_data/ directory
-# False: Scrape live websites
-OFFLINE = os.getenv("OFFLINE", "true").lower() == "true"
+# Mode detection: TEST_MODE determines scraping behavior and schema
+# True: Use local test files from test_data/ directory (test schema)
+# False: Scrape live websites (dev schema) - DEFAULT
+TEST_MODE = os.getenv("TEST_MODE", "false").lower() == "true"
 
 # =============================================================================
 # DATABASE CONFIGURATION
@@ -35,55 +35,24 @@ DATABASE_CONFIG = {
     # Connection pool settings removed - not used by current SQLAlchemy setup
 }
 
-# Enable database functionality
-# True: Use PostgreSQL database (current behavior)
-# False: Disable database storage
-DATABASE_ENABLED = os.getenv("DATABASE_ENABLED", "true").lower() == "true"
+# Database functionality is always enabled (no CSV fallback implemented)
+# DATABASE_ENABLED removed - database is required for this pipeline
 
-# Database schema environment
-# This determines which schema to use for articles and sources:
-# - "test": Uses news_data_test schema (for integration testing with HTML files)
-# - "dev": Uses news_data_dev schema (for development with real/live data)
-# - "prod": Uses news_data_prod schema (for production)
-DATABASE_ENV = os.getenv("DATABASE_ENV", "test" if OFFLINE else "dev")
+# Database schema environment - auto-detected based on mode
+# - TEST_MODE=true → "test" schema (for testing with HTML files)
+# - TEST_MODE=false → "dev" schema (for live scraping)
+# - Production: Set DATABASE_ENV=prod manually
+DATABASE_ENV = os.getenv("DATABASE_ENV") or ("test" if TEST_MODE else "dev")
 
 # Schema configuration mapping
 SCHEMA_CONFIG = {
-    "news_data": {
-        "test": os.getenv("NEWS_DATA_TEST_SCHEMA", "news_data_test"),
-        "dev": os.getenv("NEWS_DATA_DEV_SCHEMA", "news_data_dev"),
-        "prod": os.getenv("NEWS_DATA_PROD_SCHEMA", "news_data_prod"),
-    },
-    "dbt": {
-        "test": os.getenv("DBT_TEST_SCHEMA", "dbt_test"),
-        "dev": os.getenv("DBT_DEV_SCHEMA", "dbt_dev"),
-        "prod": os.getenv("DBT_PROD_SCHEMA", "dbt_prod"),
-    },
+    "test": os.getenv("NEWS_DATA_TEST_SCHEMA", "news_data_test"),
+    "dev": os.getenv("NEWS_DATA_DEV_SCHEMA", "news_data_dev"),
+    "prod": os.getenv("NEWS_DATA_PROD_SCHEMA", "news_data_prod"),
 }
 
-# Pre-computed schema names for current environment
-NEWS_DATA_SCHEMA = SCHEMA_CONFIG["news_data"][DATABASE_ENV]
-# DBT_SCHEMA removed - not used anywhere in codebase
+# Pre-computed schema name for current environment
+NEWS_DATA_SCHEMA = SCHEMA_CONFIG[DATABASE_ENV]
 
 # Pipeline quality thresholds
 MIN_SUCCESS_RATE_THRESHOLD = 50.0
-
-
-def get_schema_name(schema_type: str, env: str = None) -> str:
-    """
-    Get schema name for given type and environment.
-
-    Args:
-        schema_type: Type of schema ('news_data' or 'dbt')
-        env: Environment ('test', 'dev', 'prod'). If None, uses DATABASE_ENV
-
-    Returns:
-        Schema name string
-
-    Raises:
-        KeyError: If schema_type or env not found in configuration
-    """
-    if env is None:
-        env = DATABASE_ENV
-
-    return SCHEMA_CONFIG[schema_type][env]

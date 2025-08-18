@@ -66,10 +66,11 @@ class TestEssential:
 
     def test_database_connectivity_check(self):
         """Test database connectivity without actual database operations."""
-        from config.settings import DATABASE_ENABLED
+        # Database is always enabled (no CSV fallback)
+        # This test verifies database configuration can be imported
+        from config.settings import NEWS_DATA_SCHEMA
 
-        # Just verify the setting can be imported
-        assert isinstance(DATABASE_ENABLED, bool)
+        assert isinstance(NEWS_DATA_SCHEMA, str)
 
     def test_configuration_loading(self):
         """Test that configurations can be loaded in database architecture."""
@@ -92,11 +93,11 @@ class TestEssential:
         assert "scraper_kwargs" in config
         # parser_kwargs is optional (handled by config.get("parser_kwargs", {}))
 
-    def test_offline_mode_setting(self):
-        """Test that offline mode setting can be imported."""
-        from config.settings import OFFLINE
+    def test_test_mode_setting(self):
+        """Test that test mode setting can be imported."""
+        from config.settings import TEST_MODE
 
-        assert isinstance(OFFLINE, bool)
+        assert isinstance(TEST_MODE, bool)
 
     def test_structured_logger_import(self):
         """Test that structured logger can be imported."""

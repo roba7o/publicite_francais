@@ -163,12 +163,12 @@ def all_test_files(
 @pytest.fixture(autouse=True)
 def setup_test_environment(monkeypatch):
     """Set up test environment with proper settings."""
-    # Force offline mode for tests
-    monkeypatch.setenv("OFFLINE", "True")
+    # Force test mode for tests
+    monkeypatch.setenv("TEST_MODE", "True")
     monkeypatch.setenv("DEBUG", "True")
 
     # Patch settings if already imported
-    with patch("config.settings.OFFLINE", True):
+    with patch("config.settings.TEST_MODE", True):
         with patch("config.settings.DEBUG", True):
             yield
 

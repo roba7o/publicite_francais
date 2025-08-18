@@ -23,9 +23,7 @@ class StructuredLogger:
         """Log info message with optional structured data."""
         self.logger.info(message, **kwargs)
 
-    def warning(
-        self, message: str, extra_data: dict | None = None, **kwargs
-    ) -> None:
+    def warning(self, message: str, extra_data: dict | None = None, **kwargs) -> None:
         """Log warning message with optional structured data."""
         self.logger.warning(message, **kwargs)
 
@@ -33,15 +31,11 @@ class StructuredLogger:
         """Log error message with optional structured data."""
         self.logger.error(message, **kwargs)
 
-    def critical(
-        self, message: str, extra_data: dict | None = None, **kwargs
-    ) -> None:
+    def critical(self, message: str, extra_data: dict | None = None, **kwargs) -> None:
         """Log critical message with optional structured data."""
         self.logger.critical(message, **kwargs)
 
-    def exception(
-        self, message: str, extra_data: dict | None = None, **kwargs
-    ) -> None:
+    def exception(self, message: str, extra_data: dict | None = None, **kwargs) -> None:
         """Log exception message with traceback."""
         self.logger.exception(message, **kwargs)
 

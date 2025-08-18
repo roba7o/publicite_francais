@@ -19,7 +19,7 @@ from bs4 import BeautifulSoup
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from config.settings import DEBUG, OFFLINE
+from config.settings import DEBUG, TEST_MODE
 from models import ArticleData
 
 
@@ -97,13 +97,11 @@ class DatabaseBaseParser(ABC):
 
         return cls._session
 
-    def get_soup_from_url(
-        self, url: str, max_retries: int = 3
-    ) -> BeautifulSoup | None:
+    def get_soup_from_url(self, url: str, max_retries: int = 3) -> BeautifulSoup | None:
         """
         Fetch and parse HTML (same logic as BaseParser).
         """
-        if OFFLINE:
+        if TEST_MODE:
             self.logger.warning(
                 "URL fetch attempted in offline mode",
                 extra_data={"url": url, "mode": "offline"},

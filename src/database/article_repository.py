@@ -10,7 +10,7 @@ from uuid import uuid4
 
 from sqlalchemy import text
 
-from config.settings import DATABASE_ENABLED, NEWS_DATA_SCHEMA
+from config.settings import NEWS_DATA_SCHEMA
 from models import ArticleData
 
 
@@ -114,9 +114,7 @@ class ArticleRepository:
         Returns:
             True if stored successfully, False otherwise
         """
-        if not DATABASE_ENABLED:
-            self.logger.warning("Database not enabled - article not stored")
-            return False
+        # Database is always enabled (no CSV fallback)
 
         if not article_data or not article_data.full_text:
             self.logger.debug("No article data to store")

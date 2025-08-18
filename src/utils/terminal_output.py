@@ -143,9 +143,7 @@ class ConsolidatedOutput:
 
         print(f"╚{'═' * (width - 2)}╝")
 
-    def process_start(
-        self, process_name: str, extra_data: dict | None = None
-    ) -> None:
+    def process_start(self, process_name: str, extra_data: dict | None = None) -> None:
         """Log process start with structured data (logging only, no CLI output)."""
         log_data = {"process": process_name, "status": "started"}
         if extra_data:

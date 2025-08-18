@@ -31,14 +31,14 @@ DBT_DIR := french_flashcards
 
 # ==================== CORE COMMANDS (Daily Usage) ====================
 
-run:  ## Run scraper locally
-	PYTHONPATH=$(SRC) $(PYTHON) -m $(MAIN_MODULE)
+run:  ## Run scraper locally (live mode)
+	TEST_MODE=false PYTHONPATH=$(SRC) $(PYTHON) -m $(MAIN_MODULE)
 
 pipeline:  ## Full end-to-end pipeline (scrape + dbt) 
 	@echo "\033[33m◆ Ensuring database is running...\033[0m"
 	@$(MAKE) db-start > /dev/null 2>&1
 	@echo "\033[34m■ Step 1: Scraping articles...\033[0m"
-	@$(MAKE) run || (echo "\033[31m✗ Scraping failed\033[0m" && exit 1)
+	@TEST_MODE=false $(MAKE) run || (echo "\033[31m✗ Scraping failed\033[0m" && exit 1)
 	@echo "\033[32m  ✓ Articles scraped successfully\033[0m"
 	@echo "\033[35m■ Step 2: Processing with dbt...\033[0m"
 	cd $(DBT_DIR) && ../$(DBT) run || (echo "\033[31m✗ dbt processing failed\033[0m" && exit 1)
@@ -49,7 +49,7 @@ test:  ## Run all tests (starts database automatically)
 	@echo "\033[33m◆ Ensuring database is running for tests...\033[0m"
 	@$(MAKE) db-start > /dev/null 2>&1
 	@echo "\033[33m◆ Running Python tests...\033[0m"
-	PYTHONPATH=$(SRC) $(PYTEST) -v
+	TEST_MODE=true PYTHONPATH=$(SRC) $(PYTEST) -v
 	@echo "\033[33m◆ Running pipeline integration test...\033[0m"
 	@$(MAKE) test-pipeline
 	@echo ""
@@ -149,7 +149,7 @@ test-pipeline:  ## Run pipeline test with fresh database (clears data first)
 	@printf "\033[32m  ✓ Database cleared - "
 	@docker compose exec postgres sh -c 'psql -U $$POSTGRES_USER -d $$POSTGRES_DB -t -c "SELECT COUNT(*) FROM news_data_test.articles;"' | xargs | awk '{print $$1 " articles remaining\033[0m"}'
 	@echo "\033[34m■ Step 3: Scraping test articles...\033[0m"
-	@$(MAKE) run > /dev/null 2>&1 || (echo "\033[31m✗ Scraping failed\033[0m" && exit 1)
+	@TEST_MODE=true $(MAKE) run > /dev/null 2>&1 || (echo "\033[31m✗ Scraping failed\033[0m" && exit 1)
 	@echo "\033[32m  ✓ Articles scraped successfully\033[0m"
 	@echo "\033[35m■ Step 4: Processing with dbt (test target)...\033[0m"
 	@cd $(DBT_DIR) && ../$(DBT) run --target test > /dev/null 2>&1 || (echo "\033[31m✗ dbt processing failed\033[0m" && exit 1)

@@ -15,7 +15,7 @@ from typing import Any
 
 from bs4 import BeautifulSoup
 
-from config.settings import DATABASE_ENABLED, OFFLINE
+from config.settings import TEST_MODE
 from utils.validators import DataValidator
 
 
@@ -41,7 +41,7 @@ class DatabaseProcessor:
         self, scraper: Any, parser: Any, source_name: str
     ) -> list[tuple[BeautifulSoup, str]]:
         """Get content sources based on mode (offline/live)."""
-        if OFFLINE:
+        if TEST_MODE:
             return parser.get_test_sources_from_directory(source_name)
         else:
             return self._get_live_sources(scraper, parser, source_name)
@@ -169,12 +169,7 @@ class DatabaseProcessor:
             )
             return 0, 0
 
-        if not DATABASE_ENABLED:
-            self.output.warning(
-                "Database not enabled - skipping source",
-                extra_data={"source": config["name"], "database_enabled": False},
-            )
-            return 0, 0
+        # Database is always enabled (no CSV fallback)
 
         self.output.process_start(
             f"source_processing_{config['name']}",
@@ -221,7 +216,7 @@ class DatabaseProcessor:
         # Acquire content sources
         sources = self.acquire_content(scraper, database_parser, config["name"])
 
-        mode_str = "offline" if OFFLINE else "live"
+        mode_str = "offline" if TEST_MODE else "live"
         self.output.info(
             f"Found {len(sources)} sources for {config['name']} (mode: {mode_str})",
             extra_data={
@@ -289,13 +284,13 @@ class DatabaseProcessor:
             config for config in source_configs if config.get("enabled", True)
         ]
 
-        mode_str = "offline" if OFFLINE else "live"
+        mode_str = "offline" if TEST_MODE else "live"
         self.output.process_start(
             "database_processing",
             extra_data={
                 "total_sources": len(source_configs),
                 "enabled_sources": len(enabled_sources),
-                "database_enabled": DATABASE_ENABLED,
+                "database_required": True,
                 "mode": mode_str,
             },
         )
