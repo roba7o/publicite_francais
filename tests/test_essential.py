@@ -6,8 +6,8 @@ Focused on database pipeline functionality.
 """
 
 from config.source_configs import SCRAPER_CONFIGS
-from models import ArticleData
-from services.article_pipeline import DatabaseProcessor
+from core.coordinator import ArticleCoordinator
+from core.models import ArticleData
 
 
 class TestEssential:
@@ -30,7 +30,7 @@ class TestEssential:
         assert parser_class.__name__ == "DatabaseSlateFrParser"
 
     def test_article_pipeline_disabled_config(self):
-        """Test that DatabaseProcessor handles disabled configurations."""
+        """Test that ArticleCoordinator handles disabled configurations."""
         # Create a disabled source configuration dictionary
         config = {
             "name": "DisabledSource",
@@ -46,8 +46,8 @@ class TestEssential:
         assert config["enabled"] is False
 
     def test_article_pipeline_initialization(self):
-        """Test DatabaseProcessor can be initialized."""
-        processor = DatabaseProcessor()
+        """Test ArticleCoordinator can be initialized."""
+        processor = ArticleCoordinator()
         assert processor is not None
 
     def test_article_data_model(self):
@@ -115,7 +115,7 @@ class TestEssential:
 
     def test_mock_classes_aligned_with_architecture(self):
         """Test that mock classes work with the new database architecture."""
-        from models import ArticleData
+        from core.models import ArticleData
         from tests.fixtures.mock_parser_unified import MockDatabaseParser
         from tests.fixtures.mock_scraper import MockScraper
 

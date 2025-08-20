@@ -1,11 +1,11 @@
 """
-Database-focused processor that stores raw article data to PostgreSQL.
+Article processing coordinator that orchestrates the complete pipeline.
 
-Simplified processor that handles:
-- Scraper/parser creation
+Handles coordination of:
+- Component creation (scrapers/parsers)
 - Content acquisition (live/offline)
-- Article processing and storage
-- Database operations
+- Article processing workflow
+- Database operations delegation
 
 All text processing is moved to dbt/SQL.
 """
@@ -19,21 +19,21 @@ from bs4 import BeautifulSoup
 from utils.validators import DataValidator
 
 
-class DatabaseProcessor:
+class ArticleCoordinator:
     """
-    Database pipeline orchestrator focused on processing workflow.
+    Article processing coordinator focused on orchestration workflow.
 
-    Orchestrates the complete pipeline: content acquisition → article processing → storage.
+    Coordinates the complete pipeline: content acquisition → article processing → storage.
     Uses ComponentFactory for component creation to maintain single responsibility.
     """
 
     def __init__(self):
         """Initialize processor with default dependencies."""
         from core.component_factory import ComponentFactory
-        from database import ArticleRepository
+        from core.data_processor import DataProcessor
         from utils.terminal_output import output
 
-        self.article_repo = ArticleRepository()
+        self.data_processor = DataProcessor()
         self.output = output
         self.component_factory = ComponentFactory()
 

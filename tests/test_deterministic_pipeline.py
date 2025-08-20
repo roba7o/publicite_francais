@@ -12,7 +12,7 @@ import subprocess
 import pytest
 
 from config.source_configs import SCRAPER_CONFIGS
-from services.article_pipeline import DatabaseProcessor
+from core.coordinator import ArticleCoordinator
 
 
 class TestDeterministicPipeline:
@@ -25,7 +25,7 @@ class TestDeterministicPipeline:
         os.environ["TEST_MODE"] = "true"
 
         # Initialize database for tests
-        from database import initialize_database
+        from core.database import initialize_database
 
         initialize_database()
 
@@ -78,7 +78,7 @@ class TestDeterministicPipeline:
     def test_database_article_extraction(self):
         """Test that articles are extracted and stored in database."""
         # Clear articles table for clean test
-        from database import get_database_manager
+        from core.database import get_database_manager
 
         db = get_database_manager()
         with db.get_session() as session:
@@ -93,7 +93,7 @@ class TestDeterministicPipeline:
         processed_count = 0
         attempted_count = 0
 
-        processor = DatabaseProcessor()
+        processor = ArticleCoordinator()
         for config in SCRAPER_CONFIGS:
             if config["enabled"]:
                 # Config is already in dict format
@@ -134,7 +134,7 @@ class TestDeterministicPipeline:
         assert result.returncode == 0, f"dbt run failed: {result.stderr}"
 
         # Now verify exact counts from database
-        from database import get_database_manager
+        from core.database import get_database_manager
 
         db = get_database_manager()
 
@@ -185,7 +185,7 @@ class TestDeterministicPipeline:
 
     def test_vocabulary_quality(self):
         """Test that vocabulary contains meaningful French words with reasonable frequencies."""
-        from database import get_database_manager
+        from core.database import get_database_manager
 
         db = get_database_manager()
 
@@ -247,7 +247,7 @@ class TestDeterministicPipeline:
 
     def test_source_distribution(self):
         """Test that articles are distributed correctly across sources."""
-        from database import get_database_manager
+        from core.database import get_database_manager
 
         db = get_database_manager()
 
@@ -289,7 +289,7 @@ class TestDeterministicPipeline:
 
     def test_data_quality_integrity(self):
         """Test overall data quality and integrity across the pipeline."""
-        from database import get_database_manager
+        from core.database import get_database_manager
 
         db = get_database_manager()
 

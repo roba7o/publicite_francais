@@ -126,18 +126,18 @@ def get_database_manager():
     as the old database manager but delegates to the new simplified get_session() function.
 
     Legacy Pattern (what existing code expects):
-        from database import get_database_manager
+        from core.database import get_database_manager
         manager = get_database_manager()
         with manager.get_session() as session:
             session.execute(text("SELECT 1"))
 
     Modern Pattern (preferred for new code):
-        from database import get_session
+        from core.database import get_session
         with get_session() as session:
             session.execute(text("SELECT 1"))
 
     Currently Used In:
-        - src/database/article_repository.py (line 27):
+        - src/database/data_processor.py (line 27):
           self.db = get_database_manager()
         - tests/test_deterministic_pipeline.py (multiple locations):
           db = get_database_manager()
@@ -146,7 +146,7 @@ def get_database_manager():
           Similar database manager usage pattern
 
     Migration Path:
-        1. Update article_repository.py to use get_session() directly
+        1. Update data_processor.py to use get_session() directly
         2. Update test files to use get_session() directly
         3. Remove this backwards compatibility function
 

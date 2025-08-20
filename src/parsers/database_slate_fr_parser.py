@@ -11,7 +11,7 @@ from datetime import datetime
 
 from bs4 import BeautifulSoup, Tag
 
-from models import ArticleData
+from core.models import ArticleData
 from parsers.database_base_parser import DatabaseBaseParser
 from utils.validators import DataValidator
 

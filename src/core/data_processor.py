@@ -1,8 +1,8 @@
 """
-Article repository for database operations.
+Data processor for database operations.
 
-Separates database concerns from business logic by providing
-a clean interface for article-related database operations.
+Handles all database interactions for article data by providing
+a clean interface for storing and retrieving article information.
 """
 
 from datetime import datetime
@@ -10,15 +10,15 @@ from uuid import uuid4
 
 from sqlalchemy import text
 
-from models import ArticleData
+from core.models import ArticleData
 
 
-class ArticleRepository:
-    """Repository for article database operations."""
+class DataProcessor:
+    """Processor for article database operations."""
 
     def __init__(self):
-        """Initialize repository with default dependencies."""
-        from database import get_database_manager
+        """Initialize processor with default dependencies."""
+        from core.database import get_database_manager
         from utils.structured_logger import get_structured_logger
 
         self.db = get_database_manager()

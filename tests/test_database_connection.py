@@ -24,7 +24,7 @@ src_path = Path(__file__).parent / "src"
 sys.path.insert(0, str(src_path))
 
 # Import after path modification
-from database import (  # noqa: E402
+from core.database import (  # noqa: E402
     get_database_manager,
     get_session,
     initialize_database,

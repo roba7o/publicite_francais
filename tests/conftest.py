@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 # Import after path setup
 # ScraperConfig removed - using dictionary configurations
-from services.article_pipeline import DatabaseProcessor
+from core.coordinator import ArticleCoordinator
 from utils.structured_logger import get_structured_logger
 
 
@@ -90,7 +90,7 @@ def scraper_configs():
 @pytest.fixture
 def article_pipeline():
     """Database processor for testing database operations."""
-    return DatabaseProcessor
+    return ArticleCoordinator
 
 
 @pytest.fixture

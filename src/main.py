@@ -9,8 +9,8 @@ from config.settings import (
     TEST_MODE,
 )
 from config.source_configs import get_scraper_configs
-from database import initialize_database
-from services.article_pipeline import DatabaseProcessor
+from core.coordinator import ArticleCoordinator
+from core.database import initialize_database
 from utils.logging_config_enhanced import configure_debug_mode, setup_logging
 from utils.terminal_output import output
 
@@ -69,7 +69,7 @@ def main() -> int | None:
         )
 
         # Execute pipeline
-        processor = DatabaseProcessor()
+        processor = ArticleCoordinator()
         processed, attempted = processor.process_all_sources(source_configs)
 
         # Calculate results

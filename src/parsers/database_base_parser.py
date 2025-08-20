@@ -21,7 +21,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 from config.settings import DEBUG
-from models import ArticleData
+from core.models import ArticleData
 
 
 class DatabaseBaseParser(ABC):
@@ -41,7 +41,7 @@ class DatabaseBaseParser(ABC):
         parse_article(soup): Extract title, full_text, date from HTML
     """
 
-    # Shared session for HTTP requests (same as BaseParser)
+    # Shared session for HTTP requests
     _session = None
 
     def __init__(self, site_domain: str, source_name: str, delay: float = 1.0):
@@ -53,7 +53,7 @@ class DatabaseBaseParser(ABC):
             source_name: Name of the source (e.g., "Slate.fr")
             delay: Request delay for rate limiting
         """
-        from database.article_repository import ArticleRepository
+        from core.data_processor import DataProcessor
         from utils.structured_logger import get_structured_logger
 
         self.logger = get_structured_logger(self.__class__.__name__)
@@ -61,7 +61,7 @@ class DatabaseBaseParser(ABC):
         self.source_name = source_name  # Simple source name like "Slate.fr"
         self.delay = delay
         self.debug = DEBUG
-        self.repository = ArticleRepository()
+        self.repository = DataProcessor()
 
     @classmethod
     def get_session(cls):
