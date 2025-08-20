@@ -54,6 +54,9 @@ class EnvironmentConfig:
                 "NEWS_DATA_PROD_SCHEMA": os.getenv(
                     "NEWS_DATA_PROD_SCHEMA", "news_data_prod"
                 ),
+                # Concurrent processing settings
+                "CONCURRENT_FETCHERS": self._get_int_env("CONCURRENT_FETCHERS", 3),
+                "FETCH_TIMEOUT": self._get_int_env("FETCH_TIMEOUT", 30),
             }
         )
 
@@ -127,6 +130,14 @@ class EnvironmentConfig:
             "prod": self.get("NEWS_DATA_PROD_SCHEMA"),
         }
         return schema_map.get(env, schema_map["dev"])
+
+    def get_concurrent_fetchers(self) -> int:
+        """Get number of concurrent URL fetchers."""
+        return self.get("CONCURRENT_FETCHERS", 3)
+
+    def get_fetch_timeout(self) -> int:
+        """Get timeout for URL fetching in seconds."""
+        return self.get("FETCH_TIMEOUT", 30)
 
     def refresh(self) -> None:
         """Refresh configuration from environment variables."""

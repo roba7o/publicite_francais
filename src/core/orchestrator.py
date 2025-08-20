@@ -1,9 +1,10 @@
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
 
 from bs4 import BeautifulSoup
 
-from config.environment import is_test_mode
+from config.environment import env_config, is_test_mode
 from database.models import RawArticle
 
 
@@ -45,7 +46,7 @@ class ArticleOrchestrator:
     def _get_live_sources(
         self, url_collector: Any, soup_validator: Any, site_name: str
     ) -> list[tuple[BeautifulSoup, str]]:
-        """Get live sites from web scraping."""
+        """Get live sites from web scraping using concurrent processing."""
         urls = url_collector.get_article_urls()
         if not urls:
             self.output.warning(
@@ -54,27 +55,79 @@ class ArticleOrchestrator:
             )
             return []
 
+        # Process first 5 URLs for testing (can expand later)
+        target_urls = urls[:5]
         sites = []
 
-        # Process first 5 URLs for testing (can expand later)
-        # Pure ELT: collect raw URLs without validation - let dbt handle validation
-        for url in urls[:5]:
-            try:
-                soup = soup_validator.get_soup_from_url(url)
-                if soup:
-                    sites.append((soup, url))
+        # Get concurrent processing configuration
+        max_workers = env_config.get_concurrent_fetchers()
+        fetch_timeout = env_config.get_fetch_timeout()
 
-            except Exception as e:
-                self.output.warning(
-                    "URL processing error",
-                    extra_data={
-                        "url": url,
-                        "site": site_name,
-                        "error": str(e),
-                        "operation": "url_processing",
-                    },
-                )
-                continue
+        self.output.info(
+            f"Fetching {len(target_urls)} URLs concurrently",
+            extra_data={
+                "site": site_name,
+                "url_count": len(target_urls),
+                "max_workers": max_workers,
+                "timeout": fetch_timeout,
+                "operation": "concurrent_fetch_start",
+            },
+        )
+
+        # Use ThreadPoolExecutor for concurrent URL fetching
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Submit all URL fetch tasks
+            future_to_url = {
+                executor.submit(soup_validator.get_soup_from_url, url): url
+                for url in target_urls
+            }
+
+            # Collect results as they complete
+            for future in as_completed(future_to_url, timeout=fetch_timeout):
+                url = future_to_url[future]
+                try:
+                    soup = future.result()
+                    if soup:
+                        sites.append((soup, url))
+                        self.output.success(
+                            f"Successfully fetched: {url}",
+                            extra_data={
+                                "site": site_name,
+                                "url": url,
+                                "operation": "url_fetch_success",
+                            },
+                        )
+                    else:
+                        self.output.warning(
+                            f"Empty response for: {url}",
+                            extra_data={
+                                "site": site_name,
+                                "url": url,
+                                "operation": "url_fetch_empty",
+                            },
+                        )
+                except Exception as e:
+                    self.output.warning(
+                        "URL processing error",
+                        extra_data={
+                            "url": url,
+                            "site": site_name,
+                            "error": str(e),
+                            "operation": "url_processing",
+                        },
+                    )
+                    continue
+
+        self.output.info(
+            f"Concurrent fetch completed: {len(sites)}/{len(target_urls)} successful",
+            extra_data={
+                "site": site_name,
+                "successful": len(sites),
+                "attempted": len(target_urls),
+                "success_rate": (len(sites) / len(target_urls) * 100) if target_urls else 0,
+                "operation": "concurrent_fetch_complete",
+            },
+        )
 
         return sites
 
