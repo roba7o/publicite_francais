@@ -20,15 +20,15 @@ class SlateFrSoupValidator(BaseSoupValidator):
     No text processing - that's handled by dbt downstream.
     """
 
-    def __init__(self, source_name: str, debug: bool = False) -> None:
+    def __init__(self, site_name: str, debug: bool = False) -> None:
         """
         Initialize Slate.fr soup validator.
 
         Args:
-            source_name: Name of the source (should be "Slate.fr")
+            site_name: Name of the source (should be "Slate.fr")
             debug: Enable debug logging (default: False)
         """
-        super().__init__(site_domain="slate.fr", source_name=source_name)
+        super().__init__(site_domain="slate.fr", site_name=site_name)
         self.debug = debug
 
     def validate_and_extract(self, soup: BeautifulSoup, url: str) -> RawArticle | None:
@@ -53,7 +53,7 @@ class SlateFrSoupValidator(BaseSoupValidator):
             if not article_tag or not isinstance(article_tag, Tag):
                 self.logger.warning(
                     "No article tag found - not a valid Slate.fr article",
-                    extra_data={"url": url, "domain": "slate.fr"}
+                    extra_data={"url": url, "site": "slate.fr"}
                 )
                 return None
 
@@ -62,7 +62,7 @@ class SlateFrSoupValidator(BaseSoupValidator):
             if not title_tag or not isinstance(title_tag, Tag):
                 self.logger.warning(
                     "No h1 tag found - possibly not an article page",
-                    extra_data={"url": url, "domain": "slate.fr"}
+                    extra_data={"url": url, "site": "slate.fr"}
                 )
                 return None
 
@@ -70,13 +70,13 @@ class SlateFrSoupValidator(BaseSoupValidator):
             return RawArticle(
                 url=url,
                 raw_html=str(soup),  # Complete HTML including all metadata
-                source="slate.fr",
+                site="slate.fr",
             )
 
         except Exception as e:
             self.logger.error(
                 f"Error validating Slate.fr article structure: {e}",
-                extra_data={"url": url, "domain": "slate.fr"},
+                extra_data={"url": url, "site": "slate.fr"},
                 exc_info=True
             )
             return None

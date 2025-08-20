@@ -97,7 +97,7 @@ class ConfigurableMockParser:
         return RawArticle(
             url=url,
             raw_html=html,
-            source="test.example.com"
+            site="test.example.com"
         )
 
     def get_soup_from_url(self, url: str) -> BeautifulSoup | None:

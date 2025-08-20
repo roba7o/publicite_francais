@@ -10,7 +10,7 @@ import os
 
 import pytest
 
-from config.source_configs import SCRAPER_CONFIGS
+from config.site_configs import SCRAPER_CONFIGS
 from core.orchestrator import ArticleOrchestrator
 
 
@@ -93,7 +93,7 @@ class TestScrapeUploadPipeline:
         for config in SCRAPER_CONFIGS:
             if config["enabled"]:
                 # Config is already in dict format
-                p_count, a_count = processor.process_source(config)
+                p_count, a_count = processor.process_site(config)
                 processed_count += p_count
                 attempted_count += a_count
 
@@ -128,10 +128,10 @@ class TestScrapeUploadPipeline:
             # Count raw articles per source (ELT approach)
             source_counts = session.execute(
                 text(f"""
-                SELECT source, COUNT(*) as article_count
+                SELECT site, COUNT(*) as article_count
                 FROM {self._get_test_schema()}.raw_articles
-                GROUP BY source
-                ORDER BY source
+                GROUP BY site
+                ORDER BY site
             """)
             ).fetchall()
 

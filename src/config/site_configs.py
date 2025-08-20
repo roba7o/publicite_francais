@@ -4,13 +4,13 @@ Contains the full path to url_collectors/soup_validators for the database archit
 """
 
 
-def get_scraper_configs() -> list[dict]:
-    """Get list of URL collector and soup validator configurations using domain-based naming."""
+def get_site_configs() -> list[dict]:
+    """Get list of URL collector and soup validator configurations for news sites."""
     from config.settings import DEBUG
 
     return [
         {
-            "domain": "slate.fr",  # Standardized domain identifier
+            "site": "slate.fr",  # News site identifier
             "enabled": True,
             "url_collector_class": "core.components.url_collectors.slate_fr_url_collector.SlateFrUrlCollector",
             "soup_validator_class": "core.components.soup_validators.slate_fr_soup_validator.SlateFrSoupValidator",
@@ -18,7 +18,7 @@ def get_scraper_configs() -> list[dict]:
             "soup_validator_kwargs": {"debug": DEBUG},
         },
         {
-            "domain": "franceinfo.fr",  # Standardized domain identifier
+            "site": "franceinfo.fr",  # News site identifier
             "enabled": True,
             "url_collector_class": "core.components.url_collectors.france_info_url_collector.FranceInfoUrlCollector",
             "soup_validator_class": "core.components.soup_validators.france_info_soup_validator.FranceInfoSoupValidator",
@@ -26,7 +26,7 @@ def get_scraper_configs() -> list[dict]:
             "soup_validator_kwargs": {"debug": DEBUG},
         },
         {
-            "domain": "tf1info.fr",  # Standardized domain identifier
+            "site": "tf1info.fr",  # News site identifier
             "enabled": True,
             "url_collector_class": "core.components.url_collectors.tf1_info_url_collector.TF1InfoUrlCollector",
             "soup_validator_class": "core.components.soup_validators.tf1_info_soup_validator.TF1InfoSoupValidator",
@@ -34,7 +34,7 @@ def get_scraper_configs() -> list[dict]:
             "soup_validator_kwargs": {"debug": DEBUG},
         },
         {
-            "domain": "ladepeche.fr",  # Standardized domain identifier
+            "site": "ladepeche.fr",  # News site identifier
             "enabled": True,
             "url_collector_class": "core.components.url_collectors.ladepeche_fr_url_collector.LadepecheFrUrlCollector",
             "soup_validator_class": "core.components.soup_validators.ladepeche_fr_soup_validator.LadepecheFrSoupValidator",
@@ -45,4 +45,4 @@ def get_scraper_configs() -> list[dict]:
 
 
 # Static list for backward compatibility (tests)
-SCRAPER_CONFIGS = get_scraper_configs()
+SCRAPER_CONFIGS = get_site_configs()

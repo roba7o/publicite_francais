@@ -33,7 +33,7 @@ BEGIN
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
             url TEXT NOT NULL UNIQUE,
             raw_html TEXT NOT NULL,
-            source TEXT NOT NULL,  -- Domain: "slate.fr", "franceinfo.fr" 
+            site TEXT NOT NULL,    -- News site: "slate.fr", "franceinfo.fr" 
             scraped_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
             response_status INTEGER,
             content_length INTEGER,

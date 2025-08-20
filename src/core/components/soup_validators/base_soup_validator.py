@@ -40,20 +40,20 @@ class BaseSoupValidator(ABC):
     # Shared session for HTTP requests across all soup validator instances
     _session = None
 
-    def __init__(self, site_domain: str, source_name: str, delay: float = 1.0):
+    def __init__(self, site_domain: str, site_name: str, delay: float = 1.0):
         """
         Initialize soup validator with domain-specific configuration.
 
         Args:
             site_domain: Domain name for logging (e.g., "slate.fr")
-            source_name: Human readable source name (e.g., "Slate.fr")  
+            site_name: Human readable source name (e.g., "Slate.fr")  
             delay: Request delay in seconds for rate limiting
         """
         from utils.structured_logger import get_structured_logger
 
         self.logger = get_structured_logger(self.__class__.__name__)
         self.site_domain = site_domain
-        self.source_name = source_name
+        self.site_name = site_name
         self.delay = delay
         self.debug = DEBUG
 
@@ -131,7 +131,7 @@ class BaseSoupValidator(ABC):
         return None
 
     def get_test_sources_from_directory(
-        self, source_name: str
+        self, site_name: str
     ) -> list[tuple[BeautifulSoup | None, str]]:
         """Load test HTML files for offline mode testing."""
         current_file_dir = Path(__file__).parent
@@ -145,14 +145,14 @@ class BaseSoupValidator(ABC):
             "tf1info.fr": "TF1 Info",
             "ladepeche.fr": "Depeche.fr"
         }
-        dir_name = source_dir_mapping.get(source_name, source_name)
+        dir_name = source_dir_mapping.get(site_name, site_name)
         source_dir = test_data_dir / dir_name
 
         if not source_dir.exists():
             self.logger.warning(
                 "Test directory not found",
                 extra_data={
-                    "source_name": source_name,
+                    "site_name": site_name,
                     "directory_path": str(source_dir),
                 },
             )
@@ -174,7 +174,7 @@ class BaseSoupValidator(ABC):
         except Exception as e:
             self.logger.error(
                 "Error reading test files",
-                extra_data={"source_name": source_name, "error": str(e)},
+                extra_data={"site_name": site_name, "error": str(e)},
                 exc_info=True,
             )
 

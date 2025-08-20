@@ -26,7 +26,7 @@ class RawArticle:
     # Required fields
     url: str
     raw_html: str  # Complete HTML content as text
-    source: str  # Domain only: "slate.fr", "franceinfo.fr"
+    site: str  # News site: "slate.fr", "franceinfo.fr"
 
     # Auto-generated fields
     scraped_at: str = field(default_factory=lambda: datetime.now().isoformat())
@@ -37,8 +37,8 @@ class RawArticle:
 
     def __post_init__(self) -> None:
         """Validate raw data after initialization."""
-        if not self.url or not self.raw_html or not self.source:
-            raise ValueError("url, raw_html, and source are required")
+        if not self.url or not self.raw_html or not self.site:
+            raise ValueError("url, raw_html, and site are required")
 
         # Set content_length if not provided
         if self.content_length is None:
@@ -49,7 +49,7 @@ class RawArticle:
         return {
             "url": self.url,
             "raw_html": self.raw_html,
-            "source": self.source,
+            "site": self.site,
             "scraped_at": self.scraped_at,
             "response_status": self.response_status,
             "content_length": self.content_length,

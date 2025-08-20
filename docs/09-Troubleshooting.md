@@ -54,14 +54,14 @@ python -c "from config.settings import DEBUG, OFFLINE; print(f'DEBUG={DEBUG}, OF
 ls -la src/output/
 
 # Check if sources are enabled
-python -c "from config.source_configs import SCRAPER_CONFIGS; print([c['name'] for c in SCRAPER_CONFIGS if c['enabled']])"
+python -c "from config.site_configs import SCRAPER_CONFIGS; print([c['name'] for c in SCRAPER_CONFIGS if c['enabled']])"
 
 # Test offline mode
 OFFLINE=True DEBUG=True python -m main
 ```
 
 **Most Common Causes**:
-1. All sources disabled in configuration
+1. All sites disabled in configuration
 2. Network connectivity issues
 3. Output directory permission problems
 4. Parser selector changes
@@ -157,7 +157,7 @@ make dbt-run
 
 2. **Check Configuration**:
    ```python
-   from config.source_configs import SCRAPER_CONFIGS
+   from config.site_configs import SCRAPER_CONFIGS
    for config in SCRAPER_CONFIGS:
        if config['enabled']:
            print(f"Source: {config['name']}")
@@ -302,13 +302,13 @@ make dbt-run
 
 **Error**: `ValueError: No valid source configurations found`
 
-**Cause**: All sources disabled or malformed configuration
+**Cause**: All sites disabled or malformed configuration
 
 **Solutions**:
 
 1. **Check Source Configuration**:
    ```python
-   from config.source_configs import SCRAPER_CONFIGS
+   from config.site_configs import SCRAPER_CONFIGS
    
    print(f"Total configs: {len(SCRAPER_CONFIGS)}")
    enabled = [c for c in SCRAPER_CONFIGS if c.enabled]
@@ -321,7 +321,7 @@ make dbt-run
 2. **Enable Sources**:
    ```python
    # Temporarily enable all sources
-   from config.source_configs import SCRAPER_CONFIGS
+   from config.site_configs import SCRAPER_CONFIGS
    for config in SCRAPER_CONFIGS:
        config['enabled'] = True
    print("All sources enabled")
@@ -329,7 +329,7 @@ make dbt-run
 
 3. **Validate Configuration**:
    ```python
-   from config.source_configs import SCRAPER_CONFIGS
+   from config.site_configs import SCRAPER_CONFIGS
    
    for config in SCRAPER_CONFIGS:
        # Check required fields

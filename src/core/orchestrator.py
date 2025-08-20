@@ -23,37 +23,37 @@ class ArticleOrchestrator:
         self.component_factory = ComponentFactory()
 
     def acquire_content(
-        self, url_collector: Any, soup_validator: Any, source_name: str
+        self, url_collector: Any, soup_validator: Any, site_name: str
     ) -> list[tuple[BeautifulSoup, str]]:
         """
-            Acquire content sources based on mode
+            Acquire content sites based on mode
             a) Offline mode: read from local files (handled by soup_validator)
             b) Live mode: scrape from web (handled by _get_live_sources)
             NOTE! Uses the same soup_validator for both modes to maintain consistency
 
             returns:
-                List of tuples (BeautifulSoup, source_identifier[url or file path])
+                List of tuples (BeautifulSoup, site_identifier[url or file path])
         Check if running in offline mode (TEST_MODE)
         """
         if os.getenv("TEST_MODE", "false").lower() == "true":
-            return soup_validator.get_test_sources_from_directory(source_name)
+            return soup_validator.get_test_sources_from_directory(site_name)
         else:
-            return self._get_live_sources(url_collector, soup_validator, source_name)
+            return self._get_live_sources(url_collector, soup_validator, site_name)
 
     # Logic for acquiring live sources from web scraping
     def _get_live_sources(
-        self, url_collector: Any, soup_validator: Any, source_name: str
+        self, url_collector: Any, soup_validator: Any, site_name: str
     ) -> list[tuple[BeautifulSoup, str]]:
-        """Get live sources from web scraping."""
+        """Get live sites from web scraping."""
         urls = url_collector.get_article_urls()
         if not urls:
             self.output.warning(
                 "URL discovery returned no results",
-                extra_data={"source": source_name, "operation": "url_discovery"},
+                extra_data={"site": site_name, "operation": "url_discovery"},
             )
             return []
 
-        sources = []
+        sites = []
 
         # Process first 5 URLs for testing (can expand later)
         # Pure ELT: collect raw URLs without validation - let dbt handle validation
@@ -61,24 +61,24 @@ class ArticleOrchestrator:
             try:
                 soup = soup_validator.get_soup_from_url(url)
                 if soup:
-                    sources.append((soup, url))
+                    sites.append((soup, url))
 
             except Exception as e:
                 self.output.warning(
                     "URL processing error",
                     extra_data={
                         "url": url,
-                        "source": source_name,
+                        "site": site_name,
                         "error": str(e),
                         "operation": "url_processing",
                     },
                 )
                 continue
 
-        return sources
+        return sites
 
     def process_article(
-        self, soup_validator, soup: BeautifulSoup, url: str, source_name: str
+        self, soup_validator, soup: BeautifulSoup, url: str, site_name: str
     ) -> bool:
         """Process single article - validate and store to database."""
         try:
@@ -92,7 +92,7 @@ class ArticleOrchestrator:
             self.output.info(
                 f"Processing: {url_display}",
                 extra_data={
-                    "source": source_name,
+                    "site": site_name,
                     "url": url,
                     "operation": "article_start",
                 },
@@ -104,7 +104,7 @@ class ArticleOrchestrator:
                 self.output.warning(
                     f"Failed to validate: {url_display}",
                     extra_data={
-                        "source": source_name,
+                        "site": site_name,
                         "url": url,
                         "operation": "validation_failed",
                     },
@@ -117,7 +117,7 @@ class ArticleOrchestrator:
                 self.output.success(
                     f"Stored: {url_display}",
                     extra_data={
-                        "source": source_name,
+                        "site": site_name,
                         "url": url,
                         "content_length": raw_article.content_length,
                         "approach": "ELT",
@@ -130,7 +130,7 @@ class ArticleOrchestrator:
             self.output.error(
                 "Article processing failed",
                 extra_data={
-                    "source": source_name,
+                    "site": site_name,
                     "url": url,
                     "error": str(e),
                     "operation": "article_processing",
@@ -138,25 +138,25 @@ class ArticleOrchestrator:
             )
             return False
 
-    def process_source(self, config: dict) -> tuple[int, int]:
+    def process_site(self, config: dict) -> tuple[int, int]:
         """
-        Process a single source - database version.
+        Process a single site - database version.
 
         Uses your existing scraper but Database parser + database storage.
         """
         if not config.get("enabled", True):
             self.output.info(
-                "Source processing skipped - disabled",
-                extra_data={"source": config["domain"], "reason": "disabled"},
+                "Site processing skipped - disabled",
+                extra_data={"site": config["site"], "reason": "disabled"},
             )
             return 0, 0
 
         # Database is always enabled (no CSV fallback)
 
         self.output.process_start(
-            f"source_processing_{config['domain']}",
+            f"site_processing_{config['site']}",
             extra_data={
-                "source": config["domain"],
+                "site": config["site"],
                 "url_collector_class": config["url_collector_class"],
             },
         )
@@ -173,7 +173,7 @@ class ArticleOrchestrator:
             self.output.error(
                 "Component initialization failed",
                 extra_data={
-                    "source": config["domain"],
+                    "site": config["site"],
                     "error": str(e),
                     "operation": "initialization",
                 },
@@ -183,47 +183,47 @@ class ArticleOrchestrator:
             self.output.error(
                 "Unexpected error during component initialization",
                 extra_data={
-                    "source": config["domain"],
+                    "site": config["site"],
                     "error": str(e),
                     "operation": "initialization",
                 },
             )
             return 0, 0
 
-        # Acquire content sources
-        sources = self.acquire_content(url_collector, soup_validator, config["domain"])
+        # Acquire content sites
+        sites = self.acquire_content(url_collector, soup_validator, config["site"])
 
         mode_str = (
             "offline" if os.getenv("TEST_MODE", "false").lower() == "true" else "live"
         )
         self.output.info(
-            f"Found {len(sources)} sources for {config['domain']} (mode: {mode_str})",
+            f"Found {len(sites)} sites for {config['site']} (mode: {mode_str})",
             extra_data={
-                "source": config["domain"],
-                "sources_found": len(sources),
+                "site": config["site"],
+                "sites_found": len(sites),
                 "mode": mode_str,
             },
         )
 
-        if not sources:
+        if not sites:
             self.output.warning(
-                "No content sources found",
+                "No content sites found",
                 extra_data={
-                    "source": config["domain"],
+                    "site": config["site"],
                     "mode": mode_str,
-                    "sources_count": 0,
+                    "sites_count": 0,
                 },
             )
             return 0, 0
 
         processed_count = 0
-        total_attempted = len(sources)
+        total_attempted = len(sites)
 
         # Process each article for database storage
-        for soup, source_identifier in sources:
+        for soup, site_identifier in sites:
             if soup:
                 success = self.process_article(
-                    soup_validator, soup, source_identifier, config["domain"]
+                    soup_validator, soup, site_identifier, config["site"]
                 )
                 if success:
                     processed_count += 1
@@ -233,11 +233,11 @@ class ArticleOrchestrator:
             (processed_count / total_attempted * 100) if total_attempted > 0 else 0
         )
 
-        # Complete source processing with consolidated output
+        # Complete site processing with consolidated output
         self.output.process_complete(
-            f"source_processing_{config['domain']}",
+            f"site_processing_{config['site']}",
             extra_data={
-                "source": config["domain"],
+                "site": config["site"],
                 "articles_stored": processed_count,
                 "articles_attempted": total_attempted,
                 "success_rate_percent": round(success_rate, 1),
@@ -246,21 +246,21 @@ class ArticleOrchestrator:
         )
 
         self.output.success(
-            f"Source '{config['domain']}' processing completed",
-            extra_data={"source": config["domain"], "status": "completed"},
+            f"Site '{config['site']}' processing completed",
+            extra_data={"site": config["site"], "status": "completed"},
         )
 
         return processed_count, total_attempted
 
-    def process_all_sources(self, source_configs: list[dict]) -> tuple[int, int]:
+    def process_all_sites(self, site_configs: list[dict]) -> tuple[int, int]:
         """
-        Process all sources - database version.
+        Process all sites - database version.
         """
         total_processed = 0
         total_attempted = 0
 
-        enabled_sources = [
-            config for config in source_configs if config.get("enabled", True)
+        enabled_sites = [
+            config for config in site_configs if config.get("enabled", True)
         ]
 
         mode_str = (
@@ -269,16 +269,16 @@ class ArticleOrchestrator:
         self.output.process_start(
             "database_processing",
             extra_data={
-                "total_sources": len(source_configs),
-                "enabled_sources": len(enabled_sources),
+                "total_sites": len(site_configs),
+                "enabled_sites": len(enabled_sites),
                 "database_required": True,
                 "mode": mode_str,
             },
         )
 
-        # Process sources sequentially for now (simpler)
-        for config in enabled_sources:
-            processed, attempted = self.process_source(config)
+        # Process sites sequentially for now (simpler)
+        for config in enabled_sites:
+            processed, attempted = self.process_site(config)
             total_processed += processed
             total_attempted += attempted
 

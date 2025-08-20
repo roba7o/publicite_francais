@@ -82,7 +82,7 @@ def mock_scraper_config():
 @pytest.fixture
 def scraper_configs():
     """All scraper configurations for testing."""
-    from config.source_configs import SCRAPER_CONFIGS
+    from config.site_configs import SCRAPER_CONFIGS
 
     return SCRAPER_CONFIGS
 

@@ -994,7 +994,7 @@ OFFLINE=True DEBUG=True python -m main
 
 ```python
 # test_integration.py
-from config.source_configs import get_scraper_configs
+from config.site_configs import get_scraper_configs
 from core.processor import ArticleProcessor
 
 # Test configuration loading
@@ -1027,7 +1027,7 @@ else:
 ```bash
 # Test just your source
 python -c "
-from config.source_configs import SCRAPER_CONFIGS
+from config.site_configs import SCRAPER_CONFIGS
 from core.processor import ArticleProcessor
 
 # Find your config

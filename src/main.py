@@ -8,7 +8,7 @@ from config.settings import (
     NEWS_DATA_SCHEMA,
     TEST_MODE,
 )
-from config.source_configs import get_scraper_configs
+from config.site_configs import get_site_configs
 from core.orchestrator import ArticleOrchestrator
 from database.database import initialize_database
 from utils.logging_config_enhanced import configure_debug_mode, setup_logging
@@ -55,14 +55,14 @@ def main() -> int | None:
             extra_data={"step": "database_initialization", "status": "success"},
         )
 
-        # Get source configurations and start processing
-        source_configs = get_scraper_configs()
+        # Get site configurations and start processing
+        site_configs = get_site_configs()
         start_time = time.time()
 
         output.process_start(
             "article_processing",
             extra_data={
-                "source_count": len(source_configs),
+                "site_count": len(site_configs),
                 "mode": mode,
                 "step": "processing_start",
             },
@@ -70,7 +70,7 @@ def main() -> int | None:
 
         # Execute pipeline
         processor = ArticleOrchestrator()
-        processed, attempted = processor.process_all_sources(source_configs)
+        processed, attempted = processor.process_all_sites(site_configs)
 
         # Calculate results
         elapsed_time = time.time() - start_time

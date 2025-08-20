@@ -22,15 +22,15 @@ class tf1infoSoupValidator(BaseSoupValidator):
     No text processing - that's handled by dbt downstream.
     """
 
-    def __init__(self, source_name: str, debug: bool = False) -> None:
+    def __init__(self, site_name: str, debug: bool = False) -> None:
         """
         Initialize TF1 Info parser.
 
         Args:
-            source_name: Name of the source (should be "TF1 Info")
+            site_name: Name of the source (should be "TF1 Info")
             debug: Enable debug logging (default: False)
         """
-        super().__init__(site_domain="tf1info.fr", source_name=source_name)
+        super().__init__(site_domain="tf1info.fr", site_name=site_name)
         self.debug = debug
 
     def validate_and_extract(self, soup: BeautifulSoup, url: str) -> RawArticle | None:
@@ -61,7 +61,7 @@ class tf1infoSoupValidator(BaseSoupValidator):
             if not content_div or not isinstance(content_div, Tag):
                 self.logger.warning(
                     "No content div or article tag found - not a valid TF1 Info article",
-                    extra_data={"url": url, "domain": "tf1info.fr"}
+                    extra_data={"url": url, "site": "tf1info.fr"}
                 )
                 return None
 
@@ -70,7 +70,7 @@ class tf1infoSoupValidator(BaseSoupValidator):
             if not title_tag or not isinstance(title_tag, Tag):
                 self.logger.warning(
                     "No h1 tag found - possibly not an article page",
-                    extra_data={"url": url, "domain": "tf1info.fr"}
+                    extra_data={"url": url, "site": "tf1info.fr"}
                 )
                 return None
 
@@ -78,13 +78,13 @@ class tf1infoSoupValidator(BaseSoupValidator):
             return RawArticle(
                 url=url,
                 raw_html=str(soup),  # Complete HTML including all metadata
-                source="tf1info.fr",
+                site="tf1info.fr",
             )
 
         except Exception as e:
             self.logger.error(
                 f"Error validating TF1 Info article structure: {e}",
-                extra_data={"url": url, "domain": "tf1info.fr"},
+                extra_data={"url": url, "site": "tf1info.fr"},
                 exc_info=True
             )
             return None

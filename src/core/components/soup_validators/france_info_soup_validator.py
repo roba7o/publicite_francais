@@ -20,15 +20,15 @@ class FranceInfoSoupValidator(BaseSoupValidator):
     No text processing - that's handled by dbt downstream.
     """
 
-    def __init__(self, source_name: str, debug: bool = False) -> None:
+    def __init__(self, site_name: str, debug: bool = False) -> None:
         """
         Initialize FranceInfo.fr soup validator.
 
         Args:
-            source_name: Name of the source (should be "FranceInfo.fr")
+            site_name: Name of the source (should be "FranceInfo.fr")
             debug: Enable debug logging (default: False)
         """
-        super().__init__(site_domain="franceinfo.fr", source_name=source_name)
+        super().__init__(site_domain="franceinfo.fr", site_name=site_name)
         self.debug = debug
 
     def validate_and_extract(self, soup: BeautifulSoup, url: str) -> RawArticle | None:
@@ -53,7 +53,7 @@ class FranceInfoSoupValidator(BaseSoupValidator):
             if not content_div or not isinstance(content_div, Tag):
                 self.logger.warning(
                     "No c-body div found - not a valid FranceInfo.fr article",
-                    extra_data={"url": url, "domain": "franceinfo.fr"}
+                    extra_data={"url": url, "site": "franceinfo.fr"}
                 )
                 return None
 
@@ -62,7 +62,7 @@ class FranceInfoSoupValidator(BaseSoupValidator):
             if not title_tag or not isinstance(title_tag, Tag):
                 self.logger.warning(
                     "No h1 tag found - possibly not an article page",
-                    extra_data={"url": url, "domain": "franceinfo.fr"}
+                    extra_data={"url": url, "site": "franceinfo.fr"}
                 )
                 return None
 
@@ -70,13 +70,13 @@ class FranceInfoSoupValidator(BaseSoupValidator):
             return RawArticle(
                 url=url,
                 raw_html=str(soup),  # Complete HTML including all metadata
-                source="franceinfo.fr",
+                site="franceinfo.fr",
             )
 
         except Exception as e:
             self.logger.error(
                 f"Error validating FranceInfo.fr article structure: {e}",
-                extra_data={"url": url, "domain": "franceinfo.fr"},
+                extra_data={"url": url, "site": "franceinfo.fr"},
                 exc_info=True
             )
             return None

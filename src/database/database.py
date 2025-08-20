@@ -117,7 +117,7 @@ def store_raw_article(raw_article: RawArticle) -> bool:
     - Proper session cleanup
 
     Args:
-        raw_article: Raw scraped data (URL, HTML, source)
+        raw_article: Raw scraped data (URL, HTML, site)
 
     Returns:
         True if stored successfully, False otherwise
@@ -130,14 +130,14 @@ def store_raw_article(raw_article: RawArticle) -> bool:
             session.execute(
                 text(f"""
                     INSERT INTO {schema_name}.raw_articles
-                    (id, url, raw_html, source, scraped_at, response_status, content_length)
-                    VALUES (:id, :url, :raw_html, :source, :scraped_at, :response_status, :content_length)
+                    (id, url, raw_html, site, scraped_at, response_status, content_length)
+                    VALUES (:id, :url, :raw_html, :site, :scraped_at, :response_status, :content_length)
                 """),
                 {
                     "id": str(uuid4()),
                     "url": raw_article.url,
                     "raw_html": raw_article.raw_html,
-                    "source": raw_article.source,
+                    "site": raw_article.site,
                     "scraped_at": raw_article.scraped_at,
                     "response_status": raw_article.response_status,
                     "content_length": raw_article.content_length,
@@ -148,7 +148,7 @@ def store_raw_article(raw_article: RawArticle) -> bool:
                 "Raw article stored successfully (pure ELT)",
                 extra_data={
                     "url": raw_article.url,
-                    "source": raw_article.source,
+                    "site": raw_article.site,
                     "content_length": raw_article.content_length,
                     "approach": "pure_ELT",
                     "deduplication": "handled_by_dbt",
@@ -162,7 +162,7 @@ def store_raw_article(raw_article: RawArticle) -> bool:
             f"Failed to store raw article: {str(e)}",
             extra_data={
                 "url": raw_article.url,
-                "source": raw_article.source,
+                "site": raw_article.site,
                 "error": str(e),
             },
             exc_info=True,

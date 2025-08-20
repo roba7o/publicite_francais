@@ -20,15 +20,15 @@ class ladepechefrSoupValidator(BaseSoupValidator):
     No text processing - that's handled by dbt downstream.
     """
 
-    def __init__(self, source_name: str, debug: bool = False) -> None:
+    def __init__(self, site_name: str, debug: bool = False) -> None:
         """
         Initialize Ladepeche.fr parser.
 
         Args:
-            source_name: Name of the source (should be "Ladepeche.fr")
+            site_name: Name of the source (should be "Ladepeche.fr")
             debug: Enable debug logging (default: False)
         """
-        super().__init__(site_domain="ladepeche.fr", source_name=source_name)
+        super().__init__(site_domain="ladepeche.fr", site_name=site_name)
         self.debug = debug
 
     def validate_and_extract(self, soup: BeautifulSoup, url: str) -> RawArticle | None:
@@ -58,7 +58,7 @@ class ladepechefrSoupValidator(BaseSoupValidator):
             if not article_content_area or not isinstance(article_content_area, Tag):
                 self.logger.warning(
                     "No article content area found - not a valid Ladepeche.fr article",
-                    extra_data={"url": url, "domain": "ladepeche.fr"}
+                    extra_data={"url": url, "site": "ladepeche.fr"}
                 )
                 return None
 
@@ -67,7 +67,7 @@ class ladepechefrSoupValidator(BaseSoupValidator):
             if not title_tag or not isinstance(title_tag, Tag):
                 self.logger.warning(
                     "No h1 tag found - possibly not an article page",
-                    extra_data={"url": url, "domain": "ladepeche.fr"}
+                    extra_data={"url": url, "site": "ladepeche.fr"}
                 )
                 return None
 
@@ -75,13 +75,13 @@ class ladepechefrSoupValidator(BaseSoupValidator):
             return RawArticle(
                 url=url,
                 raw_html=str(soup),  # Complete HTML including all metadata
-                source="ladepeche.fr",
+                site="ladepeche.fr",
             )
 
         except Exception as e:
             self.logger.error(
                 f"Error validating Ladepeche.fr article structure: {e}",
-                extra_data={"url": url, "domain": "ladepeche.fr"},
+                extra_data={"url": url, "site": "ladepeche.fr"},
                 exc_info=True
             )
             return None

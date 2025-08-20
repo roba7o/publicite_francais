@@ -5,7 +5,7 @@ These tests verify core functionality is working correctly after development.
 Focused on database pipeline functionality.
 """
 
-from config.source_configs import SCRAPER_CONFIGS
+from config.site_configs import SCRAPER_CONFIGS
 from core.orchestrator import ArticleOrchestrator
 from database.models import RawArticle
 
@@ -33,7 +33,7 @@ class TestEssential:
         """Test that ArticleOrchestrator handles disabled configurations."""
         # Create a disabled source configuration dictionary
         config = {
-            "domain": "disabled-source.fr",
+            "site": "disabled-source.fr",
             "enabled": False,
             "url_collector_class": "core.components.url_collectors.slate_fr_url_collector.SlateFrUrlCollector",
             "soup_validator_class": "core.components.soup_validators.slate_fr_soup_validator.SlateFrSoupValidator",
@@ -42,7 +42,7 @@ class TestEssential:
 
         # Test that the configuration dictionary has correct enabled state
         assert config["enabled"] is False
-        assert config["domain"] == "disabled-source.fr"
+        assert config["site"] == "disabled-source.fr"
         assert config["enabled"] is False
 
     def test_article_pipeline_initialization(self):
@@ -55,12 +55,12 @@ class TestEssential:
         raw_data = RawArticle(
             url="https://test.example.com/article",
             raw_html="<html><body><h1>Test Article</h1><p>Test content</p></body></html>",
-            source="test.example.com",
+            site="test.example.com",
         )
 
         assert raw_data.url == "https://test.example.com/article"
         assert "Test Article" in raw_data.raw_html
-        assert raw_data.source == "test.example.com"
+        assert raw_data.site == "test.example.com"
         assert raw_data.content_length > 0
 
     def test_database_connectivity_check(self):
@@ -80,12 +80,12 @@ class TestEssential:
         # Check first config has required fields for database architecture
         config = SCRAPER_CONFIGS[0]
         assert isinstance(config, dict)
-        assert "domain" in config
+        assert "site" in config
         assert "enabled" in config
         assert "url_collector_class" in config
 
         # Test that dict format has all required fields
-        assert "domain" in config
+        assert "site" in config
         assert "enabled" in config
         assert "url_collector_class" in config
         assert "soup_validator_class" in config
@@ -120,7 +120,7 @@ class TestEssential:
         raw_article = parser.parse_article(None)  # Mock doesn't need actual soup
         assert isinstance(raw_article, RawArticle)
         assert "Mock Article Title" in raw_article.raw_html
-        assert raw_article.source == "test.example.com"
+        assert raw_article.site == "test.example.com"
 
         # Test that mock scraper works with processor
         scraper = MockScraper(debug=True)

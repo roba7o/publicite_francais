@@ -17,7 +17,7 @@ class ComponentFactory:
         class_path = config.get("url_collector_class")
         if not class_path:
             raise ValueError(
-                f"No url_collector_class specified in config for source: {config['domain']}"
+                f"No url_collector_class specified in config for source: {config['site']}"
             )
 
         kwargs = config.get("url_collector_kwargs", {})
@@ -28,9 +28,9 @@ class ComponentFactory:
         class_path = config.get("soup_validator_class")
         if not class_path:
             raise ValueError(
-                f"No soup_validator_class specified in config for source: {config['domain']}"
+                f"No soup_validator_class specified in config for source: {config['site']}"
             )
 
-        # Soup validator gets source_name from config - much simpler!
+        # Soup validator gets site_name from config - much simpler!
         kwargs = config.get("soup_validator_kwargs", {})
-        return create_component(class_path, config["domain"], **kwargs)
+        return create_component(class_path, config["site"], **kwargs)
