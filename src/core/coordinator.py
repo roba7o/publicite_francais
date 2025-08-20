@@ -16,8 +16,6 @@ from typing import Any
 
 from bs4 import BeautifulSoup
 
-from utils.validators import DataValidator
-
 
 class ArticleCoordinator:
     """
@@ -58,15 +56,12 @@ class ArticleCoordinator:
         sources = []
 
         # Process first 5 URLs for testing (can expand later)
+        # Pure ELT: collect raw URLs without validation - let dbt handle validation
         for url in urls[:5]:
             try:
-                validated_url = DataValidator.validate_url(url)
-                if not validated_url:
-                    continue
-
-                soup = parser.get_soup_from_url(validated_url)
+                soup = parser.get_soup_from_url(url)
                 if soup:
-                    sources.append((soup, validated_url))
+                    sources.append((soup, url))
 
             except Exception as e:
                 self.output.warning(

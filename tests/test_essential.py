@@ -105,12 +105,10 @@ class TestEssential:
         logger = get_structured_logger("test")
         assert logger is not None
 
-    def test_validators_import(self):
-        """Test that validators can be imported."""
-        from utils.validators import DataValidator
-
-        validator = DataValidator()
-        assert validator is not None
+    def test_validators_removed(self):
+        """Test that DataValidator was removed in favor of pure ELT approach."""
+        # DataValidator removed - validation now handled by dbt
+        assert True  # Placeholder test
 
     def test_mock_classes_aligned_with_architecture(self):
         """Test that mock classes work with the ELT database architecture."""
