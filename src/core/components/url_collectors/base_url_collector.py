@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 
 import requests
 
-from config.settings import DEBUG
+from config.environment import env_config
 from utils.structured_logger import get_structured_logger
 
 
@@ -46,7 +46,7 @@ class BaseUrlCollector(ABC):
             debug: Enable debug logging. If None, uses DEBUG from config.
         """
         self.logger = get_structured_logger(self.__class__.__name__)
-        self.debug = debug if debug is not None else DEBUG
+        self.debug = debug if debug is not None else env_config.is_debug_mode()
         self.base_url = ""  # Must be set by subclasses
 
         # Default headers - can be overridden by subclasses

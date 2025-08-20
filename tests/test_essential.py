@@ -67,9 +67,10 @@ class TestEssential:
         """Test database connectivity without actual database operations."""
         # Database is always enabled (no CSV fallback)
         # This test verifies database configuration can be imported
-        from config.settings import NEWS_DATA_SCHEMA
+        from config.environment import env_config
 
-        assert isinstance(NEWS_DATA_SCHEMA, str)
+        schema = env_config.get_news_data_schema()
+        assert isinstance(schema, str)
 
     def test_configuration_loading(self):
         """Test that configurations can be loaded in database architecture."""
@@ -94,9 +95,10 @@ class TestEssential:
 
     def test_test_mode_setting(self):
         """Test that test mode setting can be imported."""
-        from config.settings import TEST_MODE
+        from config.environment import env_config
 
-        assert isinstance(TEST_MODE, bool)
+        test_mode = env_config.is_test_mode()
+        assert isinstance(test_mode, bool)
 
     def test_structured_logger_import(self):
         """Test that structured logger can be imported."""

@@ -7,9 +7,9 @@ that provides both user-friendly terminal output and structured log data.
 Provides a shared instance for the entire application to eliminate duplicate creation patterns.
 """
 
-import os
 from typing import Any
 
+from config.environment import is_production
 from utils.structured_logger import get_structured_logger
 
 
@@ -34,8 +34,7 @@ class ConsolidatedOutput:
 
         if ascii_art is None:
             # Auto-detect: ASCII art in development, clean in production
-            is_production = os.getenv("PRODUCTION", "false").lower() == "true"
-            self.ascii_art = not is_production
+            self.ascii_art = not is_production()
         else:
             self.ascii_art = ascii_art
 

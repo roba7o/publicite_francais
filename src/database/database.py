@@ -17,7 +17,7 @@ from uuid import uuid4
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session, sessionmaker
 
-from config.settings import DATABASE_CONFIG, DEBUG
+from config.environment import env_config
 from database.models import RawArticle
 from database.schema import get_current_schema
 from utils.structured_logger import get_structured_logger
@@ -34,12 +34,13 @@ def initialize_database() -> bool:
 
     try:
         # builds connection string from config
+        db_config = env_config.get_database_config()
         database_url = (
-            f"postgresql://{DATABASE_CONFIG['user']}:{DATABASE_CONFIG['password']}"
-            f"@{DATABASE_CONFIG['host']}:{DATABASE_CONFIG['port']}/{DATABASE_CONFIG['database']}"
+            f"postgresql://{db_config['user']}:{db_config['password']}"
+            f"@{db_config['host']}:{db_config['port']}/{db_config['database']}"
         )
         # this engine manages connections to database
-        engine = create_engine(database_url, echo=DEBUG)
+        engine = create_engine(database_url, echo=env_config.is_debug_mode())
 
         # create session factory bound to this engine
         _SessionLocal = sessionmaker(bind=engine)

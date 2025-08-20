@@ -1,9 +1,9 @@
-import os
 import time
 from typing import Any
 
 from bs4 import BeautifulSoup
 
+from config.environment import is_test_mode
 from database.models import RawArticle
 
 
@@ -19,6 +19,7 @@ class ArticleOrchestrator:
         """Initialize processor with default dependencies."""
         from core.component_factory import ComponentFactory
         from utils.terminal_output import output
+
         self.output = output
         self.component_factory = ComponentFactory()
 
@@ -35,7 +36,7 @@ class ArticleOrchestrator:
                 List of tuples (BeautifulSoup, site_identifier[url or file path])
         Check if running in offline mode (TEST_MODE)
         """
-        if os.getenv("TEST_MODE", "false").lower() == "true":
+        if is_test_mode():
             return soup_validator.get_test_sources_from_directory(site_name)
         else:
             return self._get_live_sources(url_collector, soup_validator, site_name)
@@ -99,7 +100,9 @@ class ArticleOrchestrator:
             )
 
             # Validate article (ELT approach - raw HTML only in form of RawArticle)
-            raw_article: RawArticle | None = soup_validator.validate_and_extract(soup, url)
+            raw_article: RawArticle | None = soup_validator.validate_and_extract(
+                soup, url
+            )
             if not raw_article:
                 self.output.warning(
                     f"Failed to validate: {url_display}",
@@ -193,9 +196,7 @@ class ArticleOrchestrator:
         # Acquire content sites
         sites = self.acquire_content(url_collector, soup_validator, config["site"])
 
-        mode_str = (
-            "offline" if os.getenv("TEST_MODE", "false").lower() == "true" else "live"
-        )
+        mode_str = "offline" if is_test_mode() else "live"
         self.output.info(
             f"Found {len(sites)} sites for {config['site']} (mode: {mode_str})",
             extra_data={
@@ -263,9 +264,7 @@ class ArticleOrchestrator:
             config for config in site_configs if config.get("enabled", True)
         ]
 
-        mode_str = (
-            "offline" if os.getenv("TEST_MODE", "false").lower() == "true" else "live"
-        )
+        mode_str = "offline" if is_test_mode() else "live"
         self.output.process_start(
             "database_processing",
             extra_data={

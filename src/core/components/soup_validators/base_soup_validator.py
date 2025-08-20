@@ -10,7 +10,6 @@ Provides:
 Child soup validators implement domain-specific HTML validation logic.
 """
 
-import os
 import time
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -20,7 +19,7 @@ from bs4 import BeautifulSoup
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from config.settings import DEBUG
+from config.environment import env_config, is_test_mode
 from database.models import RawArticle
 
 
@@ -55,7 +54,7 @@ class BaseSoupValidator(ABC):
         self.site_domain = site_domain
         self.site_name = site_name
         self.delay = delay
-        self.debug = DEBUG
+        self.debug = env_config.is_debug_mode()
 
     @classmethod
     def get_session(cls):
@@ -78,18 +77,20 @@ class BaseSoupValidator(ABC):
 
             cls._session.mount("http://", adapter)
             cls._session.mount("https://", adapter)
-            cls._session.headers.update({
-                "User-Agent": (
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                    "(KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
-                )
-            })
+            cls._session.headers.update(
+                {
+                    "User-Agent": (
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                        "(KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
+                    )
+                }
+            )
 
         return cls._session
 
     def get_soup_from_url(self, url: str, max_retries: int = 3) -> BeautifulSoup | None:
         """Fetch and parse HTML from URL with retry logic."""
-        if os.getenv("TEST_MODE", "false").lower() == "true":
+        if is_test_mode():
             self.logger.warning(
                 "URL fetch attempted in offline mode",
                 extra_data={"url": url, "mode": "offline"},
@@ -143,7 +144,7 @@ class BaseSoupValidator(ABC):
             "slate.fr": "Slate.fr",
             "franceinfo.fr": "FranceInfo.fr",
             "tf1info.fr": "TF1 Info",
-            "ladepeche.fr": "Depeche.fr"
+            "ladepeche.fr": "Depeche.fr",
         }
         dir_name = source_dir_mapping.get(site_name, site_name)
         source_dir = test_data_dir / dir_name

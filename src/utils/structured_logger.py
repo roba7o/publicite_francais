@@ -5,7 +5,7 @@ Simplified structured logging system for the French article scraper.
 import logging
 import sys
 
-from config.settings import DEBUG
+from config.environment import env_config
 
 
 class StructuredLogger:
@@ -50,7 +50,9 @@ def _initialize_logging() -> None:
     """Initialize basic logging configuration."""
     root_logger = logging.getLogger()  # Get the root logger (if not already configured)
     if not root_logger.handlers:
-        log_level = logging.DEBUG if DEBUG else logging.INFO  # uses DEBUG setings
+        log_level = (
+            logging.DEBUG if env_config.is_debug_mode() else logging.INFO
+        )  # uses DEBUG settings
         logging.basicConfig(
             level=log_level,
             format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",

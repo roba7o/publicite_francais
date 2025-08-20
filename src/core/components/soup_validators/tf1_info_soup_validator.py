@@ -60,7 +60,7 @@ class tf1infoSoupValidator(BaseSoupValidator):
             if not content_div or not isinstance(content_div, Tag):
                 self.logger.warning(
                     "No content div or article tag found - not a valid TF1 Info article",
-                    extra_data={"url": url, "site": "tf1info.fr"}
+                    extra_data={"url": url, "site": "tf1info.fr"},
                 )
                 return None
 
@@ -69,7 +69,7 @@ class tf1infoSoupValidator(BaseSoupValidator):
             if not title_tag or not isinstance(title_tag, Tag):
                 self.logger.warning(
                     "No h1 tag found - possibly not an article page",
-                    extra_data={"url": url, "site": "tf1info.fr"}
+                    extra_data={"url": url, "site": "tf1info.fr"},
                 )
                 return None
 
@@ -84,6 +84,6 @@ class tf1infoSoupValidator(BaseSoupValidator):
             self.logger.error(
                 f"Error validating TF1 Info article structure: {e}",
                 extra_data={"url": url, "site": "tf1info.fr"},
-                exc_info=True
+                exc_info=True,
             )
             return None

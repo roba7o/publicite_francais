@@ -52,7 +52,7 @@ class SlateFrSoupValidator(BaseSoupValidator):
             if not article_tag or not isinstance(article_tag, Tag):
                 self.logger.warning(
                     "No article tag found - not a valid Slate.fr article",
-                    extra_data={"url": url, "site": "slate.fr"}
+                    extra_data={"url": url, "site": "slate.fr"},
                 )
                 return None
 
@@ -61,7 +61,7 @@ class SlateFrSoupValidator(BaseSoupValidator):
             if not title_tag or not isinstance(title_tag, Tag):
                 self.logger.warning(
                     "No h1 tag found - possibly not an article page",
-                    extra_data={"url": url, "site": "slate.fr"}
+                    extra_data={"url": url, "site": "slate.fr"},
                 )
                 return None
 
@@ -76,6 +76,6 @@ class SlateFrSoupValidator(BaseSoupValidator):
             self.logger.error(
                 f"Error validating Slate.fr article structure: {e}",
                 extra_data={"url": url, "site": "slate.fr"},
-                exc_info=True
+                exc_info=True,
             )
             return None

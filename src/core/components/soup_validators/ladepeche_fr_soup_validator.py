@@ -49,15 +49,15 @@ class ladepechefrSoupValidator(BaseSoupValidator):
         try:
             # Domain-specific validation: Ladepeche.fr uses various content containers
             article_content_area = (
-                soup.find("article") or
-                soup.find("div", class_="article-content") or
-                soup.find("main")
+                soup.find("article")
+                or soup.find("div", class_="article-content")
+                or soup.find("main")
             )
 
             if not article_content_area or not isinstance(article_content_area, Tag):
                 self.logger.warning(
                     "No article content area found - not a valid Ladepeche.fr article",
-                    extra_data={"url": url, "site": "ladepeche.fr"}
+                    extra_data={"url": url, "site": "ladepeche.fr"},
                 )
                 return None
 
@@ -66,7 +66,7 @@ class ladepechefrSoupValidator(BaseSoupValidator):
             if not title_tag or not isinstance(title_tag, Tag):
                 self.logger.warning(
                     "No h1 tag found - possibly not an article page",
-                    extra_data={"url": url, "site": "ladepeche.fr"}
+                    extra_data={"url": url, "site": "ladepeche.fr"},
                 )
                 return None
 
@@ -81,6 +81,6 @@ class ladepechefrSoupValidator(BaseSoupValidator):
             self.logger.error(
                 f"Error validating Ladepeche.fr article structure: {e}",
                 extra_data={"url": url, "site": "ladepeche.fr"},
-                exc_info=True
+                exc_info=True,
             )
             return None

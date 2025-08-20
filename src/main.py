@@ -2,12 +2,8 @@ import sys
 import time
 import traceback
 
-from config.settings import (
-    DEBUG,
-    MIN_SUCCESS_RATE_THRESHOLD,
-    NEWS_DATA_SCHEMA,
-    TEST_MODE,
-)
+from config.environment import env_config
+from config.settings import MIN_SUCCESS_RATE_THRESHOLD
 from config.site_configs import get_site_configs
 from core.orchestrator import ArticleOrchestrator
 from database.database import initialize_database
@@ -25,17 +21,17 @@ def main() -> int | None:
     try:
         # Setup logging
         setup_logging()
-        if DEBUG:
+        if env_config.is_debug_mode():
             configure_debug_mode(enabled=True)
 
-        mode = "TEST" if TEST_MODE else "LIVE"
+        mode = "TEST" if env_config.is_test_mode() else "LIVE"
 
         output.section_header(
             "French News Collection",
             f"Database pipeline in {mode} mode",
             extra_data={
                 "mode": mode,
-                "test_mode": TEST_MODE,
+                "test_mode": env_config.is_test_mode(),
                 "database_required": True,
             },
         )
@@ -131,7 +127,7 @@ def _show_next_steps() -> None:
     """Display next steps for user after pipeline completion."""
     db_check_cmd = (
         f"docker compose exec postgres psql -U news_user -d french_news "
-        f'-c "SELECT title, LENGTH(full_text), scraped_at FROM {NEWS_DATA_SCHEMA}.articles '
+        f'-c "SELECT title, LENGTH(full_text), scraped_at FROM {env_config.get_news_data_schema()}.articles '
         f'ORDER BY scraped_at DESC LIMIT 3;"'
     )
 

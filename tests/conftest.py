@@ -167,10 +167,11 @@ def setup_test_environment(monkeypatch):
     monkeypatch.setenv("TEST_MODE", "True")
     monkeypatch.setenv("DEBUG", "True")
 
-    # Patch settings if already imported
-    with patch("config.settings.TEST_MODE", True):
-        with patch("config.settings.DEBUG", True):
-            yield
+    # Refresh environment config to pick up test settings
+    from config.environment import env_config
+    env_config.refresh()
+    
+    yield
 
 
 @pytest.fixture

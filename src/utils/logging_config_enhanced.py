@@ -4,7 +4,7 @@ Enhanced logging configuration for the French article scraper.
 
 import logging
 
-from config.settings import DEBUG
+from config.environment import env_config
 
 
 def setup_logging(level: str | int | None = None) -> None:
@@ -17,7 +17,7 @@ def setup_logging(level: str | int | None = None) -> None:
     """
     # Determine default log level based on configuration
     if level is None:
-        level = logging.DEBUG if DEBUG else logging.INFO
+        level = logging.DEBUG if env_config.is_debug_mode() else logging.INFO
     elif isinstance(level, str):
         level = getattr(logging, level.upper())
 
@@ -36,7 +36,7 @@ def _setup_component_log_levels() -> None:
     """Setup appropriate log levels for different components."""
     component_levels: dict[str, str | int] = {
         # Core processing - more verbose in debug mode
-        "article_scrapers.core.processor": (logging.DEBUG if DEBUG else logging.INFO),
+        "article_scrapers.core.processor": (logging.DEBUG if env_config.is_debug_mode() else logging.INFO),
         # Database operations - moderate verbosity
         "article_scrapers.database": logging.INFO,
         # Parsers - moderate verbosity
