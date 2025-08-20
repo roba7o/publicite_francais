@@ -10,7 +10,7 @@ from config.settings import (
 )
 from config.source_configs import get_scraper_configs
 from core.coordinator import ArticleCoordinator
-from core.database import initialize_database
+from database.database import initialize_database
 from utils.logging_config_enhanced import configure_debug_mode, setup_logging
 from utils.terminal_output import output
 

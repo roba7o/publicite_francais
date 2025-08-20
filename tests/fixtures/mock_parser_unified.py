@@ -9,7 +9,7 @@ from unittest.mock import Mock
 
 from bs4 import BeautifulSoup
 
-from core.models import RawArticle
+from database.models import RawArticle
 
 
 class ConfigurableMockParser:

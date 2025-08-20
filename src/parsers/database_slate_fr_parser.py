@@ -11,7 +11,7 @@ from datetime import datetime
 
 from bs4 import BeautifulSoup, Tag
 
-from core.models import RawArticle
+from database.models import RawArticle
 from parsers.database_base_parser import DatabaseBaseParser
 
 

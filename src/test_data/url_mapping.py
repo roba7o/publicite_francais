@@ -2,9 +2,13 @@
 URL mapping configuration for test data.
 
 This file maps test filenames to their original URLs for offline mode.
+
+this could be fixed urls but we do not have control of the websites ability to change URLs.
+This allows us to simulate real-world scenarios without needing live internet access.
+
 """
 
-# Map of filename -> original URL for each test file
+# Map of filename for path -> original URL for each test file
 URL_MAPPING = {
     # Slate.fr test files
     (

@@ -25,7 +25,7 @@ class TestDeterministicPipeline:
         os.environ["TEST_MODE"] = "true"
 
         # Initialize database for tests
-        from core.database import initialize_database
+        from database.database import initialize_database
 
         initialize_database()
 
@@ -79,7 +79,7 @@ class TestDeterministicPipeline:
     def test_database_article_extraction(self):
         """Test that articles are extracted and stored in database."""
         # Clear articles table for clean test
-        from core.database import get_session
+        from database.database import get_session
 
         # Direct session usage
         with get_session() as session:
@@ -135,7 +135,7 @@ class TestDeterministicPipeline:
         assert result.returncode == 0, f"dbt run failed: {result.stderr}"
 
         # Now verify exact counts from database
-        from core.database import get_session
+        from database.database import get_session
 
         # Direct session usage
 
@@ -186,7 +186,7 @@ class TestDeterministicPipeline:
 
     def test_vocabulary_quality(self):
         """Test that vocabulary contains meaningful French words with reasonable frequencies."""
-        from core.database import get_session
+        from database.database import get_session
 
         # Direct session usage
 
@@ -248,7 +248,7 @@ class TestDeterministicPipeline:
 
     def test_source_distribution(self):
         """Test that articles are distributed correctly across sources."""
-        from core.database import get_session
+        from database.database import get_session
 
         # Direct session usage
 
@@ -292,7 +292,7 @@ class TestDeterministicPipeline:
 
     def test_data_quality_integrity(self):
         """Test overall data quality and integrity across the pipeline."""
-        from core.database import get_session
+        from database.database import get_session
 
         # Direct session usage
 

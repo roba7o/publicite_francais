@@ -7,7 +7,7 @@ Focused on database pipeline functionality.
 
 from config.source_configs import SCRAPER_CONFIGS
 from core.coordinator import ArticleCoordinator
-from core.models import RawArticle
+from database.models import RawArticle
 
 
 class TestEssential:

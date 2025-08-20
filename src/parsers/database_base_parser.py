@@ -21,7 +21,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 from config.settings import DEBUG
-from core.models import RawArticle
+from database.models import RawArticle
 
 
 class DatabaseBaseParser(ABC):
@@ -160,7 +160,7 @@ class DatabaseBaseParser(ABC):
             )
             return []
 
-        soup_sources: list[tuple[BeautifulSoup | None, str]] = []
+        soup_sources = []
         try:
             from test_data.url_mapping import URL_MAPPING
 
@@ -168,6 +168,8 @@ class DatabaseBaseParser(ABC):
                 if file_path.suffix in (".html", ".php"):
                     filename = file_path.name
                     original_url = URL_MAPPING.get(filename, f"test://{filename}")
+                    # this could be better but not worth the effort right now
+                    # get should not be f-string dependent, should just use dict key-value
 
                     with open(file_path, encoding="utf-8") as f:
                         soup = BeautifulSoup(f.read(), "html.parser")
@@ -211,6 +213,6 @@ class DatabaseBaseParser(ABC):
         Returns:
             True if stored successfully, False otherwise
         """
-        from utils.database_operations import store_raw_article
+        from database.database import store_raw_article
 
         return store_raw_article(raw_article)

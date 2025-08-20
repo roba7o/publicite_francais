@@ -1,20 +1,10 @@
-"""
-Article processing coordinator that orchestrates the complete pipeline.
-
-Handles coordination of:
-- Component creation (scrapers/parsers)
-- Content acquisition (live/offline)
-- Article processing workflow
-- Database operations delegation
-
-All text processing is moved to dbt/SQL.
-"""
-
 import os
 import time
 from typing import Any
 
 from bs4 import BeautifulSoup
+
+from core.models import RawArticle
 
 
 class ArticleCoordinator:
@@ -35,12 +25,22 @@ class ArticleCoordinator:
     def acquire_content(
         self, scraper: Any, parser: Any, source_name: str
     ) -> list[tuple[BeautifulSoup, str]]:
-        """Get content sources based on mode (offline/live)."""
+        """
+            Acquire content sources based on mode
+            a) Offline mode: read from local files (handled by parser)
+            b) Live mode: scrape from web (handled by below functions 1. _get_live_sources)
+            NOTE! Uses the same parser for both modes to maintain consistency
+
+            returns:
+                List of tuples (BeautifulSoup, source_identifier[url or file path])
+        Check if running in offline mode (TEST_MODE)
+        """
         if os.getenv("TEST_MODE", "false").lower() == "true":
             return parser.get_test_sources_from_directory(source_name)
         else:
             return self._get_live_sources(scraper, parser, source_name)
 
+    # Logic for acquiring live sources from web scraping
     def _get_live_sources(
         self, scraper: Any, parser: Any, source_name: str
     ) -> list[tuple[BeautifulSoup, str]]:
@@ -83,6 +83,7 @@ class ArticleCoordinator:
         """Process single article - parse and store to database."""
         try:
             # Log article processing start with shortened URL
+            # NOTE! does not affect the logic, just improves readability in logs
             url_display = (
                 url.split("/")[-1][:50] + "..."
                 if len(url.split("/")[-1]) > 50
@@ -97,8 +98,8 @@ class ArticleCoordinator:
                 },
             )
 
-            # Parse article (ELT approach - raw HTML only)
-            raw_article = parser.parse_article(soup, url)
+            # Parse article (ELT approach - raw HTML only in form of RawArticle)
+            raw_article: RawArticle | None = parser.parse_article(soup, url)
             if not raw_article:
                 self.output.warning(
                     f"Failed to parse: {url_display}",
