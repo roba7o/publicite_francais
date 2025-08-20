@@ -2,10 +2,10 @@ from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup, Tag
 
-from scrapers.base_scraper import BaseScraper
+from core.components.url_collectors.base_url_collector import BaseUrlCollector
 
 
-class SlateFrURLScraper(BaseScraper):
+class SlateFrUrlCollector(BaseUrlCollector):
     def __init__(self, debug: bool | None = None) -> None:
         super().__init__(debug)
         self.base_url = "https://www.slate.fr"

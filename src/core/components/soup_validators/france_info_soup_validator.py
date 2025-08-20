@@ -8,7 +8,7 @@ but stores only raw HTML. All content extraction happens in dbt.
 from bs4 import BeautifulSoup, Tag
 
 from database.models import RawArticle
-from soup_validators.base_soup_validator import BaseSoupValidator
+from core.components.soup_validators.base_soup_validator import BaseSoupValidator
 
 
 class FranceInfoSoupValidator(BaseSoupValidator):

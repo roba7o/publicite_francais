@@ -8,10 +8,10 @@ but stores only raw HTML. All content extraction happens in dbt.
 from bs4 import BeautifulSoup, Tag
 
 from database.models import RawArticle
-from parsers.database_base_parser import DatabaseBaseParser
+from core.components.soup_validators.base_soup_validator import BaseSoupValidator
 
 
-class DatabaseLadepecheFrParser(DatabaseBaseParser):
+class ladepechefrSoupValidator(BaseSoupValidator):
     """
     Pure ELT parser for Ladepeche.fr articles.
     
@@ -31,7 +31,7 @@ class DatabaseLadepecheFrParser(DatabaseBaseParser):
         super().__init__(site_domain="ladepeche.fr", source_name=source_name)
         self.debug = debug
 
-    def parse_article(self, soup: BeautifulSoup, url: str) -> RawArticle | None:
+    def validate_and_extract(self, soup: BeautifulSoup, url: str) -> RawArticle | None:
         """
         Validate Ladepeche.fr article structure and store raw HTML.
 

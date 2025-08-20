@@ -4,7 +4,7 @@ from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup, Tag
 
-from url_collectors.base_url_collector import BaseUrlCollector
+from core.components.url_collectors.base_url_collector import BaseUrlCollector
 
 
 class FranceInfoUrlCollector(BaseUrlCollector):

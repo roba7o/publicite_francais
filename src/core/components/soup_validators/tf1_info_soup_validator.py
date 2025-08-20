@@ -10,10 +10,10 @@ import re
 from bs4 import BeautifulSoup, Tag
 
 from database.models import RawArticle
-from parsers.database_base_parser import DatabaseBaseParser
+from core.components.soup_validators.base_soup_validator import BaseSoupValidator
 
 
-class DatabaseTF1InfoParser(DatabaseBaseParser):
+class tf1infoSoupValidator(BaseSoupValidator):
     """
     Pure ELT parser for TF1 Info articles.
     
@@ -33,7 +33,7 @@ class DatabaseTF1InfoParser(DatabaseBaseParser):
         super().__init__(site_domain="tf1info.fr", source_name=source_name)
         self.debug = debug
 
-    def parse_article(self, soup: BeautifulSoup, url: str) -> RawArticle | None:
+    def validate_and_extract(self, soup: BeautifulSoup, url: str) -> RawArticle | None:
         """
         Validate TF1 Info article structure and store raw HTML.
 

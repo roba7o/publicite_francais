@@ -1,5 +1,5 @@
 """
-TF1 Info Scraper - Extracts article URLs from TF1 Info homepage
+TF1 Info UrlCollector - Extracts article URLs from TF1 Info homepage
 """
 
 import json
@@ -7,10 +7,10 @@ from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
 
-from scrapers.base_scraper import BaseScraper
+from core.components.url_collectors.base_url_collector import BaseUrlCollector
 
 
-class TF1InfoURLScraper(BaseScraper):
+class TF1InfoUrlCollector(BaseUrlCollector):
     def __init__(self, debug=None):
         super().__init__(debug)
         self.base_url = "https://www.tf1info.fr/"

@@ -6,10 +6,10 @@ from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
 
-from scrapers.base_scraper import BaseScraper
+from core.components.url_collectors.base_url_collector import BaseUrlCollector
 
 
-class LadepecheFrURLScraper(BaseScraper):
+class LadepecheFrUrlCollector(BaseUrlCollector):
     def __init__(self, debug=None):
         super().__init__(debug)
         self.base_url = "https://www.ladepeche.fr"

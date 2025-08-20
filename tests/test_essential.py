@@ -18,13 +18,13 @@ class TestEssential:
         from core.component_loader import import_class
 
         # Test url collector class loading
-        url_collector_class = import_class("url_collectors.slate_fr_url_collector.SlateFrUrlCollector")
+        url_collector_class = import_class("core.components.url_collectors.slate_fr_url_collector.SlateFrUrlCollector")
         assert url_collector_class is not None
         assert url_collector_class.__name__ == "SlateFrUrlCollector"
 
         # Test soup validator class loading
         soup_validator_class = import_class(
-            "soup_validators.slate_fr_soup_validator.SlateFrSoupValidator"
+            "core.components.soup_validators.slate_fr_soup_validator.SlateFrSoupValidator"
         )
         assert soup_validator_class is not None
         assert soup_validator_class.__name__ == "SlateFrSoupValidator"
@@ -35,8 +35,8 @@ class TestEssential:
         config = {
             "domain": "disabled-source.fr",
             "enabled": False,
-            "url_collector_class": "url_collectors.slate_fr_url_collector.SlateFrUrlCollector",
-            "soup_validator_class": "soup_validators.slate_fr_soup_validator.SlateFrSoupValidator",
+            "url_collector_class": "core.components.url_collectors.slate_fr_url_collector.SlateFrUrlCollector",
+            "soup_validator_class": "core.components.soup_validators.slate_fr_soup_validator.SlateFrSoupValidator",
             "url_collector_kwargs": {"debug": False},
         }
 

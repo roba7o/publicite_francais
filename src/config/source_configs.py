@@ -12,32 +12,32 @@ def get_scraper_configs() -> list[dict]:
         {
             "domain": "slate.fr",  # Standardized domain identifier
             "enabled": True,
-            "url_collector_class": "url_collectors.slate_fr_url_collector.SlateFrUrlCollector",
-            "soup_validator_class": "soup_validators.slate_fr_soup_validator.SlateFrSoupValidator",
+            "url_collector_class": "core.components.url_collectors.slate_fr_url_collector.SlateFrUrlCollector",
+            "soup_validator_class": "core.components.soup_validators.slate_fr_soup_validator.SlateFrSoupValidator",
             "url_collector_kwargs": {"debug": DEBUG},
             "soup_validator_kwargs": {"debug": DEBUG},
         },
         {
             "domain": "franceinfo.fr",  # Standardized domain identifier
             "enabled": True,
-            "url_collector_class": "url_collectors.france_info_url_collector.FranceInfoUrlCollector",
-            "soup_validator_class": "soup_validators.france_info_soup_validator.FranceInfoSoupValidator",
+            "url_collector_class": "core.components.url_collectors.france_info_url_collector.FranceInfoUrlCollector",
+            "soup_validator_class": "core.components.soup_validators.france_info_soup_validator.FranceInfoSoupValidator",
             "url_collector_kwargs": {"debug": DEBUG},
             "soup_validator_kwargs": {"debug": DEBUG},
         },
         {
             "domain": "tf1info.fr",  # Standardized domain identifier
             "enabled": True,
-            "url_collector_class": "url_collectors.tf1_info_url_collector.TF1InfoUrlCollector",
-            "soup_validator_class": "soup_validators.tf1_info_soup_validator.TF1InfoSoupValidator",
+            "url_collector_class": "core.components.url_collectors.tf1_info_url_collector.TF1InfoUrlCollector",
+            "soup_validator_class": "core.components.soup_validators.tf1_info_soup_validator.TF1InfoSoupValidator",
             "url_collector_kwargs": {"debug": DEBUG},
             "soup_validator_kwargs": {"debug": DEBUG},
         },
         {
             "domain": "ladepeche.fr",  # Standardized domain identifier
             "enabled": True,
-            "url_collector_class": "url_collectors.ladepeche_fr_url_collector.LadepecheFrUrlCollector",
-            "soup_validator_class": "soup_validators.ladepeche_fr_soup_validator.LadepecheFrSoupValidator",
+            "url_collector_class": "core.components.url_collectors.ladepeche_fr_url_collector.LadepecheFrUrlCollector",
+            "soup_validator_class": "core.components.soup_validators.ladepeche_fr_soup_validator.LadepecheFrSoupValidator",
             "url_collector_kwargs": {"debug": DEBUG},
             "soup_validator_kwargs": {"debug": DEBUG},
         },
