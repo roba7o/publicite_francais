@@ -16,14 +16,13 @@ from pathlib import Path
 
 import requests
 from bs4 import BeautifulSoup
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
 
 from config.environment import env_config, is_test_mode
+from core.components.http_session_mixin import HTTPSessionMixin
 from database.models import RawArticle
 
 
-class BaseSoupValidator(ABC):
+class BaseSoupValidator(HTTPSessionMixin, ABC):
     """
     Abstract base soup validator for pure ELT raw data collection.
 
@@ -35,9 +34,6 @@ class BaseSoupValidator(ABC):
     - Child classes handle domain-specific HTML validation
     - Base class provides HTTP session management and database storage
     """
-
-    # Shared session for HTTP requests across all soup validator instances
-    _session = None
 
     def __init__(self, site_domain: str, site_name: str, delay: float = 1.0):
         """
@@ -56,38 +52,6 @@ class BaseSoupValidator(ABC):
         self.delay = delay
         self.debug = env_config.is_debug_mode()
 
-    @classmethod
-    def get_session(cls):
-        """Get or create shared HTTP session with connection pooling."""
-        if cls._session is None:
-            cls._session = requests.Session()
-
-            retry_strategy = Retry(
-                total=3,
-                backoff_factor=1,
-                status_forcelist=[429, 500, 502, 503, 504],
-            )
-
-            adapter = HTTPAdapter(
-                max_retries=retry_strategy,
-                pool_connections=10,
-                pool_maxsize=20,
-                pool_block=False,
-            )
-
-            cls._session.mount("http://", adapter)
-            cls._session.mount("https://", adapter)
-            cls._session.headers.update(
-                {
-                    "User-Agent": (
-                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                        "(KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
-                    )
-                }
-            )
-
-        return cls._session
-
     def get_soup_from_url(self, url: str, max_retries: int = 3) -> BeautifulSoup | None:
         """Fetch and parse HTML from URL with retry logic."""
         if is_test_mode():
@@ -99,8 +63,7 @@ class BaseSoupValidator(ABC):
 
         for attempt in range(max_retries):
             try:
-                session = self.get_session()
-                response = session.get(url, timeout=15)
+                response = self.get_with_session(url, timeout=15)
                 time.sleep(self.delay)
                 response.raise_for_status()
 

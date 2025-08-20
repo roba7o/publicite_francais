@@ -11,10 +11,11 @@ from abc import ABC, abstractmethod
 import requests
 
 from config.environment import env_config
+from core.components.http_session_mixin import HTTPSessionMixin
 from utils.structured_logger import get_structured_logger
 
 
-class BaseUrlCollector(ABC):
+class BaseUrlCollector(HTTPSessionMixin, ABC):
     """
     Abstract base class for news site URL collectors.
 
@@ -48,19 +49,6 @@ class BaseUrlCollector(ABC):
         self.logger = get_structured_logger(self.__class__.__name__)
         self.debug = debug if debug is not None else env_config.is_debug_mode()
         self.base_url = ""  # Must be set by subclasses
-
-        # Default headers - can be overridden by subclasses
-        self.headers = {
-            "User-Agent": (
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                "(KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-            ),
-            "Accept": (
-                "text/html,application/xhtml+xml,application/xml;q=0.9,"
-                "image/webp,*/*;q=0.8"
-            ),
-            "Accept-Language": "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7",
-        }
 
     @abstractmethod
     def get_article_urls(self) -> list[str]:
@@ -96,7 +84,7 @@ class BaseUrlCollector(ABC):
             requests.RequestException: If request fails
         """
         try:
-            response = requests.get(url, headers=self.headers, timeout=timeout)
+            response = self.get_with_session(url, timeout=timeout)
             response.raise_for_status()
             return response
         except requests.exceptions.RequestException as e:
