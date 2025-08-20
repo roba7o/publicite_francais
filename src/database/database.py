@@ -19,7 +19,6 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from config.environment import env_config
 from database.models import RawArticle
-from database.schema import get_current_schema
 from utils.structured_logger import get_structured_logger
 
 logger = get_structured_logger(__name__)
@@ -123,7 +122,7 @@ def store_raw_article(raw_article: RawArticle) -> bool:
     Returns:
         True if stored successfully, False otherwise
     """
-    schema_name = get_current_schema()
+    schema_name = env_config.get_news_data_schema()
 
     try:
         with get_session() as session:
