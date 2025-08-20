@@ -10,7 +10,7 @@ from database.schema import get_current_schema
 
 __all__ = [
     "get_session",
-    "initialize_database", 
+    "initialize_database",
     "store_raw_article",
     "RawArticle",
     "get_current_schema",

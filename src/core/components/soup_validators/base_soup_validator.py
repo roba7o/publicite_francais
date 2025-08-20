@@ -2,7 +2,7 @@
 Pure ELT base soup validator for storing raw HTML to PostgreSQL.
 
 Provides:
-- HTTP session management for web scraping  
+- HTTP session management for web scraping
 - Database storage for raw HTML content
 - Abstract contract for child soup validators
 - Support for live and offline modes
@@ -46,7 +46,7 @@ class BaseSoupValidator(ABC):
 
         Args:
             site_domain: Domain name for logging (e.g., "slate.fr")
-            site_name: Human readable source name (e.g., "Slate.fr")  
+            site_name: Human readable source name (e.g., "Slate.fr")
             delay: Request delay in seconds for rate limiting
         """
         from utils.structured_logger import get_structured_logger
@@ -137,11 +137,11 @@ class BaseSoupValidator(ABC):
         current_file_dir = Path(__file__).parent
         project_root_dir = current_file_dir.parent.parent.parent.parent
         test_data_dir = project_root_dir / "src" / "test_data" / "raw_url_soup"
-        
+
         # Map config source names to directory names
         source_dir_mapping = {
             "slate.fr": "Slate.fr",
-            "franceinfo.fr": "FranceInfo.fr", 
+            "franceinfo.fr": "FranceInfo.fr",
             "tf1info.fr": "TF1 Info",
             "ladepeche.fr": "Depeche.fr"
         }
@@ -197,7 +197,7 @@ class BaseSoupValidator(ABC):
 
         Implementation Notes:
         - Store the ENTIRE HTML content in raw_html field
-        - Set source to the domain name (e.g., "slate.fr") 
+        - Set source to the domain name (e.g., "slate.fr")
         - Let dbt handle all text processing downstream
         - No title/content extraction here - pure raw storage
         """

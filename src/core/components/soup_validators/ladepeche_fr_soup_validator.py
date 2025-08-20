@@ -7,14 +7,13 @@ but stores only raw HTML. All content extraction happens in dbt.
 
 from bs4 import BeautifulSoup, Tag
 
-from database.models import RawArticle
 from core.components.soup_validators.base_soup_validator import BaseSoupValidator
+from database.models import RawArticle
 
 
 class ladepechefrSoupValidator(BaseSoupValidator):
     """
     Pure ELT parser for Ladepeche.fr articles.
-    
     Responsibility: Identify valid Ladepeche.fr articles and store raw HTML.
     Domain logic: Understands Ladepeche.fr HTML structure for validation.
     No text processing - that's handled by dbt downstream.
@@ -50,11 +49,11 @@ class ladepechefrSoupValidator(BaseSoupValidator):
         try:
             # Domain-specific validation: Ladepeche.fr uses various content containers
             article_content_area = (
-                soup.find("article") or 
+                soup.find("article") or
                 soup.find("div", class_="article-content") or
                 soup.find("main")
             )
-            
+
             if not article_content_area or not isinstance(article_content_area, Tag):
                 self.logger.warning(
                     "No article content area found - not a valid Ladepeche.fr article",

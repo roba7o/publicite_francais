@@ -1,8 +1,8 @@
 """
 Deterministic tests for the SCRAPE → UPLOAD RAW SOUP pipeline.
 
-These tests verify that the UrlCollector → SoupValidator → Database pipeline 
-produces exactly the expected results from the known HTML test files. 
+These tests verify that the UrlCollector → SoupValidator → Database pipeline
+produces exactly the expected results from the known HTML test files.
 Any changes to these counts indicate changes in parsing logic that need investigation.
 """
 

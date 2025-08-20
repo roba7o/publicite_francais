@@ -7,14 +7,13 @@ but stores only raw HTML. All content extraction happens in dbt.
 
 from bs4 import BeautifulSoup, Tag
 
-from database.models import RawArticle
 from core.components.soup_validators.base_soup_validator import BaseSoupValidator
+from database.models import RawArticle
 
 
 class FranceInfoSoupValidator(BaseSoupValidator):
     """
     Pure ELT soup validator for FranceInfo.fr articles.
-    
     Responsibility: Validate FranceInfo.fr articles and store raw HTML.
     Domain logic: Understands FranceInfo.fr HTML structure for validation.
     No text processing - that's handled by dbt downstream.

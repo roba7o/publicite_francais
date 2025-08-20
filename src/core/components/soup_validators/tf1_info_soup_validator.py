@@ -9,14 +9,13 @@ import re
 
 from bs4 import BeautifulSoup, Tag
 
-from database.models import RawArticle
 from core.components.soup_validators.base_soup_validator import BaseSoupValidator
+from database.models import RawArticle
 
 
 class tf1infoSoupValidator(BaseSoupValidator):
     """
     Pure ELT parser for TF1 Info articles.
-    
     Responsibility: Identify valid TF1 Info articles and store raw HTML.
     Domain logic: Understands TF1 Info HTML structure for validation.
     No text processing - that's handled by dbt downstream.
@@ -57,7 +56,7 @@ class tf1infoSoupValidator(BaseSoupValidator):
             )
             if not content_div:
                 content_div = soup.find("article")
-                
+
             if not content_div or not isinstance(content_div, Tag):
                 self.logger.warning(
                     "No content div or article tag found - not a valid TF1 Info article",
