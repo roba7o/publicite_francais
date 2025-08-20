@@ -17,17 +17,17 @@ class TestEssential:
         """Test that the component loader can load classes from class paths."""
         from core.component_loader import import_class
 
-        # Test scraper class loading
-        scraper_class = import_class("scrapers.slate_fr_scraper.SlateFrURLScraper")
-        assert scraper_class is not None
-        assert scraper_class.__name__ == "SlateFrURLScraper"
+        # Test url collector class loading
+        url_collector_class = import_class("url_collectors.slate_fr_url_collector.SlateFrUrlCollector")
+        assert url_collector_class is not None
+        assert url_collector_class.__name__ == "SlateFrUrlCollector"
 
-        # Test parser class loading
-        parser_class = import_class(
-            "parsers.database_slate_fr_parser.DatabaseSlateFrParser"
+        # Test soup validator class loading
+        soup_validator_class = import_class(
+            "soup_validators.slate_fr_soup_validator.SlateFrSoupValidator"
         )
-        assert parser_class is not None
-        assert parser_class.__name__ == "DatabaseSlateFrParser"
+        assert soup_validator_class is not None
+        assert soup_validator_class.__name__ == "SlateFrSoupValidator"
 
     def test_article_pipeline_disabled_config(self):
         """Test that ArticleCoordinator handles disabled configurations."""
@@ -35,9 +35,9 @@ class TestEssential:
         config = {
             "domain": "disabled-source.fr",
             "enabled": False,
-            "scraper_class": "scrapers.slate_fr_scraper.SlateFrURLScraper",
-            "parser_class": "parsers.database_slate_fr_parser.DatabaseSlateFrParser",
-            "scraper_kwargs": {"debug": False},
+            "url_collector_class": "url_collectors.slate_fr_url_collector.SlateFrUrlCollector",
+            "soup_validator_class": "soup_validators.slate_fr_soup_validator.SlateFrSoupValidator",
+            "url_collector_kwargs": {"debug": False},
         }
 
         # Test that the configuration dictionary has correct enabled state
@@ -82,15 +82,15 @@ class TestEssential:
         assert isinstance(config, dict)
         assert "domain" in config
         assert "enabled" in config
-        assert "scraper_class" in config
+        assert "url_collector_class" in config
 
         # Test that dict format has all required fields
         assert "domain" in config
         assert "enabled" in config
-        assert "scraper_class" in config
-        assert "parser_class" in config
-        assert "scraper_kwargs" in config
-        # parser_kwargs is optional (handled by config.get("parser_kwargs", {}))
+        assert "url_collector_class" in config
+        assert "soup_validator_class" in config
+        assert "url_collector_kwargs" in config
+        # soup_validator_kwargs is optional (handled by config.get("soup_validator_kwargs", {}))
 
     def test_test_mode_setting(self):
         """Test that test mode setting can be imported."""

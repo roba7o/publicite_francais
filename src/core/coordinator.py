@@ -157,17 +157,17 @@ class ArticleCoordinator:
             f"source_processing_{config['domain']}",
             extra_data={
                 "source": config["domain"],
-                "scraper_class": config["scraper_class"],
+                "url_collector_class": config["url_collector_class"],
             },
         )
         start_time = time.time()
 
         try:
-            # Create scraper
-            scraper = self.component_factory.create_scraper(config)
+            # Create url collector
+            url_collector = self.component_factory.create_scraper(config)
 
-            # Create database parser - much simpler, no database lookup needed!
-            database_parser = self.component_factory.create_parser(config)
+            # Create soup validator - much simpler, no database lookup needed!
+            soup_validator = self.component_factory.create_parser(config)
 
         except (ValueError, ImportError) as e:
             self.output.error(
@@ -191,7 +191,7 @@ class ArticleCoordinator:
             return 0, 0
 
         # Acquire content sources
-        sources = self.acquire_content(scraper, database_parser, config["domain"])
+        sources = self.acquire_content(url_collector, soup_validator, config["domain"])
 
         mode_str = (
             "offline" if os.getenv("TEST_MODE", "false").lower() == "true" else "live"
@@ -223,7 +223,7 @@ class ArticleCoordinator:
         for soup, source_identifier in sources:
             if soup:
                 success = self.process_article(
-                    database_parser, soup, source_identifier, config["domain"]
+                    soup_validator, soup, source_identifier, config["domain"]
                 )
                 if success:
                     processed_count += 1
