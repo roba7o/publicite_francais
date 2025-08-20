@@ -1,28 +1,28 @@
 """
-Pure ELT Slate.fr parser for raw HTML storage.
+Pure ELT Slate.fr soup validator for raw HTML storage.
 
-Handles Slate.fr domain-specific HTML structure identification
+Handles Slate.fr domain-specific HTML structure validation
 but stores only raw HTML. All content extraction happens in dbt.
 """
 
 from bs4 import BeautifulSoup, Tag
 
 from database.models import RawArticle
-from parsers.database_base_parser import DatabaseBaseParser
+from soup_validators.base_soup_validator import BaseSoupValidator
 
 
-class DatabaseSlateFrParser(DatabaseBaseParser):
+class SlateFrSoupValidator(BaseSoupValidator):
     """
-    Pure ELT parser for Slate.fr articles.
+    Pure ELT soup validator for Slate.fr articles.
     
-    Responsibility: Identify valid Slate.fr articles and store raw HTML.
+    Responsibility: Validate Slate.fr articles and store raw HTML.
     Domain logic: Understands Slate.fr HTML structure for validation.
     No text processing - that's handled by dbt downstream.
     """
 
     def __init__(self, source_name: str, debug: bool = False) -> None:
         """
-        Initialize Slate.fr parser.
+        Initialize Slate.fr soup validator.
 
         Args:
             source_name: Name of the source (should be "Slate.fr")
@@ -31,7 +31,7 @@ class DatabaseSlateFrParser(DatabaseBaseParser):
         super().__init__(site_domain="slate.fr", source_name=source_name)
         self.debug = debug
 
-    def parse_article(self, soup: BeautifulSoup, url: str) -> RawArticle | None:
+    def validate_and_extract(self, soup: BeautifulSoup, url: str) -> RawArticle | None:
         """
         Validate Slate.fr article structure and store raw HTML.
 

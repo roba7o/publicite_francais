@@ -29,7 +29,7 @@ from (
                 regexp_replace(full_text, '<[^>]*>', '', 'g'), -- Strip HTML
                 '.'
             )) as sentence
-        from {{ source('news_data', 'articles') }}
+        from {{ ref('articles') }}
         where full_text is not null 
           and length(trim(full_text)) > 200
           and full_text ~ '[àâäçéèêëïîôûùüÿñæœ]'  -- Contains French characters

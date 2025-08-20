@@ -5,6 +5,6 @@ This package provides tools for scraping French articles from various news websi
 processing the text, and extracting vocabulary with frequency analysis.
 """
 
-from core.models import RawArticle
+from database.models import RawArticle
 
 __all__ = ["RawArticle"]

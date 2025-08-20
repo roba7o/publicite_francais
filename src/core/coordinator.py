@@ -4,7 +4,7 @@ from typing import Any
 
 from bs4 import BeautifulSoup
 
-from core.models import RawArticle
+from database.models import RawArticle
 
 
 class ArticleCoordinator:
@@ -23,29 +23,29 @@ class ArticleCoordinator:
         self.component_factory = ComponentFactory()
 
     def acquire_content(
-        self, scraper: Any, parser: Any, source_name: str
+        self, url_collector: Any, soup_validator: Any, source_name: str
     ) -> list[tuple[BeautifulSoup, str]]:
         """
             Acquire content sources based on mode
-            a) Offline mode: read from local files (handled by parser)
-            b) Live mode: scrape from web (handled by below functions 1. _get_live_sources)
-            NOTE! Uses the same parser for both modes to maintain consistency
+            a) Offline mode: read from local files (handled by soup_validator)
+            b) Live mode: scrape from web (handled by _get_live_sources)
+            NOTE! Uses the same soup_validator for both modes to maintain consistency
 
             returns:
                 List of tuples (BeautifulSoup, source_identifier[url or file path])
         Check if running in offline mode (TEST_MODE)
         """
         if os.getenv("TEST_MODE", "false").lower() == "true":
-            return parser.get_test_sources_from_directory(source_name)
+            return soup_validator.get_test_sources_from_directory(source_name)
         else:
-            return self._get_live_sources(scraper, parser, source_name)
+            return self._get_live_sources(url_collector, soup_validator, source_name)
 
     # Logic for acquiring live sources from web scraping
     def _get_live_sources(
-        self, scraper: Any, parser: Any, source_name: str
+        self, url_collector: Any, soup_validator: Any, source_name: str
     ) -> list[tuple[BeautifulSoup, str]]:
         """Get live sources from web scraping."""
-        urls = scraper.get_article_urls()
+        urls = url_collector.get_article_urls()
         if not urls:
             self.output.warning(
                 "URL discovery returned no results",
@@ -59,7 +59,7 @@ class ArticleCoordinator:
         # Pure ELT: collect raw URLs without validation - let dbt handle validation
         for url in urls[:5]:
             try:
-                soup = parser.get_soup_from_url(url)
+                soup = soup_validator.get_soup_from_url(url)
                 if soup:
                     sources.append((soup, url))
 
@@ -78,9 +78,9 @@ class ArticleCoordinator:
         return sources
 
     def process_article(
-        self, parser, soup: BeautifulSoup, url: str, source_name: str
+        self, soup_validator, soup: BeautifulSoup, url: str, source_name: str
     ) -> bool:
-        """Process single article - parse and store to database."""
+        """Process single article - validate and store to database."""
         try:
             # Log article processing start with shortened URL
             # NOTE! does not affect the logic, just improves readability in logs
@@ -98,21 +98,21 @@ class ArticleCoordinator:
                 },
             )
 
-            # Parse article (ELT approach - raw HTML only in form of RawArticle)
-            raw_article: RawArticle | None = parser.parse_article(soup, url)
+            # Validate article (ELT approach - raw HTML only in form of RawArticle)
+            raw_article: RawArticle | None = soup_validator.validate_and_extract(soup, url)
             if not raw_article:
                 self.output.warning(
-                    f"Failed to parse: {url_display}",
+                    f"Failed to validate: {url_display}",
                     extra_data={
                         "source": source_name,
                         "url": url,
-                        "operation": "parse_failed",
+                        "operation": "validation_failed",
                     },
                 )
                 return False
 
             # Store raw data directly to database
-            success = parser.to_database(raw_article, url)
+            success = soup_validator.store_to_database(raw_article)
             if success:
                 self.output.success(
                     f"Stored: {url_display}",

@@ -1,13 +1,13 @@
 """
-Pure ELT base parser for storing raw HTML to PostgreSQL.
+Pure ELT base soup validator for storing raw HTML to PostgreSQL.
 
 Provides:
 - HTTP session management for web scraping  
 - Database storage for raw HTML content
-- Abstract contract for child parsers
+- Abstract contract for child soup validators
 - Support for live and offline modes
 
-Child parsers implement domain-specific HTML extraction logic.
+Child soup validators implement domain-specific HTML validation logic.
 """
 
 import os
@@ -24,25 +24,25 @@ from config.settings import DEBUG
 from database.models import RawArticle
 
 
-class DatabaseBaseParser(ABC):
+class BaseSoupValidator(ABC):
     """
-    Abstract base parser for pure ELT raw data collection.
+    Abstract base soup validator for pure ELT raw data collection.
 
-    Each child parser handles domain-specific HTML structure but stores
+    Each child soup validator handles domain-specific HTML structure but stores
     only raw HTML content. All text processing happens downstream in dbt.
 
     Contract:
-    - Child classes MUST implement: parse_article(soup, url) -> RawArticle | None
-    - Child classes handle domain-specific HTML extraction
+    - Child classes MUST implement: validate_and_extract(soup, url) -> RawArticle | None
+    - Child classes handle domain-specific HTML validation
     - Base class provides HTTP session management and database storage
     """
 
-    # Shared session for HTTP requests across all parser instances
+    # Shared session for HTTP requests across all soup validator instances
     _session = None
 
     def __init__(self, site_domain: str, source_name: str, delay: float = 1.0):
         """
-        Initialize parser with domain-specific configuration.
+        Initialize soup validator with domain-specific configuration.
 
         Args:
             site_domain: Domain name for logging (e.g., "slate.fr")
@@ -172,11 +172,11 @@ class DatabaseBaseParser(ABC):
         return soup_sources
 
     @abstractmethod
-    def parse_article(self, soup: BeautifulSoup, url: str) -> RawArticle | None:
+    def validate_and_extract(self, soup: BeautifulSoup, url: str) -> RawArticle | None:
         """
-        Extract domain-specific article content and create RawArticle.
+        Validate domain-specific article content and create RawArticle.
 
-        This is the ONLY method child parsers need to implement.
+        This is the ONLY method child soup validators need to implement.
         Each child handles the unique HTML structure of their domain.
 
         Args:
@@ -184,7 +184,7 @@ class DatabaseBaseParser(ABC):
             url: Article URL for the RawArticle record
 
         Returns:
-            RawArticle with raw HTML content or None if extraction fails
+            RawArticle with raw HTML content or None if validation fails
 
         Implementation Notes:
         - Store the ENTIRE HTML content in raw_html field

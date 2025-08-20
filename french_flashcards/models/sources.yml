@@ -4,21 +4,21 @@ sources:
   - name: news_data
     schema: "{{ 'news_data_test' if target.name == 'test' else 'news_data_dev' }}"
     tables:
-      - name: articles
-        description: Raw scraped French articles
+      - name: raw_articles
+        description: Raw scraped data (pure ELT - includes duplicates)
         columns:
           - name: id
             tests:
-              - unique
               - not_null
           - name: url
             tests:
               - not_null
-          - name: title
+          - name: raw_html
             tests:
               - not_null
-          - name: full_text
+          - name: source
             tests:
               - not_null
-          - name: article_date
-          - name: source_name
+          - name: scraped_at
+          - name: response_status
+          - name: content_length

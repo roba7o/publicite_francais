@@ -1,28 +1,28 @@
 """
-Pure ELT FranceInfo.fr parser for raw HTML storage.
+Pure ELT FranceInfo.fr soup validator for raw HTML storage.
 
-Handles FranceInfo.fr domain-specific HTML structure identification
+Handles FranceInfo.fr domain-specific HTML structure validation
 but stores only raw HTML. All content extraction happens in dbt.
 """
 
 from bs4 import BeautifulSoup, Tag
 
 from database.models import RawArticle
-from parsers.database_base_parser import DatabaseBaseParser
+from soup_validators.base_soup_validator import BaseSoupValidator
 
 
-class DatabaseFranceInfoParser(DatabaseBaseParser):
+class FranceInfoSoupValidator(BaseSoupValidator):
     """
-    Pure ELT parser for FranceInfo.fr articles.
+    Pure ELT soup validator for FranceInfo.fr articles.
     
-    Responsibility: Identify valid FranceInfo.fr articles and store raw HTML.
+    Responsibility: Validate FranceInfo.fr articles and store raw HTML.
     Domain logic: Understands FranceInfo.fr HTML structure for validation.
     No text processing - that's handled by dbt downstream.
     """
 
     def __init__(self, source_name: str, debug: bool = False) -> None:
         """
-        Initialize FranceInfo.fr parser.
+        Initialize FranceInfo.fr soup validator.
 
         Args:
             source_name: Name of the source (should be "FranceInfo.fr")
@@ -31,7 +31,7 @@ class DatabaseFranceInfoParser(DatabaseBaseParser):
         super().__init__(site_domain="franceinfo.fr", source_name=source_name)
         self.debug = debug
 
-    def parse_article(self, soup: BeautifulSoup, url: str) -> RawArticle | None:
+    def validate_and_extract(self, soup: BeautifulSoup, url: str) -> RawArticle | None:
         """
         Validate FranceInfo.fr article structure and store raw HTML.
 
