@@ -33,4 +33,4 @@ class ComponentFactory:
 
         # Parser gets source_name from config - much simpler!
         kwargs = config.get("parser_kwargs", {})
-        return create_component(class_path, config["name"], **kwargs)
+        return create_component(class_path, config["domain"], **kwargs)

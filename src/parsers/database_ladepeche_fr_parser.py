@@ -12,9 +12,8 @@ from datetime import datetime
 
 from bs4 import BeautifulSoup
 
-from core.models import ArticleData
+from core.models import RawArticle
 from parsers.database_base_parser import DatabaseBaseParser
-from utils.validators import DataValidator
 
 
 class DatabaseLadepecheFrParser(DatabaseBaseParser):
@@ -33,67 +32,32 @@ class DatabaseLadepecheFrParser(DatabaseBaseParser):
         self.debug = debug
         self.logger.info("DatabaseLadepecheFrParser initialized.")
 
-    def parse_article(self, soup: BeautifulSoup) -> ArticleData | None:
+    def parse_article(self, soup: BeautifulSoup, url: str) -> RawArticle | None:
         """
-        Parse Ladepeche.fr article from BeautifulSoup object.
+        Create RawArticle for ELT processing.
 
-        This method is identical to LadepecheFrArticleParser.parse_article()
-        to ensure consistent parsing behavior.
+        Returns raw HTML data - all processing done by dbt.
         """
         try:
-            # Look for the main article content area
+            # Simple validation - ensure we have content
             article_content_area = soup.find("article") or soup.find(
                 "div", class_="article-content"
             )
             if not article_content_area:
-                self.logger.warning(
-                    "No main article content area found (article or .article-content)."
-                )
-                # Attempt a more general fallback if specific elements
-                # aren't found
                 article_content_area = soup.find("main")
 
             if not article_content_area:
-                self.logger.warning(
-                    "No article content found even with general fallback. "
-                    "This might not be an article page."
-                )
                 return None
 
-            paragraphs = self._extract_paragraphs(
-                BeautifulSoup(str(article_content_area), "html.parser")
-            )
-            full_text = "\n\n".join(paragraphs) if paragraphs else ""
-
-            if not full_text:
-                self.logger.warning(
-                    "No significant text extracted from Ladepeche.fr article."
-                )
-                return None
-
-            # Log basic text info for debugging
-            if self.debug:
-                word_count = len(full_text.split())
-                self.logger.info(f"Ladepeche.fr text stats: total_words={word_count}")
-
-            # Extract and validate title and date
-            raw_title = self._extract_title(soup)
-            validated_title = DataValidator.validate_title(raw_title)
-
-            raw_date = self._extract_date(soup)
-            validated_date = DataValidator.validate_date(raw_date)
-
-            return ArticleData(
-                full_text=full_text,
-                num_paragraphs=len(paragraphs),
-                title=validated_title or "Untitled Article",
-                article_date=validated_date,
-                date_scraped=datetime.now().strftime("%Y-%m-%d"),
-                author=self._extract_author(soup),
+            # Return raw HTML for dbt processing
+            return RawArticle(
+                url=url,
+                raw_html=str(soup),
+                source="ladepeche.fr",
             )
 
         except Exception as e:
-            self.logger.error(f"Error parsing Ladepeche.fr article: {e}", exc_info=True)
+            self.logger.error(f"Error creating raw article data: {e}")
             return None
 
     def _extract_paragraphs(self, content_area: BeautifulSoup) -> list[str]:

@@ -48,9 +48,9 @@ def get_structured_logger(name: str) -> StructuredLogger:
 # Initialize basic logging
 def _initialize_logging() -> None:
     """Initialize basic logging configuration."""
-    root_logger = logging.getLogger()   # Get the root logger (if not already configured)
+    root_logger = logging.getLogger()  # Get the root logger (if not already configured)
     if not root_logger.handlers:
-        log_level = logging.DEBUG if DEBUG else logging.INFO    #uses DEBUG setings
+        log_level = logging.DEBUG if DEBUG else logging.INFO  # uses DEBUG setings
         logging.basicConfig(
             level=log_level,
             format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",

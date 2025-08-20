@@ -12,9 +12,8 @@ from datetime import datetime
 
 from bs4 import BeautifulSoup, Tag
 
-from core.models import ArticleData
+from core.models import RawArticle
 from parsers.database_base_parser import DatabaseBaseParser
-from utils.validators import DataValidator
 
 
 class DatabaseFranceInfoParser(DatabaseBaseParser):
@@ -32,41 +31,27 @@ class DatabaseFranceInfoParser(DatabaseBaseParser):
         super().__init__(site_domain="franceinfo.fr", source_name=source_name)
         self.debug = debug
 
-    def parse_article(self, soup: BeautifulSoup) -> ArticleData | None:
+    def parse_article(self, soup: BeautifulSoup, url: str) -> RawArticle | None:
         """
-        Parse FranceInfo article from BeautifulSoup object.
+        Create RawArticle for ELT processing.
 
-        This method is identical to FranceInfoArticleParser.parse_article()
-        to ensure consistent parsing behavior.
+        Returns raw HTML data - all processing done by dbt.
         """
         try:
+            # Simple validation - ensure we have content
             content_div = soup.find("div", class_="c-body")
             if not content_div or not isinstance(content_div, Tag):
                 return None
 
-            paragraphs = self._extract_paragraphs(content_div)
-            full_text = "\n\n".join(paragraphs) if paragraphs else ""
-
-            if not full_text:
-                return None
-
-            # Extract and validate title and date
-            raw_title = self._extract_title(soup)
-            validated_title = DataValidator.validate_title(raw_title)
-
-            raw_date = self._extract_date(soup)
-            validated_date = DataValidator.validate_date(raw_date)
-
-            return ArticleData(
-                full_text=full_text,
-                num_paragraphs=len(paragraphs),
-                title=validated_title or "Untitled Article",
-                article_date=validated_date,
-                date_scraped=datetime.now().strftime("%Y-%m-%d"),
+            # Return raw HTML for dbt processing
+            return RawArticle(
+                url=url,
+                raw_html=str(soup),
+                source="franceinfo.fr",
             )
 
         except Exception as e:
-            self.logger.error(f"Error parsing FranceInfo article: {e}")
+            self.logger.error(f"Error creating raw article data: {e}")
             return None
 
     def _extract_paragraphs(self, content_div: Tag) -> list[str]:

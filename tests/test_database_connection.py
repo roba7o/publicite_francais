@@ -25,7 +25,6 @@ sys.path.insert(0, str(src_path))
 
 # Import after path modification
 from core.database import (  # noqa: E402
-    get_database_manager,
     get_session,
     initialize_database,
 )
@@ -57,18 +56,21 @@ def test_raw_connection():
     print("\n\033[35m■ Testing database manager compatibility...\033[0m")
 
     try:
-        db = get_database_manager()
+        # Direct session usage
 
         # Test that we can get sessions from the manager
-        with db.get_session() as session:
+        with get_session() as session:
             # Test basic query using SQLAlchemy
             result = session.execute(
                 text("SELECT current_database(), current_user, version()")
             ).fetchone()
 
-            print(f"\033[32m✓ Connected to database: {result[0]}\033[0m")
-            print(f"\033[32m✓ Connected as user: {result[1]}\033[0m")
-            print(f"\033[32m✓ PostgreSQL version: {result[2].split(',')[0]}\033[0m")
+            if result:
+                print(f"\033[32m✓ Connected to database: {result[0]}\033[0m")
+                print(f"\033[32m✓ Connected as user: {result[1]}\033[0m")
+                print(f"\033[32m✓ PostgreSQL version: {result[2].split(',')[0]}\033[0m")
+            else:
+                print("\033[31m✗ No result from database query\033[0m")
 
         print("\033[32m✓ Database manager compatibility confirmed\033[0m")
 
@@ -82,9 +84,9 @@ def test_sqlalchemy_connection():
     print("\n\033[36m■ Testing SQLAlchemy connection...\033[0m")
 
     try:
-        db = get_database_manager()
+        # Direct session usage
 
-        with db.get_session() as session:
+        with get_session() as session:
             from sqlalchemy import text
 
             # Test schema query
@@ -112,9 +114,9 @@ def test_news_sources_data():
     print("\n\033[34m■ Testing news sources data...\033[0m")
 
     try:
-        db = get_database_manager()
+        # Direct session usage
 
-        with db.get_session() as session:
+        with get_session() as session:
             from sqlalchemy import text
 
             # Try different schema variations based on environment

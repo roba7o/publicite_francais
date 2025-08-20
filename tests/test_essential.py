@@ -7,7 +7,7 @@ Focused on database pipeline functionality.
 
 from config.source_configs import SCRAPER_CONFIGS
 from core.coordinator import ArticleCoordinator
-from core.models import ArticleData
+from core.models import RawArticle
 
 
 class TestEssential:
@@ -33,7 +33,7 @@ class TestEssential:
         """Test that ArticleCoordinator handles disabled configurations."""
         # Create a disabled source configuration dictionary
         config = {
-            "name": "DisabledSource",
+            "domain": "disabled-source.fr",
             "enabled": False,
             "scraper_class": "scrapers.slate_fr_scraper.SlateFrURLScraper",
             "parser_class": "parsers.database_slate_fr_parser.DatabaseSlateFrParser",
@@ -42,7 +42,7 @@ class TestEssential:
 
         # Test that the configuration dictionary has correct enabled state
         assert config["enabled"] is False
-        assert config["name"] == "DisabledSource"
+        assert config["domain"] == "disabled-source.fr"
         assert config["enabled"] is False
 
     def test_article_pipeline_initialization(self):
@@ -50,19 +50,18 @@ class TestEssential:
         processor = ArticleCoordinator()
         assert processor is not None
 
-    def test_article_data_model(self):
-        """Test ArticleData model creation."""
-        parsed_data = ArticleData(
-            title="Test Article",
-            full_text="Test content for the article",
-            article_date="2025-07-14",
-            date_scraped="2025-07-14",
+    def test_raw_article_model(self):
+        """Test RawArticle model creation."""
+        raw_data = RawArticle(
+            url="https://test.example.com/article",
+            raw_html="<html><body><h1>Test Article</h1><p>Test content</p></body></html>",
+            source="test.example.com",
         )
 
-        assert parsed_data.title == "Test Article"
-        assert parsed_data.full_text == "Test content for the article"
-        assert parsed_data.article_date == "2025-07-14"
-        assert parsed_data.date_scraped == "2025-07-14"
+        assert raw_data.url == "https://test.example.com/article"
+        assert "Test Article" in raw_data.raw_html
+        assert raw_data.source == "test.example.com"
+        assert raw_data.content_length > 0
 
     def test_database_connectivity_check(self):
         """Test database connectivity without actual database operations."""
@@ -81,12 +80,12 @@ class TestEssential:
         # Check first config has required fields for database architecture
         config = SCRAPER_CONFIGS[0]
         assert isinstance(config, dict)
-        assert "name" in config
+        assert "domain" in config
         assert "enabled" in config
         assert "scraper_class" in config
 
         # Test that dict format has all required fields
-        assert "name" in config
+        assert "domain" in config
         assert "enabled" in config
         assert "scraper_class" in config
         assert "parser_class" in config
@@ -114,16 +113,16 @@ class TestEssential:
         assert validator is not None
 
     def test_mock_classes_aligned_with_architecture(self):
-        """Test that mock classes work with the new database architecture."""
-        from core.models import ArticleData
+        """Test that mock classes work with the ELT database architecture."""
         from tests.fixtures.mock_parser_unified import MockDatabaseParser
         from tests.fixtures.mock_scraper import MockScraper
 
-        # Test that mock parser returns ArticleData (not dict)
+        # Test that mock parser returns RawArticle (ELT approach)
         parser = MockDatabaseParser("test-source")
-        article_data = parser.parse_article(None)  # Mock doesn't need actual soup
-        assert isinstance(article_data, ArticleData)
-        assert article_data.title == "Mock Article Title"
+        raw_article = parser.parse_article(None)  # Mock doesn't need actual soup
+        assert isinstance(raw_article, RawArticle)
+        assert "Mock Article Title" in raw_article.raw_html
+        assert raw_article.source == "test.example.com"
 
         # Test that mock scraper works with processor
         scraper = MockScraper(debug=True)

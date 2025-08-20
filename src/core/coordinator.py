@@ -105,9 +105,9 @@ class ArticleCoordinator:
                 },
             )
 
-            # Parse article (no text processing)
-            article_data = parser.parse_article(soup)
-            if not article_data:
+            # Parse article (ELT approach - raw HTML only)
+            raw_article = parser.parse_article(soup, url)
+            if not raw_article:
                 self.output.warning(
                     f"Failed to parse: {url_display}",
                     extra_data={
@@ -119,15 +119,15 @@ class ArticleCoordinator:
                 return False
 
             # Store raw data directly to database
-            success = parser.to_database(article_data, url)
+            success = parser.to_database(raw_article, url)
             if success:
                 self.output.success(
-                    f"Stored: {article_data.title[:50]}{'...' if len(article_data.title) > 50 else ''}",
+                    f"Stored: {url_display}",
                     extra_data={
                         "source": source_name,
                         "url": url,
-                        "title": article_data.title,
-                        "word_count": len(article_data.full_text.split()),
+                        "content_length": raw_article.content_length,
+                        "approach": "ELT",
                         "operation": "article_complete",
                     },
                 )
@@ -154,16 +154,16 @@ class ArticleCoordinator:
         if not config.get("enabled", True):
             self.output.info(
                 "Source processing skipped - disabled",
-                extra_data={"source": config["name"], "reason": "disabled"},
+                extra_data={"source": config["domain"], "reason": "disabled"},
             )
             return 0, 0
 
         # Database is always enabled (no CSV fallback)
 
         self.output.process_start(
-            f"source_processing_{config['name']}",
+            f"source_processing_{config['domain']}",
             extra_data={
-                "source": config["name"],
+                "source": config["domain"],
                 "scraper_class": config["scraper_class"],
             },
         )
@@ -180,7 +180,7 @@ class ArticleCoordinator:
             self.output.error(
                 "Component initialization failed",
                 extra_data={
-                    "source": config["name"],
+                    "source": config["domain"],
                     "error": str(e),
                     "operation": "initialization",
                 },
@@ -190,7 +190,7 @@ class ArticleCoordinator:
             self.output.error(
                 "Unexpected error during component initialization",
                 extra_data={
-                    "source": config["name"],
+                    "source": config["domain"],
                     "error": str(e),
                     "operation": "initialization",
                 },
@@ -198,15 +198,15 @@ class ArticleCoordinator:
             return 0, 0
 
         # Acquire content sources
-        sources = self.acquire_content(scraper, database_parser, config["name"])
+        sources = self.acquire_content(scraper, database_parser, config["domain"])
 
         mode_str = (
             "offline" if os.getenv("TEST_MODE", "false").lower() == "true" else "live"
         )
         self.output.info(
-            f"Found {len(sources)} sources for {config['name']} (mode: {mode_str})",
+            f"Found {len(sources)} sources for {config['domain']} (mode: {mode_str})",
             extra_data={
-                "source": config["name"],
+                "source": config["domain"],
                 "sources_found": len(sources),
                 "mode": mode_str,
             },
@@ -216,7 +216,7 @@ class ArticleCoordinator:
             self.output.warning(
                 "No content sources found",
                 extra_data={
-                    "source": config["name"],
+                    "source": config["domain"],
                     "mode": mode_str,
                     "sources_count": 0,
                 },
@@ -230,7 +230,7 @@ class ArticleCoordinator:
         for soup, source_identifier in sources:
             if soup:
                 success = self.process_article(
-                    database_parser, soup, source_identifier, config["name"]
+                    database_parser, soup, source_identifier, config["domain"]
                 )
                 if success:
                     processed_count += 1
@@ -242,9 +242,9 @@ class ArticleCoordinator:
 
         # Complete source processing with consolidated output
         self.output.process_complete(
-            f"source_processing_{config['name']}",
+            f"source_processing_{config['domain']}",
             extra_data={
-                "source": config["name"],
+                "source": config["domain"],
                 "articles_stored": processed_count,
                 "articles_attempted": total_attempted,
                 "success_rate_percent": round(success_rate, 1),
@@ -253,8 +253,8 @@ class ArticleCoordinator:
         )
 
         self.output.success(
-            f"Source '{config['name']}' processing completed",
-            extra_data={"source": config["name"], "status": "completed"},
+            f"Source '{config['domain']}' processing completed",
+            extra_data={"source": config["domain"], "status": "completed"},
         )
 
         return processed_count, total_attempted

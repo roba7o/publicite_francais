@@ -1,77 +1,56 @@
 """
-Data models for the article scraper system.
+Data models for the article scraper system using ELT approach.
+
+ELT = Extract, Load, Transform
+- Extract: Scrape raw HTML
+- Load: Store raw data in database
+- Transform: Process with dbt
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
-__all__ = ["ArticleData"]
+__all__ = ["RawArticle"]
 
 
 @dataclass
-class ArticleData:
+class RawArticle:
     """
-    Represents scraped article data with validation and normalization.
+    Raw scraped data - no processing, just collection.
 
-    This dataclass replaces the previous dictionary-based approach for
-    representing article data, providing type safety and better structure.
+    This follows the ELT pattern where Python only collects raw data
+    and dbt handles all content processing and extraction.
     """
 
     # Required fields
-    title: str
-    full_text: str
-    article_date: str  # Format: YYYY-MM-DD
-    date_scraped: str  # Format: YYYY-MM-DD or YYYY-MM-DD HH:MM:SS
+    url: str
+    raw_html: str  # Complete HTML content as text
+    source: str  # Domain only: "slate.fr", "franceinfo.fr"
 
-    # Optional fields
-    num_paragraphs: int | None = None
-    author: str | None = None
-    category: str | None = None
-    summary: str | None = None
+    # Auto-generated fields
+    scraped_at: str = field(default_factory=lambda: datetime.now().isoformat())
+
+    # Optional metadata
+    response_status: int | None = None
+    content_length: int | None = None
 
     def __post_init__(self) -> None:
-        """Validate and normalize data after initialization."""
-        # Ensure date_scraped is set if not provided
-        if not self.date_scraped:
-            self.date_scraped = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        """Validate raw data after initialization."""
+        if not self.url or not self.raw_html or not self.source:
+            raise ValueError("url, raw_html, and source are required")
+
+        # Set content_length if not provided
+        if self.content_length is None:
+            self.content_length = len(self.raw_html)
 
     def to_dict(self) -> dict[str, Any]:
-        """
-        Convert ArticleData to dictionary for backward compatibility.
-
-        Returns:
-            dict: Dictionary representation of the article data
-        """
+        """Convert to dictionary for database storage."""
         return {
-            "title": self.title,
-            "full_text": self.full_text,
-            "article_date": self.article_date,
-            "date_scraped": self.date_scraped,
-            "num_paragraphs": self.num_paragraphs,
-            "author": self.author,
-            "category": self.category,
-            "summary": self.summary,
+            "url": self.url,
+            "raw_html": self.raw_html,
+            "source": self.source,
+            "scraped_at": self.scraped_at,
+            "response_status": self.response_status,
+            "content_length": self.content_length,
         }
-
-    @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "ArticleData":
-        """
-        Create ArticleData from dictionary.
-
-        Args:
-            data: Dictionary containing article data
-
-        Returns:
-            ArticleData: New instance with data from dictionary
-        """
-        return cls(
-            title=data.get("title", ""),
-            full_text=data.get("full_text", ""),
-            article_date=data.get("article_date", ""),
-            date_scraped=data.get("date_scraped", ""),
-            num_paragraphs=data.get("num_paragraphs"),
-            author=data.get("author"),
-            category=data.get("category"),
-            summary=data.get("summary"),
-        )

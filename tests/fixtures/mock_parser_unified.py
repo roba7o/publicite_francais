@@ -9,7 +9,7 @@ from unittest.mock import Mock
 
 from bs4 import BeautifulSoup
 
-from core.models import ArticleData
+from core.models import RawArticle
 
 
 class ConfigurableMockParser:
@@ -73,15 +73,32 @@ class ConfigurableMockParser:
             },
         }
 
-    def parse_article(self, soup: BeautifulSoup) -> ArticleData | None:
+    def parse_article(self, soup: BeautifulSoup, url: str = "https://test.example.com/mock-article") -> RawArticle | None:
         """Parse article based on behavior configuration."""
         if self.behavior in ["failure", "empty"]:
             return None
 
-        config = self.content_configs.get(
-            self.behavior, self.content_configs["success"]
+        # Return raw HTML data for ELT approach
+        if self.behavior == "rich_content":
+            html = """
+            <html>
+            <body>
+                <h1>Article Français Complexe avec Analyses Détaillées</h1>
+                <div class="content">
+                    <p>Le gouvernement français annonce des réformes importantes pour l'économie nationale.</p>
+                    <p>Ces changements concernent principalement la sécurité sociale et les politiques publiques.</p>
+                </div>
+            </body>
+            </html>
+            """
+        else:
+            html = "<html><body><h1>Mock Article Title</h1><p>Ceci est un article de test français avec du contenu pour analyse.</p></body></html>"
+
+        return RawArticle(
+            url=url,
+            raw_html=html,
+            source="test.example.com"
         )
-        return ArticleData(**config)
 
     def get_soup_from_url(self, url: str) -> BeautifulSoup | None:
         """Get soup based on behavior configuration."""
@@ -115,7 +132,7 @@ class ConfigurableMockParser:
         soup = self.get_soup_from_url("mock://url")
         return [(soup, f"https://test.example.com/{self.behavior}-article")]
 
-    def to_database(self, article_data: ArticleData, url: str) -> bool:
+    def to_database(self, raw_article: RawArticle, url: str) -> bool:
         """Mock database operation based on behavior configuration."""
         if self.behavior == "failure":
             return False

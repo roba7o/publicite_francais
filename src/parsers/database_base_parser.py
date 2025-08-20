@@ -21,14 +21,14 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 from config.settings import DEBUG
-from core.models import ArticleData
+from core.models import RawArticle
 
 
 class DatabaseBaseParser(ABC):
     """
     Database-focused base parser for raw data collection.
 
-    Child parsers implement the parse_article(soup) -> ArticleData interface.
+    Child parsers implement the parse_article(soup) -> RawArticle interface.
 
     Features:
     - Shared HTTP session with connection pooling
@@ -38,7 +38,7 @@ class DatabaseBaseParser(ABC):
     - Support for both live web scraping and offline testing
 
     Child classes must implement:
-        parse_article(soup): Extract title, full_text, date from HTML
+        parse_article(soup): Return raw HTML data for ELT processing
     """
 
     # Shared session for HTTP requests
@@ -185,36 +185,32 @@ class DatabaseBaseParser(ABC):
         return soup_sources
 
     @abstractmethod
-    def parse_article(self, soup: BeautifulSoup) -> ArticleData | None:
+    def parse_article(self, soup: BeautifulSoup, url: str) -> RawArticle | None:
         """
-        Extract raw article data from HTML.
+        Create raw article data for ELT processing.
 
-        Child parsers must implement this to extract:
-        - title: Article headline
-        - full_text: Complete article content
-        - article_date: Publication date (optional)
-        - num_paragraphs: Paragraph count
-
-        NO text processing - just extract the raw content.
-        Text analysis will be done in dbt/SQL.
+        Child parsers must implement this to return:
+        - RawArticle with complete HTML content
+        - All processing will be done by dbt
 
         Args:
             soup: BeautifulSoup object of article HTML
+            url: Article URL for the RawArticle
 
         Returns:
-            ArticleData with raw content or None if parsing fails
+            RawArticle with raw HTML or None if parsing fails
         """
         pass
 
-    def to_database(self, article_data: ArticleData, url: str) -> bool:
+    def to_database(self, raw_article: RawArticle, url: str) -> bool:
         """
-        Store raw article data using repository pattern.
+        Store raw article data using ELT approach.
 
         Args:
-            article_data: Parsed article content
+            raw_article: Raw HTML data
             url: Article URL for duplicate detection
 
         Returns:
             True if stored successfully, False otherwise
         """
-        return self.repository.store_article(article_data, url, self.source_name)
+        return self.repository.store_raw_article(raw_article)

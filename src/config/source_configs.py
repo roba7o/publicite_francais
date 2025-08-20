@@ -5,12 +5,12 @@ Contains the full path to scraper/parsers for the database architecture.
 
 
 def get_scraper_configs() -> list[dict]:
-    """Get list of scraper configurations as simple dictionaries."""
+    """Get list of scraper configurations using domain-based naming."""
     from config.settings import DEBUG
 
     return [
         {
-            "name": "Slate.fr",
+            "domain": "slate.fr",  # Standardized domain identifier
             "enabled": True,
             "scraper_class": "scrapers.slate_fr_scraper.SlateFrURLScraper",
             "parser_class": "parsers.database_slate_fr_parser.DatabaseSlateFrParser",
@@ -18,7 +18,7 @@ def get_scraper_configs() -> list[dict]:
             "parser_kwargs": {"debug": DEBUG},
         },
         {
-            "name": "FranceInfo.fr",
+            "domain": "franceinfo.fr",  # Standardized domain identifier
             "enabled": True,
             "scraper_class": "scrapers.france_info_scraper.FranceInfoURLScraper",
             "parser_class": "parsers.database_france_info_parser.DatabaseFranceInfoParser",
@@ -26,7 +26,7 @@ def get_scraper_configs() -> list[dict]:
             "parser_kwargs": {"debug": DEBUG},
         },
         {
-            "name": "TF1 Info",
+            "domain": "tf1info.fr",  # Standardized domain identifier
             "enabled": True,
             "scraper_class": "scrapers.tf1_info_scraper.TF1InfoURLScraper",
             "parser_class": "parsers.database_tf1_info_parser.DatabaseTF1InfoParser",
@@ -34,7 +34,7 @@ def get_scraper_configs() -> list[dict]:
             "parser_kwargs": {"debug": DEBUG},
         },
         {
-            "name": "Depeche.fr",
+            "domain": "ladepeche.fr",  # Standardized domain identifier
             "enabled": True,
             "scraper_class": "scrapers.ladepeche_fr_scraper.LadepecheFrURLScraper",
             "parser_class": "parsers.database_ladepeche_fr_parser.DatabaseLadepecheFrParser",

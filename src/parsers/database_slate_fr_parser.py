@@ -11,9 +11,8 @@ from datetime import datetime
 
 from bs4 import BeautifulSoup, Tag
 
-from core.models import ArticleData
+from core.models import RawArticle
 from parsers.database_base_parser import DatabaseBaseParser
-from utils.validators import DataValidator
 
 
 class DatabaseSlateFrParser(DatabaseBaseParser):
@@ -37,40 +36,27 @@ class DatabaseSlateFrParser(DatabaseBaseParser):
         super().__init__(site_domain="slate.fr", source_name=source_name)
         self.debug = debug
 
-    def parse_article(self, soup: BeautifulSoup) -> ArticleData | None:
+    def parse_article(self, soup: BeautifulSoup, url: str) -> RawArticle | None:
         """
-        Parse Slate.fr article - identical logic to SlateFrArticleParser.
+        Create RawArticle for ELT processing.
 
-        The only difference: uses DatabaseBaseParser instead of BaseParser.
+        Returns raw HTML data - all processing done by dbt.
         """
         try:
+            # Simple validation - ensure we have an article
             article_tag = soup.find("article")
             if not article_tag or not isinstance(article_tag, Tag):
                 return None
 
-            paragraphs = self._extract_paragraphs(article_tag)
-            full_text = "\n\n".join(paragraphs) if paragraphs else ""
-
-            if not full_text:
-                return None
-
-            # Extract and validate title and date
-            raw_title = self._extract_title(soup)
-            validated_title = DataValidator.validate_title(raw_title)
-
-            raw_date = self._extract_date(soup)
-            validated_date = DataValidator.validate_date(raw_date)
-
-            return ArticleData(
-                full_text=full_text,
-                num_paragraphs=len(paragraphs),
-                title=validated_title or "Untitled Article",
-                article_date=validated_date,
-                date_scraped=datetime.now().strftime("%Y-%m-%d"),
+            # Return raw HTML for dbt processing
+            return RawArticle(
+                url=url,
+                raw_html=str(soup),
+                source="slate.fr",
             )
 
         except Exception as e:
-            self.logger.error(f"Error parsing Slate.fr article: {e}")
+            self.logger.error(f"Error creating raw article data: {e}")
             return None
 
     def _extract_paragraphs(self, article_tag: Tag) -> list[str]:

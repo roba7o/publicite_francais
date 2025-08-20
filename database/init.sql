@@ -27,34 +27,18 @@ CREATE SCHEMA IF NOT EXISTS dbt_prod;         -- dbt production target
 CREATE OR REPLACE FUNCTION create_environment_tables(env_schema text)
 RETURNS void AS $$
 BEGIN
-    -- News sources configuration table
+    -- Raw articles table (ELT approach - stores unprocessed HTML)
     EXECUTE format('
-        CREATE TABLE IF NOT EXISTS %I.news_sources (
+        CREATE TABLE IF NOT EXISTS %I.raw_articles (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            name VARCHAR(100) NOT NULL UNIQUE,
-            base_url VARCHAR(500) NOT NULL,
-            enabled BOOLEAN NOT NULL DEFAULT true,
-            scraper_class VARCHAR(200),
-            parser_class VARCHAR(200),
-            config JSONB,
-            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-        )', env_schema);
-
-    -- Articles metadata table
-    EXECUTE format('
-        CREATE TABLE IF NOT EXISTS %I.articles (
-            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            source_id UUID NOT NULL REFERENCES %I.news_sources(id),
-            title TEXT NOT NULL,
-            url TEXT NOT NULL,
-            article_date DATE,
+            url TEXT NOT NULL UNIQUE,
+            raw_html TEXT NOT NULL,
+            source TEXT NOT NULL,  -- Domain: "slate.fr", "franceinfo.fr" 
             scraped_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-            full_text TEXT,
-            num_paragraphs INTEGER,
-            UNIQUE(source_id, url),
-            UNIQUE(source_id, title, article_date)
-        )', env_schema, env_schema);
+            response_status INTEGER,
+            content_length INTEGER,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        )', env_schema);
 
     -- Word frequencies table
     EXECUTE format('

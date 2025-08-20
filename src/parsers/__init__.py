@@ -2,7 +2,7 @@
 Parser module for French Article Scraper.
 
 This module contains database-focused parsers for extracting content from different French news websites.
-All parsers extend the DatabaseBaseParser class and return ArticleData objects for database storage.
+All parsers extend the DatabaseBaseParser class and return RawArticle objects for ELT processing.
 """
 
 from .database_base_parser import DatabaseBaseParser
