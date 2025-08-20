@@ -47,6 +47,17 @@ class ladepechefrSoupValidator(BaseSoupValidator):
             RawArticle with raw HTML or None if not a valid article
         """
         try:
+            # Enhanced validation: Check URL domain using tldextract
+            if not self.validate_url_domain(url, "ladepeche.fr"):
+                self.logger.warning(
+                    "URL domain validation failed",
+                    extra_data={
+                        "url": url,
+                        "expected_domain": "ladepeche.fr",
+                        "site": "ladepeche.fr",
+                    },
+                )
+                return None
             # Domain-specific validation: Ladepeche.fr uses various content containers
             article_content_area = (
                 soup.find("article")

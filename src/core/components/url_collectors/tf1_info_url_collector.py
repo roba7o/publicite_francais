@@ -5,8 +5,6 @@ TF1 Info UrlCollector - Extracts article URLs from TF1 Info homepage
 import json
 from urllib.parse import urljoin
 
-from bs4 import BeautifulSoup
-
 from core.components.url_collectors.base_url_collector import BaseUrlCollector
 
 
@@ -25,7 +23,7 @@ class TF1InfoUrlCollector(BaseUrlCollector):
         """
         try:
             response = self._make_request(self.base_url)
-            soup = BeautifulSoup(response.text, "html.parser")
+            soup = self.parse_html_fast(response.text.encode())
 
             # Method 1: Try to extract from JSON-LD in script tag
             urls = self._extract_from_json_ld(soup)

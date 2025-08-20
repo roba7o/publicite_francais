@@ -1,6 +1,6 @@
 from urllib.parse import urljoin
 
-from bs4 import BeautifulSoup, Tag
+from bs4 import Tag
 
 from core.components.url_collectors.base_url_collector import BaseUrlCollector
 
@@ -13,7 +13,7 @@ class SlateFrUrlCollector(BaseUrlCollector):
     def get_article_urls(self) -> list[str]:
         try:
             response = self._make_request(self.base_url)
-            soup = BeautifulSoup(response.content, "html.parser")
+            soup = self.parse_html_fast(response.content)
 
             cards = soup.select(".card--story")
             urls = []

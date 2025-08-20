@@ -35,6 +35,7 @@ class SlateFrSoupValidator(BaseSoupValidator):
         Validate Slate.fr article structure and store raw HTML.
 
         Domain-specific logic:
+        - Validates URL belongs to slate.fr domain using tldextract
         - Checks for article tag (Slate.fr uses <article> wrapper)
         - Validates basic structure exists
         - Stores complete HTML for dbt processing
@@ -47,6 +48,17 @@ class SlateFrSoupValidator(BaseSoupValidator):
             RawArticle with raw HTML or None if not a valid article
         """
         try:
+            # Enhanced validation: Check URL domain using tldextract
+            if not self.validate_url_domain(url, "slate.fr"):
+                self.logger.warning(
+                    "URL domain validation failed",
+                    extra_data={
+                        "url": url,
+                        "expected_domain": "slate.fr",
+                        "site": "slate.fr",
+                    },
+                )
+                return None
             # Domain-specific validation: Slate.fr articles use <article> tag
             article_tag = soup.find("article")
             if not article_tag or not isinstance(article_tag, Tag):

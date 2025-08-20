@@ -4,8 +4,6 @@ Grabbing top 8 articles from ladepeche.fr which are then passed on to parser
 
 from urllib.parse import urljoin
 
-from bs4 import BeautifulSoup
-
 from core.components.url_collectors.base_url_collector import BaseUrlCollector
 
 
@@ -20,7 +18,7 @@ class LadepecheFrUrlCollector(BaseUrlCollector):
         """
         try:
             response = self._make_request(self.base_url)
-            soup = BeautifulSoup(response.content, "html.parser")
+            soup = self.parse_html_fast(response.content)
 
             # Look for article links in the news section
             # Based on the HTML structure: <a class="new__title"

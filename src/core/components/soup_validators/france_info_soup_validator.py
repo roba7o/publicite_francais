@@ -47,6 +47,17 @@ class FranceInfoSoupValidator(BaseSoupValidator):
             RawArticle with raw HTML or None if not a valid article
         """
         try:
+            # Enhanced validation: Check URL domain using tldextract
+            if not self.validate_url_domain(url, "franceinfo.fr"):
+                self.logger.warning(
+                    "URL domain validation failed",
+                    extra_data={
+                        "url": url,
+                        "expected_domain": "franceinfo.fr",
+                        "site": "franceinfo.fr",
+                    },
+                )
+                return None
             # Domain-specific validation: FranceInfo.fr uses div.c-body for content
             content_div = soup.find("div", class_="c-body")
             if not content_div or not isinstance(content_div, Tag):

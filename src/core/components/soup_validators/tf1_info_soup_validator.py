@@ -50,6 +50,17 @@ class tf1infoSoupValidator(BaseSoupValidator):
             RawArticle with raw HTML or None if not a valid article
         """
         try:
+            # Enhanced validation: Check URL domain using tldextract
+            if not self.validate_url_domain(url, "tf1info.fr"):
+                self.logger.warning(
+                    "URL domain validation failed",
+                    extra_data={
+                        "url": url,
+                        "expected_domain": "tf1info.fr",
+                        "site": "tf1info.fr",
+                    },
+                )
+                return None
             # Domain-specific validation: TF1 Info uses various content containers
             content_div = soup.find(
                 "div", class_=re.compile(r"article-body|content-body|main-content")

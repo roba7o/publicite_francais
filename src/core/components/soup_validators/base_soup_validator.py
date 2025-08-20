@@ -18,11 +18,11 @@ import requests
 from bs4 import BeautifulSoup
 
 from config.environment import env_config, is_test_mode
-from core.components.http_session_mixin import HTTPSessionMixin
+from core.components.enhanced_web_mixin import EnhancedWebMixin
 from database.models import RawArticle
 
 
-class BaseSoupValidator(HTTPSessionMixin, ABC):
+class BaseSoupValidator(EnhancedWebMixin, ABC):
     """
     Abstract base soup validator for pure ELT raw data collection.
 
@@ -77,7 +77,7 @@ class BaseSoupValidator(HTTPSessionMixin, ABC):
                     )
                     continue
 
-                return BeautifulSoup(response.content, "html.parser")
+                return self.parse_html_fast(response.content)
 
             except requests.exceptions.RequestException as e:
                 self.logger.warning(
@@ -132,7 +132,7 @@ class BaseSoupValidator(HTTPSessionMixin, ABC):
                     original_url = URL_MAPPING.get(filename, f"test://{filename}")
 
                     with open(file_path, encoding="utf-8") as f:
-                        soup = BeautifulSoup(f.read(), "html.parser")
+                        soup = self.parse_html_fast(f.read().encode('utf-8'))
                         soup_sources.append((soup, original_url))
 
         except Exception as e:

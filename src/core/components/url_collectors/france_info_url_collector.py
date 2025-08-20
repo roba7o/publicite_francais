@@ -2,7 +2,7 @@ import random
 import time
 from urllib.parse import urljoin
 
-from bs4 import BeautifulSoup, Tag
+from bs4 import Tag
 
 from core.components.url_collectors.base_url_collector import BaseUrlCollector
 
@@ -17,7 +17,7 @@ class FranceInfoUrlCollector(BaseUrlCollector):
             time.sleep(random.uniform(1, 3))
             response = self._make_request(self.base_url)
 
-            soup = BeautifulSoup(response.content, "html.parser")
+            soup = self.parse_html_fast(response.content)
             article_cards = soup.find_all("article", {"data-cy": "card-article-m"})
 
             if not article_cards:
