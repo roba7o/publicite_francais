@@ -7,11 +7,11 @@ from bs4 import BeautifulSoup
 from database.models import RawArticle
 
 
-class ArticleCoordinator:
+class ArticleOrchestrator:
     """
-    Article processing coordinator focused on orchestration workflow.
+    Article processing orchestrator focused on orchestration workflow.
 
-    Coordinates the complete pipeline: content acquisition → article processing → storage.
+    Orchestrates the complete pipeline: content acquisition → article processing → storage.
     Uses ComponentFactory for component creation to maintain single responsibility.
     """
 

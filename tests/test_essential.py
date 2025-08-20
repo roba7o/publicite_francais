@@ -6,7 +6,7 @@ Focused on database pipeline functionality.
 """
 
 from config.source_configs import SCRAPER_CONFIGS
-from core.coordinator import ArticleCoordinator
+from core.orchestrator import ArticleOrchestrator
 from database.models import RawArticle
 
 
@@ -30,7 +30,7 @@ class TestEssential:
         assert soup_validator_class.__name__ == "SlateFrSoupValidator"
 
     def test_article_pipeline_disabled_config(self):
-        """Test that ArticleCoordinator handles disabled configurations."""
+        """Test that ArticleOrchestrator handles disabled configurations."""
         # Create a disabled source configuration dictionary
         config = {
             "domain": "disabled-source.fr",
@@ -46,8 +46,8 @@ class TestEssential:
         assert config["enabled"] is False
 
     def test_article_pipeline_initialization(self):
-        """Test ArticleCoordinator can be initialized."""
-        processor = ArticleCoordinator()
+        """Test ArticleOrchestrator can be initialized."""
+        processor = ArticleOrchestrator()
         assert processor is not None
 
     def test_raw_article_model(self):

@@ -11,7 +11,7 @@ import os
 import pytest
 
 from config.source_configs import SCRAPER_CONFIGS
-from core.coordinator import ArticleCoordinator
+from core.orchestrator import ArticleOrchestrator
 
 
 class TestScrapeUploadPipeline:
@@ -89,7 +89,7 @@ class TestScrapeUploadPipeline:
         processed_count = 0
         attempted_count = 0
 
-        processor = ArticleCoordinator()
+        processor = ArticleOrchestrator()
         for config in SCRAPER_CONFIGS:
             if config["enabled"]:
                 # Config is already in dict format
