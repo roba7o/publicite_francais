@@ -30,10 +30,7 @@ class ArticleCoordinator:
     def __init__(self):
         """Initialize processor with default dependencies."""
         from core.component_factory import ComponentFactory
-        from core.data_processor import DataProcessor
         from utils.terminal_output import output
-
-        self.data_processor = DataProcessor()
         self.output = output
         self.component_factory = ComponentFactory()
 

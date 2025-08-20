@@ -267,7 +267,7 @@ class TestDeterministicPipeline:
 
             source_dict = {row[0]: row[1] for row in source_counts}
 
-            # Each source should contribute articles (exact counts may vary based on HTML quality)  
+            # Each source should contribute articles (exact counts may vary based on HTML quality)
             # Only test sources that have test data files in offline mode
             expected_sources = ["slate.fr", "franceinfo.fr"]
 
