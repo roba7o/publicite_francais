@@ -104,8 +104,6 @@ def main() -> int | None:
                 },
             )
 
-        _show_next_steps()
-
         return 0
 
     except KeyboardInterrupt:
@@ -121,26 +119,6 @@ def main() -> int | None:
             extra_data={"error": str(e), "traceback": traceback.format_exc()},
         )
         return 1
-
-
-def _show_next_steps() -> None:
-    """Display next steps for user after pipeline completion."""
-    db_check_cmd = (
-        f"docker compose exec postgres psql -U news_user -d french_news "
-        f'-c "SELECT title, LENGTH(full_text), scraped_at FROM {env_config.get_news_data_schema()}.articles '
-        f'ORDER BY scraped_at DESC LIMIT 3;"'
-    )
-
-    output.info(
-        "Next steps:",
-        extra_data={
-            "database_check_command": db_check_cmd,
-            "dbt_command": "make dbt-run",
-            "next_steps": ["database_verification", "dbt_transformations"],
-        },
-    )
-    output.info(f"Check database: {db_check_cmd}")
-    output.info("Run dbt transformations: make dbt-run")
 
 
 if __name__ == "__main__":
