@@ -132,7 +132,7 @@ import requests
 from bs4 import BeautifulSoup, Tag
 
 from config.settings import DEBUG
-from utils.structured_logger import get_structured_logger
+from utils.structured_logger import WebScraperLogger
 
 
 class ExampleNewsURLScraper:
@@ -140,7 +140,7 @@ class ExampleNewsURLScraper:
     
     def __init__(self, debug=None):
         """Initialize scraper with logging and configuration."""
-        self.logger = get_structured_logger(self.__class__.__name__)
+        self.logger = WebScraperLogger(self.__class__.__name__)
         self.debug = debug if debug is not None else DEBUG
         self.base_url = "https://example-news.fr/"
         self.headers = {
@@ -242,7 +242,7 @@ import requests
 from bs4 import BeautifulSoup, Tag
 
 from config.settings import DEBUG, OFFLINE
-from utils.structured_logger import get_structured_logger
+from utils.structured_logger import WebScraperLogger
 from utils.validators import DataValidator
 from utils.csv_writer import DailyCSVWriter
 from utils.french_text_processor import FrenchTextProcessor
@@ -253,7 +253,7 @@ class ExampleNewsArticleParser:
     
     def __init__(self, delay: float = 2.0):
         """Initialize parser with configuration."""
-        self.logger = get_structured_logger(self.__class__.__name__)
+        self.logger = WebScraperLogger(self.__class__.__name__)
         self.delay = delay
         self.headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"

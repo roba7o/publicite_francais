@@ -12,7 +12,7 @@ import requests
 
 from config.environment import env_config
 from core.components.enhanced_web_mixin import EnhancedWebMixin
-from utils.structured_logger import get_structured_logger
+from utils.structured_logger import Logger
 
 
 class BaseUrlCollector(EnhancedWebMixin, ABC):
@@ -46,7 +46,7 @@ class BaseUrlCollector(EnhancedWebMixin, ABC):
         Args:
             debug: Enable debug logging. If None, uses DEBUG from config.
         """
-        self.logger = get_structured_logger(self.__class__.__name__)
+        self.logger = Logger(self.__class__.__name__)
         self.debug = debug if debug is not None else env_config.is_debug_mode()
         self.base_url = ""  # Must be set by subclasses
 
@@ -88,14 +88,7 @@ class BaseUrlCollector(EnhancedWebMixin, ABC):
             response.raise_for_status()
             return response
         except requests.exceptions.RequestException as e:
-            self.logger.error(
-                f"Request failed for {url}",
-                extra_data={
-                    "url": url,
-                    "error": str(e),
-                    "url_collector": self.__class__.__name__,
-                },
-            )
+            self.logger.error(f"Request failed for {url}: {str(e)}")
             raise
 
     def _log_results(self, urls: list[str]) -> None:
@@ -106,13 +99,6 @@ class BaseUrlCollector(EnhancedWebMixin, ABC):
             urls: List of URLs found
         """
         if self.debug:
-            self.logger.info(
-                f"Found {len(urls)} article URLs",
-                extra_data={
-                    "url_collector": self.__class__.__name__,
-                    "url_count": len(urls),
-                    "base_url": self.base_url,
-                },
-            )
+            self.logger.info(f"Found {len(urls)} article URLs")
             for i, url in enumerate(urls, 1):
                 self.logger.debug(f"URL {i}: {url}")

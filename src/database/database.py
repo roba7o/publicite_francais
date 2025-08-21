@@ -12,22 +12,22 @@ classes to get database sessions with proper transaction handling.
 
 from collections.abc import Generator
 from contextlib import contextmanager
-from uuid import uuid4
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.sql import table, column
 
 from config.environment import env_config
 from database.models import RawArticle
-from utils.structured_logger import get_structured_logger
+from utils.structured_logger import Logger
 
-logger = get_structured_logger(__name__)
+logger = Logger(__name__)
 
 # Simple module-level session factory
 _SessionLocal = None
 
 
-def initialize_database() -> bool:
+def initialize_database(echo: bool = None) -> bool:
     """Initialize database connection with simple session factory."""
     global _SessionLocal
 
@@ -39,7 +39,10 @@ def initialize_database() -> bool:
             f"@{db_config['host']}:{db_config['port']}/{db_config['database']}"
         )
         # this engine manages connections to database
-        engine = create_engine(database_url, echo=env_config.is_debug_mode())
+        # Allow override of echo for migrations
+        if echo is None:
+            echo = env_config.is_debug_mode()
+        engine = create_engine(database_url, echo=echo)
 
         # create session factory bound to this engine
         _SessionLocal = sessionmaker(bind=engine)
@@ -104,67 +107,84 @@ def get_session() -> Generator[Session, None, None]:
         session.close()  # always closes the session
 
 
+def _execute_operation(operation: str, params: dict = None) -> bool:
+    """Private helper to DRY up database operations."""
+    try:
+        with get_session() as session:
+            session.execute(text(operation), params or {})
+            return True
+    except Exception as e:
+        logger.error(f"Database operation failed: {str(e)}")
+        return False
+
+
 def store_raw_article(raw_article: RawArticle) -> bool:
     """
-    Store raw article data using pure ELT approach with proper ACID compliance.
+    Store raw article data with UUID-based uniqueness.
 
-    Pure ELT: Stores ALL scraped data including duplicates.
-    Deduplication is handled downstream by dbt for better separation of concerns.
-
-    Uses the clean session management which handles:
-    - Automatic commits on success
-    - Automatic rollbacks on failure
-    - Proper session cleanup
+    Each article gets a unique UUID, allowing duplicate URLs to be stored
+    as separate entries. This follows pure ELT approach where all scraped
+    data is preserved and deduplication is handled downstream by dbt.
 
     Args:
-        raw_article: Raw scraped data (URL, HTML, site)
+        raw_article: Raw scraped data with auto-generated UUID
 
     Returns:
-        True if stored successfully, False otherwise
+        True if stored successfully, False on error
     """
     schema_name = env_config.get_news_data_schema()
 
     try:
         with get_session() as session:
-            # Pure ELT: Insert ALL data, let dbt handle deduplication
-            session.execute(
-                text(f"""
-                    INSERT INTO {schema_name}.raw_articles
-                    (id, url, raw_html, site, scraped_at, response_status, content_length)
-                    VALUES (:id, :url, :raw_html, :site, :scraped_at, :response_status, :content_length)
-                """),
-                {
-                    "id": str(uuid4()),
-                    "url": raw_article.url,
-                    "raw_html": raw_article.raw_html,
-                    "site": raw_article.site,
-                    "scraped_at": raw_article.scraped_at,
-                    "response_status": raw_article.response_status,
-                    "content_length": raw_article.content_length,
-                },
+            # Ensure schema exists (simple, idempotent check)
+            session.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema_name}"))
+
+            # Use table() for cleaner insert
+            raw_articles_table = table(
+                "raw_articles",
+                column("id"),
+                column("url"),
+                column("raw_html"),
+                column("site"),
+                column("scraped_at"),
+                column("response_status"),
+                column("content_length"),
+                column("extracted_text"),
+                column("title"),
+                column("author"),
+                column("date_published"),
+                column("language"),
+                column("summary"),
+                column("keywords"),
+                column("extraction_status"),
+                schema=schema_name,
             )
 
-            logger.info(
-                "Raw article stored successfully (pure ELT)",
-                extra_data={
-                    "url": raw_article.url,
-                    "site": raw_article.site,
-                    "content_length": raw_article.content_length,
-                    "approach": "pure_ELT",
-                    "deduplication": "handled_by_dbt",
-                },
+            stmt = raw_articles_table.insert().values(
+                id=raw_article.id,
+                url=raw_article.url,
+                raw_html=raw_article.raw_html,
+                site=raw_article.site,
+                scraped_at=raw_article.scraped_at,
+                response_status=raw_article.response_status,
+                content_length=raw_article.content_length,
+                extracted_text=raw_article.extracted_text,
+                title=raw_article.title,
+                author=raw_article.author,
+                date_published=raw_article.date_published,
+                language=raw_article.language,
+                summary=raw_article.summary,
+                keywords=raw_article.keywords,
+                extraction_status=raw_article.extraction_status,
             )
+
+            session.execute(stmt)
+
+            if env_config.is_debug_mode():
+                logger.info("Raw article stored successfully (pure ELT)")
             return True
 
     except Exception as e:
         # Exception automatically triggers rollback in context manager
-        logger.error(
-            f"Failed to store raw article: {str(e)}",
-            extra_data={
-                "url": raw_article.url,
-                "site": raw_article.site,
-                "error": str(e),
-            },
-            exc_info=True,
-        )
+        logger.error(f"Failed to store raw article: {str(e)}")
         return False

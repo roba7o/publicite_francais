@@ -102,9 +102,9 @@ class TestEssential:
 
     def test_structured_logger_import(self):
         """Test that structured logger can be imported."""
-        from utils.structured_logger import get_structured_logger
+        from utils.structured_logger import Logger
 
-        logger = get_structured_logger("test")
+        logger = Logger("test")
         assert logger is not None
 
     def test_validators_removed(self):

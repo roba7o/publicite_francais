@@ -44,9 +44,9 @@ class BaseSoupValidator(EnhancedWebMixin, ABC):
             site_name: Human readable source name (e.g., "Slate.fr")
             delay: Request delay in seconds for rate limiting
         """
-        from utils.structured_logger import get_structured_logger
+        from utils.structured_logger import Logger
 
-        self.logger = get_structured_logger(self.__class__.__name__)
+        self.logger = Logger(self.__class__.__name__)
         self.site_domain = site_domain
         self.site_name = site_name
         self.delay = delay
@@ -136,11 +136,7 @@ class BaseSoupValidator(EnhancedWebMixin, ABC):
                         soup_sources.append((soup, original_url))
 
         except Exception as e:
-            self.logger.error(
-                "Error reading test files",
-                extra_data={"site_name": site_name, "error": str(e)},
-                exc_info=True,
-            )
+            self.logger.error(f"Error reading test files: {str(e)}")
 
         return soup_sources
 

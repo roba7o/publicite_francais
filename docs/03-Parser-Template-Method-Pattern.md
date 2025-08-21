@@ -29,7 +29,7 @@ class DatabaseBaseParser(ABC):
     
     # COMMON: Initialization with shared dependencies
     def __init__(self, site_domain: str, source_id: str, delay: float = 1.0):
-        self.logger = get_structured_logger(self.__class__.__name__)
+        self.logger = DatabaseLogger(self.__class__.__name__)
         self.repository = ArticleRepository()
         self.source_id = source_id
         
