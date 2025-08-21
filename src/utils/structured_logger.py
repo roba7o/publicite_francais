@@ -3,6 +3,7 @@ Simple logging for the French article scraper using Rich.
 """
 
 import logging
+
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table

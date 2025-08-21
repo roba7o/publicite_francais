@@ -1,7 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from core.component_factory import ComponentFactory
 from config.environment import env_config, is_test_mode
+from core.component_factory import ComponentFactory
 from utils.structured_logger import Logger
 
 

@@ -15,7 +15,7 @@ from contextlib import contextmanager
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy.sql import table, column
+from sqlalchemy.sql import column, table
 
 from config.environment import env_config
 from database.models import RawArticle
