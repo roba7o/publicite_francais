@@ -5,6 +5,9 @@ TF1 Info UrlCollector - Extracts article URLs from TF1 Info homepage
 import json
 from urllib.parse import urljoin
 
+import requests
+from bs4 import BeautifulSoup
+
 from core.components.url_collectors.base_url_collector import BaseUrlCollector
 
 
@@ -12,6 +15,45 @@ class TF1InfoUrlCollector(BaseUrlCollector):
     def __init__(self, debug=None):
         super().__init__(debug)
         self.base_url = "https://www.tf1info.fr/"
+
+    def _make_request(self, url: str, timeout: int = 60) -> requests.Response:
+        """
+        Override base class request method to avoid anti-bot detection.
+
+        TF1Info has sophisticated anti-bot protection that returns truncated
+        content. Use a clean session with browser-like behavior.
+        """
+        import time
+
+        try:
+            # Create a fresh session for each request to avoid tracking
+            session = requests.Session()
+
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                "Accept-Language": "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7",
+                # Don't specify Accept-Encoding to let requests handle compression automatically
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "Upgrade-Insecure-Requests": "1",
+            }
+
+            # Add small delay to mimic human behavior
+            time.sleep(1)
+
+            response = session.get(
+                url, headers=headers, timeout=timeout, allow_redirects=True
+            )
+            response.raise_for_status()
+
+            # Close session to avoid tracking
+            session.close()
+
+            return response
+        except requests.exceptions.RequestException as e:
+            self.logger.error(f"Request failed for {url}: {str(e)}")
+            raise
 
     def get_article_urls(self, max_articles=8) -> list[str]:
         """
@@ -23,7 +65,8 @@ class TF1InfoUrlCollector(BaseUrlCollector):
         """
         try:
             response = self._make_request(self.base_url)
-            soup = self.parse_html_fast(response.text.encode())
+            # Use html.parser instead of lxml to avoid parsing issues
+            soup = BeautifulSoup(response.text, "html.parser")
 
             # Method 1: Try to extract from JSON-LD in script tag
             urls = self._extract_from_json_ld(soup)
