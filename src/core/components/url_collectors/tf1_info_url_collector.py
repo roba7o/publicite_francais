@@ -110,7 +110,7 @@ class TF1InfoUrlCollector(BaseUrlCollector):
         # TF1Info uses LinkArrowButton__Content__Title in h3 elements within links
         # Look for links containing these title elements
         title_elements = soup.find_all(attrs={'class': lambda x: x and 'LinkArrowButton__Content__Title' in ' '.join(x) if isinstance(x, list) else 'LinkArrowButton__Content__Title' in str(x) if x else False})
-        
+
         for title_elem in title_elements:
             # Find the parent link
             parent = title_elem.parent
@@ -118,7 +118,7 @@ class TF1InfoUrlCollector(BaseUrlCollector):
                 parent = parent.parent
                 if not parent:
                     break
-            
+
             if parent and parent.name == 'a':
                 if href := parent.get("href"):
                     full_url = urljoin(self.base_url, href)

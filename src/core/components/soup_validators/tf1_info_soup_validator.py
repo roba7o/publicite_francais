@@ -5,11 +5,10 @@ Handles TF1 Info domain-specific HTML structure identification
 but stores only raw HTML. All content extraction happens in dbt.
 """
 
-import re
 import time
 
 import requests
-from bs4 import BeautifulSoup, Tag
+from bs4 import BeautifulSoup
 
 from core.components.soup_validators.base_soup_validator import BaseSoupValidator
 from database.models import RawArticle
@@ -37,12 +36,11 @@ class tf1infoSoupValidator(BaseSoupValidator):
     def get_soup_from_url(self, url: str, max_retries: int = 3) -> BeautifulSoup | None:
         """
         Override base method to bypass TF1Info anti-bot protection.
-        
         TF1Info has sophisticated anti-bot protection that returns truncated
         content. Use the same bypass technique as the URL collector.
         """
         from config.environment import is_test_mode
-        
+
         if is_test_mode():
             self.logger.warning("URL fetch attempted in offline mode")
             return None
@@ -147,6 +145,5 @@ class tf1infoSoupValidator(BaseSoupValidator):
             self.logger.error(
                 f"Error validating TF1 Info article structure: {e}",
                 extra_data={"url": url, "site": "tf1info.fr"},
-                exc_info=True,
             )
             return None
