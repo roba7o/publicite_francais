@@ -16,6 +16,7 @@ from contextlib import contextmanager
 
 import sqlalchemy.exc
 from sqlalchemy import create_engine, text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import QueuePool
 from sqlalchemy.sql import column, table
@@ -274,3 +275,136 @@ def store_raw_article(raw_article: RawArticle) -> bool:
         # Exception automatically triggers rollback in context manager
         logger.error(f"Failed to store raw article: {str(e)}")
         return False
+
+
+def store_articles_batch(
+    articles: list[RawArticle], max_memory_mb: int = 100
+) -> tuple[int, int]:
+    """
+    Store multiple articles in optimized batches using SQLAlchemy bulk operations.
+
+    This function provides significant performance improvements over individual inserts:
+    - Reduces database operations from N*2 (N inserts + N commits) to 2 (1 insert + 1 commit)
+    - Eliminates connection churning by using a single session
+    - Reduces disk I/O from N writes to 1 write per batch
+    - Includes memory management for large article sets
+
+    Args:
+        articles: List of RawArticle objects to store
+        max_memory_mb: Maximum memory usage in MB before chunking (default: 100MB)
+
+    Returns:
+        Tuple of (successful_count, failed_count)
+    """
+    if not articles:
+        return 0, 0
+
+    schema_name = env_config.get_news_data_schema()
+
+    # Memory management: estimate size and chunk if needed
+    estimated_size_mb = (
+        sum(len(article.raw_html or "") for article in articles) / 1024 / 1024
+    )
+
+    if estimated_size_mb > max_memory_mb and len(articles) > 1:
+        # Process in chunks to manage memory
+        chunk_size = max(1, int(len(articles) * max_memory_mb / estimated_size_mb))
+        logger.info(
+            f"Large batch detected ({estimated_size_mb:.1f}MB), processing in chunks of {chunk_size}"
+        )
+
+        total_successful = 0
+        total_failed = 0
+
+        for i in range(0, len(articles), chunk_size):
+            chunk = articles[i : i + chunk_size]
+            successful, failed = store_articles_batch(chunk, max_memory_mb)
+            total_successful += successful
+            total_failed += failed
+
+        return total_successful, total_failed
+
+    try:
+        with get_session() as session:
+            # Ensure schema exists (simple, idempotent check)
+            session.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema_name}"))
+
+            # Use SQLAlchemy's optimized bulk insert
+            # Convert articles to dictionaries for bulk_insert_mappings
+            article_dicts = [article.to_dict() for article in articles]
+
+            # Use the raw_articles table metadata for bulk insert
+            raw_articles_table = table(
+                "raw_articles",
+                column("id"),
+                column("url"),
+                column("raw_html"),
+                column("site"),
+                column("scraped_at"),
+                column("response_status"),
+                column("content_length"),
+                column("extracted_text"),
+                column("title"),
+                column("author"),
+                column("date_published"),
+                column("language"),
+                column("summary"),
+                column("keywords"),
+                column("extraction_status"),
+                schema=schema_name,
+            )
+
+            # Execute bulk insert
+            session.execute(raw_articles_table.insert(), article_dicts)
+
+            if env_config.is_debug_mode():
+                logger.info(
+                    f"Batch stored {len(articles)} articles successfully (pure ELT)"
+                )
+
+            return len(articles), 0
+
+    except IntegrityError as e:
+        # Handle unique constraint violations or other integrity issues
+        logger.warning(f"Batch insert integrity error: {str(e)}")
+        return _fallback_individual_inserts(articles)
+
+    except Exception as e:
+        logger.error(f"Batch insert failed: {str(e)}")
+        return _fallback_individual_inserts(articles)
+
+
+def _fallback_individual_inserts(articles: list[RawArticle]) -> tuple[int, int]:
+    """
+    Fallback method to insert articles individually when batch insert fails.
+
+    This handles cases where the batch insert encounters issues like:
+    - Unique constraint violations
+    - Memory limitations
+    - Other database errors
+
+    Args:
+        articles: List of articles to store individually
+
+    Returns:
+        Tuple of (successful_count, failed_count)
+    """
+    successful_count = 0
+    failed_count = 0
+
+    logger.info(f"Falling back to individual inserts for {len(articles)} articles")
+
+    for article in articles:
+        try:
+            if store_raw_article(article):
+                successful_count += 1
+            else:
+                failed_count += 1
+        except Exception as e:
+            logger.error(f"Individual insert failed for article {article.id}: {str(e)}")
+            failed_count += 1
+
+    logger.info(
+        f"Fallback complete: {successful_count} successful, {failed_count} failed"
+    )
+    return successful_count, failed_count

@@ -62,14 +62,28 @@ class ArticleOrchestrator:
         if not sites:
             return 0, 0
 
-        processed_count = 0
+        # Collect articles for batch processing
+        articles_batch = []
         total_attempted = len(sites)
 
         for soup, site_identifier in sites:
             if soup:
                 raw_article = soup_validator.validate_and_extract(soup, site_identifier)
-                if raw_article and soup_validator.store_to_database(raw_article):
-                    processed_count += 1
+                if raw_article:
+                    articles_batch.append(raw_article)
+
+        # Store articles in batch for better performance
+        if articles_batch:
+            from database import store_articles_batch
+
+            processed_count, failed_count = store_articles_batch(articles_batch)
+
+            if env_config.is_debug_mode():
+                self.logger.info(
+                    f"Batch processing results: {processed_count} successful, {failed_count} failed"
+                )
+        else:
+            processed_count = 0
 
         self.logger.always(
             f"{processed_count}/{total_attempted} articles successfully processed for {config['site']}"
