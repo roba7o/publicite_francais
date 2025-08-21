@@ -15,6 +15,7 @@ from contextlib import contextmanager
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.sql import table, column
 
 from config.environment import env_config
 from database.models import RawArticle
@@ -106,6 +107,17 @@ def get_session() -> Generator[Session, None, None]:
         session.close()  # always closes the session
 
 
+def _execute_operation(operation: str, params: dict = None) -> bool:
+    """Private helper to DRY up database operations."""
+    try:
+        with get_session() as session:
+            session.execute(text(operation), params or {})
+            return True
+    except Exception as e:
+        logger.error(f"Database operation failed: {str(e)}")
+        return False
+
+
 def store_raw_article(raw_article: RawArticle) -> bool:
     """
     Store raw article data with UUID-based uniqueness.
@@ -124,35 +136,50 @@ def store_raw_article(raw_article: RawArticle) -> bool:
 
     try:
         with get_session() as session:
-            # Insert article with UUID from model (allows duplicate URLs)
-            session.execute(
-                text(f"""
-                    INSERT INTO {schema_name}.raw_articles
-                    (id, url, raw_html, site, scraped_at, response_status, content_length,
-                     extracted_text, title, author, date_published, language, summary, keywords, extraction_status)
-                    VALUES (:id, :url, :raw_html, :site, :scraped_at, :response_status, :content_length,
-                            :extracted_text, :title, :author, :date_published, :language, :summary, :keywords, :extraction_status)
-                """),
-                {
-                    "id": raw_article.id,
-                    "url": raw_article.url,
-                    "raw_html": raw_article.raw_html,
-                    "site": raw_article.site,
-                    "scraped_at": raw_article.scraped_at,
-                    "response_status": raw_article.response_status,
-                    "content_length": raw_article.content_length,
-                    "extracted_text": raw_article.extracted_text,
-                    "title": raw_article.title,
-                    "author": raw_article.author,
-                    "date_published": raw_article.date_published,
-                    "language": raw_article.language,
-                    "summary": raw_article.summary,
-                    "keywords": raw_article.keywords,
-                    "extraction_status": raw_article.extraction_status,
-                },
+            # Ensure schema exists (simple, idempotent check)
+            session.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema_name}"))
+
+            # Use table() for cleaner insert
+            raw_articles_table = table(
+                "raw_articles",
+                column("id"),
+                column("url"),
+                column("raw_html"),
+                column("site"),
+                column("scraped_at"),
+                column("response_status"),
+                column("content_length"),
+                column("extracted_text"),
+                column("title"),
+                column("author"),
+                column("date_published"),
+                column("language"),
+                column("summary"),
+                column("keywords"),
+                column("extraction_status"),
+                schema=schema_name,
             )
 
-            # Only log detailed storage info in debug mode
+            stmt = raw_articles_table.insert().values(
+                id=raw_article.id,
+                url=raw_article.url,
+                raw_html=raw_article.raw_html,
+                site=raw_article.site,
+                scraped_at=raw_article.scraped_at,
+                response_status=raw_article.response_status,
+                content_length=raw_article.content_length,
+                extracted_text=raw_article.extracted_text,
+                title=raw_article.title,
+                author=raw_article.author,
+                date_published=raw_article.date_published,
+                language=raw_article.language,
+                summary=raw_article.summary,
+                keywords=raw_article.keywords,
+                extraction_status=raw_article.extraction_status,
+            )
+
+            session.execute(stmt)
+
             if env_config.is_debug_mode():
                 logger.info("Raw article stored successfully (pure ELT)")
             return True
