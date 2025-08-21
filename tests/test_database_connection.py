@@ -209,9 +209,6 @@ def test_health_check():
                 "news_data_test",
                 "news_data_dev",
                 "news_data",
-                "dbt_test",
-                "dbt_dev",
-                "dbt",
             ]
             found_schemas = [s for s in expected_schemas if s in schema_names]
 
