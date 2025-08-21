@@ -154,29 +154,10 @@ def store_raw_article(raw_article: RawArticle) -> bool:
 
             # Only log detailed storage info in debug mode
             if env_config.is_debug_mode():
-                logger.info(
-                    "Raw article stored successfully (pure ELT)",
-                    extra_data={
-                        "id": raw_article.id,
-                        "url": raw_article.url,
-                        "site": raw_article.site,
-                        "content_length": raw_article.content_length,
-                        "approach": "pure_ELT_uuid",
-                        "deduplication": "none_uuid_based",
-                    },
-                )
+                logger.info("Raw article stored successfully (pure ELT)")
             return True
 
     except Exception as e:
         # Exception automatically triggers rollback in context manager
-        logger.error(
-            f"Failed to store raw article: {str(e)}",
-            extra_data={
-                "id": raw_article.id,
-                "url": raw_article.url,
-                "site": raw_article.site,
-                "error": str(e),
-            },
-            exc_info=True,
-        )
+        logger.error(f"Failed to store raw article: {str(e)}")
         return False

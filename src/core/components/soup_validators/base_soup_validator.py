@@ -136,11 +136,7 @@ class BaseSoupValidator(EnhancedWebMixin, ABC):
                         soup_sources.append((soup, original_url))
 
         except Exception as e:
-            self.logger.error(
-                "Error reading test files",
-                extra_data={"site_name": site_name, "error": str(e)},
-                exc_info=True,
-            )
+            self.logger.error(f"Error reading test files: {str(e)}")
 
         return soup_sources
 
