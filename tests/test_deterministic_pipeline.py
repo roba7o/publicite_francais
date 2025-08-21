@@ -23,7 +23,7 @@ class TestScrapeUploadPipeline:
         """Ensure we're using the test database environment."""
         os.environ["DATABASE_ENV"] = "test"
         os.environ["TEST_MODE"] = "true"
-        
+
         # Refresh environment config to pick up test settings
         env_config.refresh()
 
@@ -142,23 +142,24 @@ class TestScrapeUploadPipeline:
             source_dict = {row[0]: row[1] for row in source_counts}
 
             # Each source should contribute articles (exact counts may vary based on HTML quality)
-            # Only test sources that are actually working in offline mode
-            expected_sources = ["slate.fr"]  # Only slate.fr is currently working in test mode
+            # All sources should be working in offline mode
+            expected_sources = ["slate.fr", "tf1info.fr", "ladepeche.fr", "franceinfo.fr"]  # All 4 sources working in test mode
 
             for source in expected_sources:
                 assert source in source_dict, f"Source '{source}' not found in database"
                 assert source_dict[source] > 0, f"Source '{source}' has no articles"
 
             # Should have reasonable number of articles (allow for some variation)
-            # With 1 source in test mode, expect 4 articles from slate.fr
+            # With 4 sources in test mode, expect 16 articles total (4 per source)
             total_articles = sum(source_dict.values())
-            assert 3 <= total_articles <= 6, (
-                f"Expected 3-6 total articles, got {total_articles}"
+            assert 14 <= total_articles <= 18, (
+                f"Expected 14-18 total articles, got {total_articles}"
             )
 
-            # Slate.fr should have around 4 articles (the test data files available)
-            if "slate.fr" in source_dict:
-                assert source_dict["slate.fr"] == 4, (
-                    f"Expected 4 slate.fr articles, got {source_dict['slate.fr']}"
-                )
+            # Each working source should have exactly 4 articles (the test data files available)
+            for source in expected_sources:
+                if source in source_dict:
+                    assert source_dict[source] == 4, (
+                        f"Expected 4 {source} articles, got {source_dict[source]}"
+                    )
 

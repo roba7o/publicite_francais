@@ -10,7 +10,7 @@ import os
 import shutil
 import sys
 import tempfile
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 import pytest
 
@@ -170,7 +170,7 @@ def setup_test_environment(monkeypatch):
     # Refresh environment config to pick up test settings
     from config.environment import env_config
     env_config.refresh()
-    
+
     yield
 
 
