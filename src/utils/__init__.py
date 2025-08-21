@@ -10,15 +10,15 @@ Note: Text processing is now handled by dbt/SQL for better performance.
 """
 
 from .structured_logger import (
-    MigrationLogger,
     DatabaseLogger,
-    WebScraperLogger,
     GeneralLogger,
+    MigrationLogger,
+    WebScraperLogger,
 )
 
 __all__ = [
     "MigrationLogger",
-    "DatabaseLogger", 
+    "DatabaseLogger",
     "WebScraperLogger",
     "GeneralLogger",
 ]

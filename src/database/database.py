@@ -12,7 +12,6 @@ classes to get database sessions with proper transaction handling.
 
 from collections.abc import Generator
 from contextlib import contextmanager
-from uuid import uuid4
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session, sessionmaker
@@ -27,7 +26,7 @@ logger = DatabaseLogger(__name__)
 _SessionLocal = None
 
 
-def initialize_database() -> bool:
+def initialize_database(echo: bool = None) -> bool:
     """Initialize database connection with simple session factory."""
     global _SessionLocal
 
@@ -39,7 +38,10 @@ def initialize_database() -> bool:
             f"@{db_config['host']}:{db_config['port']}/{db_config['database']}"
         )
         # this engine manages connections to database
-        engine = create_engine(database_url, echo=env_config.is_debug_mode())
+        # Allow override of echo for migrations
+        if echo is None:
+            echo = env_config.is_debug_mode()
+        engine = create_engine(database_url, echo=echo)
 
         # create session factory bound to this engine
         _SessionLocal = sessionmaker(bind=engine)
@@ -106,27 +108,23 @@ def get_session() -> Generator[Session, None, None]:
 
 def store_raw_article(raw_article: RawArticle) -> bool:
     """
-    Store raw article data using pure ELT approach with proper ACID compliance.
+    Store raw article data with UUID-based uniqueness.
 
-    Pure ELT: Stores ALL scraped data including duplicates.
-    Deduplication is handled downstream by dbt for better separation of concerns.
-
-    Uses the clean session management which handles:
-    - Automatic commits on success
-    - Automatic rollbacks on failure
-    - Proper session cleanup
+    Each article gets a unique UUID, allowing duplicate URLs to be stored
+    as separate entries. This follows pure ELT approach where all scraped
+    data is preserved and deduplication is handled downstream by dbt.
 
     Args:
-        raw_article: Raw scraped data (URL, HTML, site)
+        raw_article: Raw scraped data with auto-generated UUID
 
     Returns:
-        True if stored successfully, False otherwise
+        True if stored successfully, False on error
     """
     schema_name = env_config.get_news_data_schema()
 
     try:
         with get_session() as session:
-            # Pure ELT: Insert ALL data, let dbt handle deduplication
+            # Insert article with UUID from model (allows duplicate URLs)
             session.execute(
                 text(f"""
                     INSERT INTO {schema_name}.raw_articles
@@ -136,7 +134,7 @@ def store_raw_article(raw_article: RawArticle) -> bool:
                             :extracted_text, :title, :author, :date_published, :language, :summary, :keywords, :extraction_status)
                 """),
                 {
-                    "id": str(uuid4()),
+                    "id": raw_article.id,
                     "url": raw_article.url,
                     "raw_html": raw_article.raw_html,
                     "site": raw_article.site,
@@ -157,11 +155,12 @@ def store_raw_article(raw_article: RawArticle) -> bool:
             logger.info(
                 "Raw article stored successfully (pure ELT)",
                 extra_data={
+                    "id": raw_article.id,
                     "url": raw_article.url,
                     "site": raw_article.site,
                     "content_length": raw_article.content_length,
-                    "approach": "pure_ELT",
-                    "deduplication": "handled_by_dbt",
+                    "approach": "pure_ELT_uuid",
+                    "deduplication": "none_uuid_based",
                 },
             )
             return True
@@ -171,6 +170,7 @@ def store_raw_article(raw_article: RawArticle) -> bool:
         logger.error(
             f"Failed to store raw article: {str(e)}",
             extra_data={
+                "id": raw_article.id,
                 "url": raw_article.url,
                 "site": raw_article.site,
                 "error": str(e),

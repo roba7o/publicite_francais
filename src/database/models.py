@@ -10,6 +10,7 @@ ELT = Extract, Load, Transform
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
+from uuid import uuid4
 
 import trafilatura
 
@@ -31,6 +32,7 @@ class RawArticle:
     site: str  # News site: "slate.fr", "franceinfo.fr"
 
     # Auto-generated fields
+    id: str = field(default_factory=lambda: str(uuid4()))
     scraped_at: str = field(default_factory=lambda: datetime.now().isoformat())
 
     # Optional metadata
@@ -93,6 +95,7 @@ class RawArticle:
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for database storage."""
         return {
+            "id": self.id,
             "url": self.url,
             "raw_html": self.raw_html,
             "site": self.site,

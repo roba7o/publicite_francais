@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Database Migration Runner for French News Scraper
 
@@ -33,11 +32,9 @@ logger = MigrationLogger(__name__)
 class MigrationRunner:
     def __init__(self):
         self.migrations_dir = Path(__file__).parent
-        # Ensure our logger's SQLAlchemy filter is applied BEFORE database initialization
-        logger._configure()  # Re-run configuration to ensure filters are in place
         
-        # Initialize database connection 
-        if not initialize_database():
+        # Initialize database connection with silent SQLAlchemy
+        if not initialize_database(echo=False):
             print("\033[31m✗ Failed to initialize database connection\033[0m")
             sys.exit(1)
         self.ensure_migration_table()
