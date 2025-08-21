@@ -6,7 +6,9 @@ but stores only raw HTML. All content extraction happens in dbt.
 """
 
 import re
+import time
 
+import requests
 from bs4 import BeautifulSoup, Tag
 
 from core.components.soup_validators.base_soup_validator import BaseSoupValidator
@@ -31,6 +33,60 @@ class tf1infoSoupValidator(BaseSoupValidator):
         """
         super().__init__(site_domain="tf1info.fr", site_name=site_name)
         self.debug = debug
+
+    def get_soup_from_url(self, url: str, max_retries: int = 3) -> BeautifulSoup | None:
+        """
+        Override base method to bypass TF1Info anti-bot protection.
+        
+        TF1Info has sophisticated anti-bot protection that returns truncated
+        content. Use the same bypass technique as the URL collector.
+        """
+        from config.environment import is_test_mode
+        
+        if is_test_mode():
+            self.logger.warning("URL fetch attempted in offline mode")
+            return None
+
+        for attempt in range(max_retries):
+            try:
+                # Create a fresh session for each request to avoid tracking
+                session = requests.Session()
+
+                headers = {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                    "Accept-Language": "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7",
+                    # Don't specify Accept-Encoding to let requests handle compression automatically
+                    "Cache-Control": "no-cache",
+                    "Connection": "keep-alive",
+                    "Upgrade-Insecure-Requests": "1",
+                }
+
+                # Add small delay to mimic human behavior
+                time.sleep(1)
+
+                response = session.get(
+                    url, headers=headers, timeout=15, allow_redirects=True
+                )
+                response.raise_for_status()
+
+                # Close session to avoid tracking
+                session.close()
+
+                if len(response.content) < 100:
+                    self.logger.warning(f"Response content too short: {len(response.content)} bytes")
+                    continue
+
+                return self.parse_html_fast(response.content)
+
+            except requests.exceptions.RequestException as e:
+                self.logger.warning(f"URL fetch failed (attempt {attempt + 1}): {str(e)}")
+
+            if attempt < max_retries - 1:
+                time.sleep(1 + attempt)
+
+        self.logger.error(f"URL fetch failed after {max_retries} retries")
+        return None
 
     def validate_and_extract(self, soup: BeautifulSoup, url: str) -> RawArticle | None:
         """
@@ -61,25 +117,21 @@ class tf1infoSoupValidator(BaseSoupValidator):
                     },
                 )
                 return None
-            # Domain-specific validation: TF1 Info uses various content containers
-            content_div = soup.find(
-                "div", class_=re.compile(r"article-body|content-body|main-content")
-            )
-            if not content_div:
-                content_div = soup.find("article")
-
-            if not content_div or not isinstance(content_div, Tag):
+            # Domain-specific validation: TF1 Info uses specific class structure
+            # Check for TF1Info title structure
+            title_wrapper = soup.select(".ArticleHeaderTitle__Wrapper h1")
+            if not title_wrapper:
                 self.logger.warning(
-                    "No content div or article tag found - not a valid TF1 Info article",
+                    "No TF1 Info title structure found (.ArticleHeaderTitle__Wrapper h1)",
                     extra_data={"url": url, "site": "tf1info.fr"},
                 )
                 return None
 
-            # Additional validation: Check for title structure
-            title_tag = soup.find("h1")
-            if not title_tag or not isinstance(title_tag, Tag):
+            # Check for TF1Info content structure
+            content_elements = soup.select(".ArticleChapo__Point")
+            if not content_elements:
                 self.logger.warning(
-                    "No h1 tag found - possibly not an article page",
+                    "No TF1 Info content structure found (.ArticleChapo__Point)",
                     extra_data={"url": url, "site": "tf1info.fr"},
                 )
                 return None

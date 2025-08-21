@@ -104,25 +104,44 @@ class TF1InfoUrlCollector(BaseUrlCollector):
         return urls
 
     def _extract_from_html(self, soup):
-        """Fallback method to extract URLs directly from HTML"""
+        """Extract URLs from TF1Info's specific HTML structure"""
         urls = []
 
-        # Try different selectors that might contain article links
-        selectors = [
-            'article a[href*="/"]',  # Generic article links
-            "a.card-article",  # Card articles
-            "a.article-link",  # Article links
-            "h2 a",  # Headline links
-        ]
-
-        for selector in selectors:
-            links = soup.select(selector)
-            for link in links:
-                if href := link.get("href"):
+        # TF1Info uses LinkArrowButton__Content__Title in h3 elements within links
+        # Look for links containing these title elements
+        title_elements = soup.find_all(attrs={'class': lambda x: x and 'LinkArrowButton__Content__Title' in ' '.join(x) if isinstance(x, list) else 'LinkArrowButton__Content__Title' in str(x) if x else False})
+        
+        for title_elem in title_elements:
+            # Find the parent link
+            parent = title_elem.parent
+            while parent and parent.name != 'a':
+                parent = parent.parent
+                if not parent:
+                    break
+            
+            if parent and parent.name == 'a':
+                if href := parent.get("href"):
                     full_url = urljoin(self.base_url, href)
                     if full_url not in urls:
                         urls.append(full_url)
-            if urls:  # Stop at first successful selector
-                break
+
+        # Fallback to generic selectors if the specific method fails
+        if not urls:
+            selectors = [
+                'article a[href*="/"]',  # Generic article links
+                "a.card-article",  # Card articles
+                "a.article-link",  # Article links
+                "h2 a",  # Headline links
+            ]
+
+            for selector in selectors:
+                links = soup.select(selector)
+                for link in links:
+                    if href := link.get("href"):
+                        full_url = urljoin(self.base_url, href)
+                        if full_url not in urls:
+                            urls.append(full_url)
+                if urls:  # Stop at first successful selector
+                    break
 
         return urls
