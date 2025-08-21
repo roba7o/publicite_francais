@@ -24,9 +24,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 from database.database import get_session, initialize_database
 from sqlalchemy import text
-from utils.structured_logger import MigrationLogger
+from utils.structured_logger import Logger
 
-logger = MigrationLogger(__name__)
+logger = Logger(__name__)
 
 
 class MigrationRunner:

@@ -18,9 +18,9 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from config.environment import env_config
 from database.models import RawArticle
-from utils.structured_logger import DatabaseLogger
+from utils.structured_logger import Logger
 
-logger = DatabaseLogger(__name__)
+logger = Logger(__name__)
 
 # Simple module-level session factory
 _SessionLocal = None
@@ -152,17 +152,19 @@ def store_raw_article(raw_article: RawArticle) -> bool:
                 },
             )
 
-            logger.info(
-                "Raw article stored successfully (pure ELT)",
-                extra_data={
-                    "id": raw_article.id,
-                    "url": raw_article.url,
-                    "site": raw_article.site,
-                    "content_length": raw_article.content_length,
-                    "approach": "pure_ELT_uuid",
-                    "deduplication": "none_uuid_based",
-                },
-            )
+            # Only log detailed storage info in debug mode
+            if env_config.is_debug_mode():
+                logger.info(
+                    "Raw article stored successfully (pure ELT)",
+                    extra_data={
+                        "id": raw_article.id,
+                        "url": raw_article.url,
+                        "site": raw_article.site,
+                        "content_length": raw_article.content_length,
+                        "approach": "pure_ELT_uuid",
+                        "deduplication": "none_uuid_based",
+                    },
+                )
             return True
 
     except Exception as e:

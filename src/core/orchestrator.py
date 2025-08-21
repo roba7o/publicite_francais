@@ -1,4 +1,3 @@
-import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
 
@@ -19,9 +18,9 @@ class ArticleOrchestrator:
     def __init__(self):
         """Initialize processor with default dependencies."""
         from core.component_factory import ComponentFactory
-        from utils.terminal_output import output
+        from utils.structured_logger import Logger
 
-        self.output = output
+        self.logger = Logger(__name__)
         self.component_factory = ComponentFactory()
 
     def acquire_content(
@@ -49,11 +48,10 @@ class ArticleOrchestrator:
         """Get live sites from web scraping using concurrent processing."""
         urls = url_collector.get_article_urls()
         if not urls:
-            self.output.warning(
-                "URL discovery returned no results",
-                extra_data={"site": site_name, "operation": "url_discovery"},
-            )
+            self.logger.warning("URL discovery returned no results")
             return []
+
+        self.logger.always(f"{len(urls[:5])} URLs found for {site_name}")
 
         # Process first 5 URLs for testing (can expand later)
         target_urls = urls[:5]
@@ -63,16 +61,7 @@ class ArticleOrchestrator:
         max_workers = env_config.get_concurrent_fetchers()
         fetch_timeout = env_config.get_fetch_timeout()
 
-        self.output.info(
-            f"Fetching {len(target_urls)} URLs concurrently",
-            extra_data={
-                "site": site_name,
-                "url_count": len(target_urls),
-                "max_workers": max_workers,
-                "timeout": fetch_timeout,
-                "operation": "concurrent_fetch_start",
-            },
-        )
+        # Silent concurrent fetching
 
         # Use ThreadPoolExecutor for concurrent URL fetching
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -89,45 +78,11 @@ class ArticleOrchestrator:
                     soup = future.result()
                     if soup:
                         sites.append((soup, url))
-                        self.output.success(
-                            f"Successfully fetched: {url}",
-                            extra_data={
-                                "site": site_name,
-                                "url": url,
-                                "operation": "url_fetch_success",
-                            },
-                        )
-                    else:
-                        self.output.warning(
-                            f"Empty response for: {url}",
-                            extra_data={
-                                "site": site_name,
-                                "url": url,
-                                "operation": "url_fetch_empty",
-                            },
-                        )
-                except Exception as e:
-                    self.output.warning(
-                        "URL processing error",
-                        extra_data={
-                            "url": url,
-                            "site": site_name,
-                            "error": str(e),
-                            "operation": "url_processing",
-                        },
-                    )
+                except Exception:
                     continue
 
-        self.output.info(
-            f"Concurrent fetch completed: {len(sites)}/{len(target_urls)} successful",
-            extra_data={
-                "site": site_name,
-                "successful": len(sites),
-                "attempted": len(target_urls),
-                "success_rate": (len(sites) / len(target_urls) * 100) if target_urls else 0,
-                "operation": "concurrent_fetch_complete",
-            },
-        )
+        # Show URL fetch results
+        self.logger.always(f"{len(sites)}/{len(target_urls)} URLs successfully fetched for {site_name}")
 
         return sites
 
@@ -136,62 +91,17 @@ class ArticleOrchestrator:
     ) -> bool:
         """Process single article - validate and store to database."""
         try:
-            # Log article processing start with shortened URL
-            # NOTE! does not affect the logic, just improves readability in logs
-            url_display = (
-                url.split("/")[-1][:50] + "..."
-                if len(url.split("/")[-1]) > 50
-                else url.split("/")[-1]
-            )
-            self.output.info(
-                f"Processing: {url_display}",
-                extra_data={
-                    "site": site_name,
-                    "url": url,
-                    "operation": "article_start",
-                },
-            )
-
             # Validate article (ELT approach - raw HTML only in form of RawArticle)
             raw_article: RawArticle | None = soup_validator.validate_and_extract(
                 soup, url
             )
             if not raw_article:
-                self.output.warning(
-                    f"Failed to validate: {url_display}",
-                    extra_data={
-                        "site": site_name,
-                        "url": url,
-                        "operation": "validation_failed",
-                    },
-                )
                 return False
 
             # Store raw data directly to database
-            success = soup_validator.store_to_database(raw_article)
-            if success:
-                self.output.success(
-                    f"Stored: {url_display}",
-                    extra_data={
-                        "site": site_name,
-                        "url": url,
-                        "content_length": raw_article.content_length,
-                        "approach": "ELT",
-                        "operation": "article_complete",
-                    },
-                )
-            return success
+            return soup_validator.store_to_database(raw_article)
 
-        except Exception as e:
-            self.output.error(
-                "Article processing failed",
-                extra_data={
-                    "site": site_name,
-                    "url": url,
-                    "error": str(e),
-                    "operation": "article_processing",
-                },
-            )
+        except Exception:
             return False
 
     def process_site(self, config: dict) -> tuple[int, int]:
@@ -201,22 +111,11 @@ class ArticleOrchestrator:
         Uses your existing scraper but Database parser + database storage.
         """
         if not config.get("enabled", True):
-            self.output.info(
-                "Site processing skipped - disabled",
-                extra_data={"site": config["site"], "reason": "disabled"},
-            )
             return 0, 0
 
         # Database is always enabled (no CSV fallback)
 
-        self.output.process_start(
-            f"site_processing_{config['site']}",
-            extra_data={
-                "site": config["site"],
-                "url_collector_class": config["url_collector_class"],
-            },
-        )
-        start_time = time.time()
+        # Process site
 
         try:
             # Create url collector
@@ -225,49 +124,14 @@ class ArticleOrchestrator:
             # Create soup validator - much simpler, no database lookup needed!
             soup_validator = self.component_factory.create_parser(config)
 
-        except (ValueError, ImportError) as e:
-            self.output.error(
-                "Component initialization failed",
-                extra_data={
-                    "site": config["site"],
-                    "error": str(e),
-                    "operation": "initialization",
-                },
-            )
-            return 0, 0
         except Exception as e:
-            self.output.error(
-                "Unexpected error during component initialization",
-                extra_data={
-                    "site": config["site"],
-                    "error": str(e),
-                    "operation": "initialization",
-                },
-            )
+            self.logger.error(f"Component initialization failed: {str(e)}")
             return 0, 0
 
         # Acquire content sites
         sites = self.acquire_content(url_collector, soup_validator, config["site"])
 
-        mode_str = "offline" if is_test_mode() else "live"
-        self.output.info(
-            f"Found {len(sites)} sites for {config['site']} (mode: {mode_str})",
-            extra_data={
-                "site": config["site"],
-                "sites_found": len(sites),
-                "mode": mode_str,
-            },
-        )
-
         if not sites:
-            self.output.warning(
-                "No content sites found",
-                extra_data={
-                    "site": config["site"],
-                    "mode": mode_str,
-                    "sites_count": 0,
-                },
-            )
             return 0, 0
 
         processed_count = 0
@@ -282,27 +146,8 @@ class ArticleOrchestrator:
                 if success:
                     processed_count += 1
 
-        elapsed_time = time.time() - start_time
-        success_rate = (
-            (processed_count / total_attempted * 100) if total_attempted > 0 else 0
-        )
-
-        # Complete site processing with consolidated output
-        self.output.process_complete(
-            f"site_processing_{config['site']}",
-            extra_data={
-                "site": config["site"],
-                "articles_stored": processed_count,
-                "articles_attempted": total_attempted,
-                "success_rate_percent": round(success_rate, 1),
-                "processing_time_seconds": round(elapsed_time, 2),
-            },
-        )
-
-        self.output.success(
-            f"Site '{config['site']}' processing completed",
-            extra_data={"site": config["site"], "status": "completed"},
-        )
+        # Basic completion log
+        self.logger.always(f"{processed_count}/{total_attempted} articles successfully processed for {config['site']}")
 
         return processed_count, total_attempted
 
@@ -317,16 +162,7 @@ class ArticleOrchestrator:
             config for config in site_configs if config.get("enabled", True)
         ]
 
-        mode_str = "offline" if is_test_mode() else "live"
-        self.output.process_start(
-            "database_processing",
-            extra_data={
-                "total_sites": len(site_configs),
-                "enabled_sites": len(enabled_sites),
-                "database_required": True,
-                "mode": mode_str,
-            },
-        )
+        # Process all sites
 
         # Process sites sequentially for now (simpler)
         for config in enabled_sites:
@@ -338,29 +174,8 @@ class ArticleOrchestrator:
             (total_processed / total_attempted * 100) if total_attempted > 0 else 0
         )
 
-        # Display completion summary with consolidated output
-        self.output.completion_summary(
-            "Database Processing Complete",
-            {
-                "Articles Stored": total_processed,
-                "Articles Attempted": total_attempted,
-                "Success Rate": f"{round(success_rate, 1)}%",
-            },
-            extra_data={
-                "total_articles_stored": total_processed,
-                "total_articles_attempted": total_attempted,
-                "success_rate_percent": round(success_rate, 1),
-                "processing_complete": True,
-            },
-        )
-
-        self.output.process_complete(
-            "database_processing",
-            extra_data={
-                "total_articles_stored": total_processed,
-                "total_articles_attempted": total_attempted,
-                "success_rate_percent": round(success_rate, 1),
-            },
-        )
+        # Summary
+        self.logger.always(f"Total: {total_processed}/{total_attempted} articles processed ({success_rate:.1f}% success)")
+        self.logger.summary_box("Database Processing Complete", total_processed, total_attempted, success_rate)
 
         return total_processed, total_attempted

@@ -1,91 +1,90 @@
 """
-Simple structured logging system for the French article scraper.
-
-Just import the logger class you need with Logger(__name__). That's it.
-All logging configuration stays in this file.
+Simple logging for the French article scraper.
 """
 
 import logging
-import sys
-
-from config.environment import env_config
-
-# Global logging setup - done once, applies everywhere
-_logging_initialized = False
-
-def _initialize_logging():
-    """Initialize logging once for the entire application."""
-    global _logging_initialized
-    if _logging_initialized:
-        return
-
-    log_level = logging.DEBUG if env_config.is_debug_mode() else logging.INFO
-    logging.basicConfig(
-        level=log_level,
-        format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
-        handlers=[logging.StreamHandler(sys.stdout)],
-    )
-
-    # Silence noisy third-party libraries globally
-    logging.getLogger('urllib3').setLevel(logging.WARNING)
-    logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
-    logging.getLogger('trafilatura').setLevel(logging.WARNING)
-    logging.getLogger('trafilatura.main_extractor').setLevel(logging.WARNING)
-    logging.getLogger('trafilatura.readability_lxml').setLevel(logging.WARNING)
-    logging.getLogger('trafilatura.external').setLevel(logging.WARNING)
-    logging.getLogger('trafilatura.core').setLevel(logging.WARNING)
-    logging.getLogger('filelock').setLevel(logging.WARNING)
-
-    # Silence SQLAlchemy completely for migrations and database operations
-    logging.getLogger('sqlalchemy').setLevel(logging.CRITICAL)
-    logging.getLogger('sqlalchemy.engine').setLevel(logging.CRITICAL)
-    logging.getLogger('sqlalchemy.engine.Engine').setLevel(logging.CRITICAL)
-    logging.getLogger('sqlalchemy.pool').setLevel(logging.CRITICAL)
-    logging.getLogger('sqlalchemy.dialects').setLevel(logging.CRITICAL)
-
-    _logging_initialized = True
 
 
-class BaseLogger:
-    """Simple logger class. Just pass __name__ and you're done."""
+class Logger:
+    """Simple logger with basic methods and box display."""
 
     def __init__(self, name: str):
-        _initialize_logging()  # Ensure logging is set up
         self.name = name
         self.logger = logging.getLogger(name)
 
-    def debug(self, message: str, extra_data: dict | None = None, **kwargs) -> None:
-        """Log debug message with optional structured data."""
-        self.logger.debug(message, **kwargs)
+        # Simple setup - basic logging
+        if not logging.getLogger().handlers:
+            logging.basicConfig(level=logging.INFO, format="%(message)s")
 
-    def info(self, message: str, extra_data: dict | None = None, **kwargs) -> None:
-        """Log info message with optional structured data."""
-        self.logger.info(message, **kwargs)
+    def info(self, message: str) -> None:
+        """Log info message."""
+        self.logger.info(message)
 
-    def warning(self, message: str, extra_data: dict | None = None, **kwargs) -> None:
-        """Log warning message with optional structured data."""
-        self.logger.warning(message, **kwargs)
+    def warning(self, message: str) -> None:
+        """Log warning message."""
+        self.logger.warning(message)
 
-    def error(self, message: str, extra_data: dict | None = None, **kwargs) -> None:
-        """Log error message with optional structured data."""
-        self.logger.error(message, **kwargs)
+    def error(self, message: str) -> None:
+        """Log error message."""
+        self.logger.error(message)
 
-    def critical(self, message: str, extra_data: dict | None = None, **kwargs) -> None:
-        """Log critical message with optional structured data."""
-        self.logger.critical(message, **kwargs)
+    def always(self, message: str) -> None:
+        """Always show message."""
+        # Use logging instead of print for CI/CD compatibility
+        logging.getLogger().warning(message)
 
-    def exception(self, message: str, extra_data: dict | None = None, **kwargs) -> None:
-        """Log exception message with traceback."""
-        self.logger.exception(message, **kwargs)
+    def summary_box(self, title: str, total_stored: int, total_attempted: int, success_rate: float) -> None:
+        """Display final processing summary in a box."""
+        # Content lines
+        content_lines = [
+            "",  # Empty line for spacing
+            f"Articles Stored                                       {total_stored:>3}",
+            f"Articles Attempted                                    {total_attempted:>3}",
+            f"Success Rate                                      {success_rate:>5.1f}%",
+            ""   # Empty line for spacing
+        ]
 
+        # Calculate box width
+        max_content_width = max(len(line) for line in content_lines)
+        title_width = len(title)
+        box_width = max(60, max_content_width + 4, title_width + 6)
 
-# Simple aliases for backwards compatibility
-MigrationLogger = BaseLogger
-DatabaseLogger = BaseLogger
-WebScraperLogger = BaseLogger
-GeneralLogger = BaseLogger
+        # Use logging instead of print for CI/CD
+        logger = logging.getLogger()
 
-# Usage: logger = MigrationLogger(__name__)
-#        logger = DatabaseLogger(__name__)
-#        logger = WebScraperLogger(__name__)
-#        logger = GeneralLogger(__name__)
+        # Top border
+        logger.warning(f"╔{'═' * (box_width - 2)}╗")
+
+        # Title line
+        title_padding = (box_width - 2 - len(title)) // 2
+        logger.warning(f"║{' ' * title_padding}{title}{' ' * (box_width - 2 - len(title) - title_padding)}║")
+
+        # Content lines
+        for line in content_lines:
+            padding = box_width - len(line) - 3
+            logger.warning(f"║{line}{' ' * padding}║")
+
+        # Bottom border
+        logger.warning(f"╚{'═' * (box_width - 2)}╝")
+
+    def header(self, title: str, subtitle: str = None) -> None:
+        """Display section header."""
+        width = max(len(title) + 4, len(subtitle) + 4 if subtitle else 0, 50)
+
+        # Use logging instead of print for CI/CD
+        logger = logging.getLogger()
+
+        # Top border
+        logger.warning(f"╔{'═' * (width - 2)}╗")
+
+        # Title
+        padding = (width - 2 - len(title)) // 2
+        logger.warning(f"║{' ' * padding}{title}{' ' * (width - 2 - len(title) - padding)}║")
+
+        # Subtitle if provided
+        if subtitle:
+            sub_padding = (width - 2 - len(subtitle)) // 2
+            logger.warning(f"║{' ' * sub_padding}{subtitle}{' ' * (width - 2 - len(subtitle) - sub_padding)}║")
+
+        # Bottom border
+        logger.warning(f"╚{'═' * (width - 2)}╝")
