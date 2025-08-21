@@ -10,11 +10,14 @@ The main purpose is to create the session factory, which is used by repository
 classes to get database sessions with proper transaction handling.
 """
 
+import time
 from collections.abc import Generator
 from contextlib import contextmanager
 
+import sqlalchemy.exc
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import QueuePool
 from sqlalchemy.sql import column, table
 
 from config.environment import env_config
@@ -23,13 +26,14 @@ from utils.structured_logger import Logger
 
 logger = Logger(__name__)
 
-# Simple module-level session factory
+# Simple module-level session factory and engine
 _SessionLocal = None
+_engine = None
 
 
 def initialize_database(echo: bool = None) -> bool:
-    """Initialize database connection with simple session factory."""
-    global _SessionLocal
+    """Initialize database connection with optimized connection pooling."""
+    global _SessionLocal, _engine
 
     try:
         # builds connection string from config
@@ -38,32 +42,90 @@ def initialize_database(echo: bool = None) -> bool:
             f"postgresql://{db_config['user']}:{db_config['password']}"
             f"@{db_config['host']}:{db_config['port']}/{db_config['database']}"
         )
-        # this engine manages connections to database
+
         # Allow override of echo for migrations
         if echo is None:
             echo = env_config.is_debug_mode()
-        engine = create_engine(database_url, echo=echo)
+
+        # Determine pool parameters based on environment
+        is_test = env_config.is_test_mode()
+        pool_size = 5 if is_test else 10
+        max_overflow = 10 if is_test else 20
+
+        # Create engine with optimized connection pooling
+        _engine = create_engine(
+            database_url,
+            echo=echo,
+            poolclass=QueuePool,
+            pool_size=pool_size,  # Keep N connections in pool
+            max_overflow=max_overflow,  # Allow N extra connections
+            pool_timeout=30,  # Wait 30s for connection
+            pool_recycle=3600,  # Recycle connections after 1 hour
+            pool_pre_ping=True,  # Verify connection health before use
+            connect_args={
+                "connect_timeout": 10,
+                "application_name": "french_news_scraper",
+            },
+        )
 
         # create session factory bound to this engine
-        _SessionLocal = sessionmaker(bind=engine)
+        _SessionLocal = sessionmaker(bind=_engine)
 
         # Tests the connection by creating a session and executing a simple query
         with get_session() as session:
             session.execute(text("SELECT 1"))
 
+        logger.info(
+            "Database initialized with connection pooling",
+            extra_data={
+                "pool_size": pool_size,
+                "max_overflow": max_overflow,
+                "pool_timeout": 30,
+                "pool_recycle": 3600,
+            },
+        )
+
         return True
 
-    except Exception:
+    except Exception as e:
+        logger.error(f"Database initialization failed: {str(e)}")
         return False
+
+
+def log_pool_status() -> None:
+    """Log current database connection pool status for monitoring."""
+    if _engine is None:
+        logger.warning("Cannot log pool status: database not initialized")
+        return
+
+    try:
+        if hasattr(_engine, "pool"):
+            pool = _engine.pool
+            status_data = {
+                "pool_size": pool.size(),
+                "checked_in": pool.checkedin(),
+                "checked_out": pool.checkedout(),
+                "overflow": pool.overflow(),
+            }
+
+            # Add invalidated count if available
+            if hasattr(pool, "invalidated"):
+                status_data["invalidated"] = pool.invalidated()
+
+            logger.info("Database connection pool status", extra_data=status_data)
+        else:
+            logger.warning("Pool status unavailable: engine has no pool attribute")
+    except Exception as e:
+        logger.error(f"Failed to log pool status: {str(e)}")
 
 
 @contextmanager
 def get_session() -> Generator[Session, None, None]:
     """
-    Provides a database session for safe transaction handling.
+    Provides a database session with connection pool exhaustion handling.
 
     This is a context manager that automatically handles:
-    - Session creation
+    - Session creation with retry logic for pool exhaustion
     - Transaction commits (on success)
     - Transaction rollbacks (on errors)
     - Session cleanup (always)
@@ -80,6 +142,7 @@ def get_session() -> Generator[Session, None, None]:
     - Commits all changes if the block completes successfully
     - Rolls back all changes if any exceptions occur
     - Always closes the session properly, even during failures
+    - Handles connection pool exhaustion with retry logic
 
     Example (successful operation):
         with get_session() as s:
@@ -96,7 +159,30 @@ def get_session() -> Generator[Session, None, None]:
             "Database not initialized. Call initialize_database() first."
         )
 
-    session = _SessionLocal()  # fresh session from the session factory
+    max_retries = 3
+    retry_delay = 1.0
+    session = None
+
+    for attempt in range(max_retries):
+        try:
+            session = _SessionLocal()  # fresh session from the session factory
+            break
+        except sqlalchemy.exc.TimeoutError:
+            if attempt == max_retries - 1:
+                logger.error("Connection pool exhausted after max retries")
+                raise
+            logger.warning(
+                f"Connection pool exhausted, retrying in {retry_delay}s (attempt {attempt + 1}/{max_retries})"
+            )
+            time.sleep(retry_delay)
+            retry_delay *= 2  # Exponential backoff
+        except Exception:
+            # For non-timeout errors, don't retry
+            raise
+
+    if session is None:
+        raise RuntimeError("Failed to create database session")
+
     try:
         yield session  # hands session to the caller
         session.commit()  # saves
