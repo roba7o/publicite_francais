@@ -55,10 +55,7 @@ class BaseSoupValidator(EnhancedWebMixin, ABC):
     def get_soup_from_url(self, url: str, max_retries: int = 3) -> BeautifulSoup | None:
         """Fetch and parse HTML from URL with retry logic."""
         if is_test_mode():
-            self.logger.warning(
-                "URL fetch attempted in offline mode",
-                extra_data={"url": url, "mode": "offline"},
-            )
+            self.logger.warning("URL fetch attempted in offline mode")
             return None
 
         for attempt in range(max_retries):
@@ -68,30 +65,18 @@ class BaseSoupValidator(EnhancedWebMixin, ABC):
                 response.raise_for_status()
 
                 if len(response.content) < 100:
-                    self.logger.warning(
-                        "Response content too short",
-                        extra_data={
-                            "url": url,
-                            "content_length": len(response.content),
-                        },
-                    )
+                    self.logger.warning(f"Response content too short: {len(response.content)} bytes")
                     continue
 
                 return self.parse_html_fast(response.content)
 
             except requests.exceptions.RequestException as e:
-                self.logger.warning(
-                    "URL fetch failed",
-                    extra_data={"url": url, "attempt": attempt + 1, "error": str(e)},
-                )
+                self.logger.warning(f"URL fetch failed (attempt {attempt + 1}): {str(e)}")
 
             if attempt < max_retries - 1:
                 time.sleep(1 + attempt)
 
-        self.logger.error(
-            "URL fetch failed after all retries",
-            extra_data={"url": url, "max_retries": max_retries},
-        )
+        self.logger.error(f"URL fetch failed after {max_retries} retries")
         return None
 
     def get_test_sources_from_directory(
@@ -113,13 +98,7 @@ class BaseSoupValidator(EnhancedWebMixin, ABC):
         source_dir = test_data_dir / dir_name
 
         if not source_dir.exists():
-            self.logger.warning(
-                "Test directory not found",
-                extra_data={
-                    "site_name": site_name,
-                    "directory_path": str(source_dir),
-                },
-            )
+            self.logger.warning(f"Test directory not found: {source_dir}")
             return []
 
         soup_sources = []

@@ -50,31 +50,18 @@ class SlateFrSoupValidator(BaseSoupValidator):
         try:
             # Enhanced validation: Check URL domain using tldextract
             if not self.validate_url_domain(url, "slate.fr"):
-                self.logger.warning(
-                    "URL domain validation failed",
-                    extra_data={
-                        "url": url,
-                        "expected_domain": "slate.fr",
-                        "site": "slate.fr",
-                    },
-                )
+                self.logger.warning("URL domain validation failed")
                 return None
             # Domain-specific validation: Slate.fr articles use <article> tag
             article_tag = soup.find("article")
             if not article_tag or not isinstance(article_tag, Tag):
-                self.logger.warning(
-                    "No article tag found - not a valid Slate.fr article",
-                    extra_data={"url": url, "site": "slate.fr"},
-                )
+                self.logger.warning("No article tag found - not a valid Slate.fr article")
                 return None
 
             # Additional validation: Check for title structure
             title_tag = soup.find("h1")
             if not title_tag or not isinstance(title_tag, Tag):
-                self.logger.warning(
-                    "No h1 tag found - possibly not an article page",
-                    extra_data={"url": url, "site": "slate.fr"},
-                )
+                self.logger.warning("No h1 tag found - possibly not an article page")
                 return None
 
             # Store raw HTML - let dbt handle all content extraction
@@ -85,9 +72,5 @@ class SlateFrSoupValidator(BaseSoupValidator):
             )
 
         except Exception as e:
-            self.logger.error(
-                f"Error validating Slate.fr article structure: {e}",
-                extra_data={"url": url, "site": "slate.fr"},
-                exc_info=True,
-            )
+            self.logger.error(f"Error validating Slate.fr article structure: {e}")
             return None
