@@ -10,9 +10,7 @@ Note: Text processing is now handled by dbt/SQL for better performance.
 """
 
 from .structured_logger import get_structured_logger
-from .validators import DataValidator
 
 __all__ = [
-    "DataValidator",
     "get_structured_logger",
 ]

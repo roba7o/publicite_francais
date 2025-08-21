@@ -2,9 +2,13 @@
 URL mapping configuration for test data.
 
 This file maps test filenames to their original URLs for offline mode.
+
+this could be fixed urls but we do not have control of the websites ability to change URLs.
+This allows us to simulate real-world scenarios without needing live internet access.
+
 """
 
-# Map of filename -> original URL for each test file
+# Map of filename for path -> original URL for each test file
 URL_MAPPING = {
     # Slate.fr test files
     (
@@ -95,6 +99,42 @@ URL_MAPPING = {
         "https://www.lemonde.fr/en/international/article/2024/11/06/"
         "algerian-boxer-imane-khelif-taking-legal-action-over-gender-"
         "reports_6731869_4.html"
+    ),
+    # FranceInfo.fr test files
+    (
+        "creation-d-un-etat-de-nouvelle-caledonie-nationalite-corps-electoral-"
+        "ce-que-contient-l-accord-historique-signe-entre-l-etat-et-les-forces-"
+        "politiques-du-territoire_7372849.html"
+    ): (
+        "https://www.franceinfo.fr/politique/nouvelle-caledonie/creation-d-un-"
+        "etat-de-nouvelle-caledonie-nationalite-corps-electoral-ce-que-contient-"
+        "l-accord-historique-signe-entre-l-etat-et-les-forces-politiques-du-"
+        "territoire_7372849.html"
+    ),
+    (
+        "elisabeth-borne-recadre-son-ministre-de-l-enseignement-superieur-qui-"
+        "avait-declare-que-la-notion-d-islamo-gauchisme-n-existait-pas_7375003.html"
+    ): (
+        "https://www.franceinfo.fr/politique/elisabeth-borne-recadre-son-"
+        "ministre-de-l-enseignement-superieur-qui-avait-declare-que-la-notion-"
+        "d-islamo-gauchisme-n-existait-pas_7375003.html"
+    ),
+    (
+        "infographie-de-32-milliards-en-2017-a-plus-de-67-prevus-en-2030-"
+        "comment-le-budget-de-la-defense-francaise-a-evolue-ces-dernieres-"
+        "annees_7374634.html"
+    ): (
+        "https://www.franceinfo.fr/politique/defense/infographie-de-32-"
+        "milliards-en-2017-a-plus-de-67-prevus-en-2030-comment-le-budget-de-"
+        "la-defense-francaise-a-evolue-ces-dernieres-annees_7374634.html"
+    ),
+    (
+        "nouvelle-caledonie-une-majorite-de-la-classe-politique-salue-l-accord-"
+        "le-rn-exprime-de-vives-inquietudes_7374766.html"
+    ): (
+        "https://www.franceinfo.fr/politique/nouvelle-caledonie/nouvelle-"
+        "caledonie-une-majorite-de-la-classe-politique-salue-l-accord-le-rn-"
+        "exprime-de-vives-inquietudes_7374766.html"
     ),
     # TF1 Info test files
     "comment-investir-son-argent-avec-un-cashback-2377334.html": (

@@ -1,55 +1,23 @@
 """
 Enhanced logging configuration for the French article scraper.
-
-This module provides backward-compatible enhanced logging that integrates
-with the new structured logging system while maintaining compatibility
-with existing code.
-
-Usage:
-    # Simple setup (backward compatible)
-    >>> from utils.logging_config_enhanced import setup_logging
-    >>> setup_logging()
-
-    # Advanced setup with structured logging
-    >>> setup_logging(
-    ...     level="DEBUG", use_structured=True, enable_file_logging=True
-    ... )
-
-    # Component-specific log levels
-    >>> from utils.logging_config_enhanced import configure_component_levels
-    >>> configure_component_levels({
-    ...     "article_scrapers.core": "DEBUG",
-    ...     "article_scrapers.parsers": "INFO"
-    ... })
 """
 
 import logging
-from typing import Dict, Optional, Union
 
-from config.settings import DEBUG
+from config.environment import env_config
 
 
-def setup_logging(
-    level: Optional[Union[str, int]] = None,
-    use_structured: bool = True,
-    enable_file_logging: bool = True,
-    console_format: str = "human",
-    log_directory: Optional[str] = None,
-) -> None:
+def setup_logging(level: str | int | None = None) -> None:
     """
-    Setup enhanced logging configuration with backward compatibility.
+    Setup enhanced logging configuration.
 
     Args:
         level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
                Defaults to DEBUG if DEBUG=True, INFO otherwise
-        use_structured: Whether to use structured JSON logging for files
-        enable_file_logging: Whether to write logs to files
-        console_format: Console output format ("human" or "structured")
-        log_directory: Directory for log files (defaults to "logs")
     """
     # Determine default log level based on configuration
     if level is None:
-        level = logging.DEBUG if DEBUG else logging.INFO
+        level = logging.DEBUG if env_config.is_debug_mode() else logging.INFO
     elif isinstance(level, str):
         level = getattr(logging, level.upper())
 
@@ -66,9 +34,9 @@ def setup_logging(
 
 def _setup_component_log_levels() -> None:
     """Setup appropriate log levels for different components."""
-    component_levels: Dict[str, Union[str, int]] = {
+    component_levels: dict[str, str | int] = {
         # Core processing - more verbose in debug mode
-        "article_scrapers.core.processor": (logging.DEBUG if DEBUG else logging.INFO),
+        "article_scrapers.core.processor": (logging.DEBUG if env_config.is_debug_mode() else logging.INFO),
         # Database operations - moderate verbosity
         "article_scrapers.database": logging.INFO,
         # Parsers - moderate verbosity
@@ -102,7 +70,7 @@ def configure_debug_mode(enabled: bool = True) -> None:
     """
     if enabled:
         # Set debug level for all application components
-        debug_components: Dict[str, Union[str, int]] = {
+        debug_components: dict[str, str | int] = {
             "article_scrapers": logging.DEBUG,
             "article_scrapers.core": logging.DEBUG,
             "article_scrapers.parsers": logging.DEBUG,
@@ -120,7 +88,7 @@ def configure_debug_mode(enabled: bool = True) -> None:
         )
     else:
         # Normal operation levels
-        normal_components: Dict[str, Union[str, int]] = {
+        normal_components: dict[str, str | int] = {
             "article_scrapers": logging.INFO,
             "urllib3": logging.WARNING,
             "requests": logging.WARNING,

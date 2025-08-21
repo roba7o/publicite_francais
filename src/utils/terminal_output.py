@@ -7,9 +7,9 @@ that provides both user-friendly terminal output and structured log data.
 Provides a shared instance for the entire application to eliminate duplicate creation patterns.
 """
 
-import os
-from typing import Any, Dict, Optional
+from typing import Any
 
+from config.environment import is_production
 from utils.structured_logger import get_structured_logger
 
 
@@ -21,7 +21,7 @@ class ConsolidatedOutput:
     structured log data for monitoring and debugging.
     """
 
-    def __init__(self, component_name: str, ascii_art: Optional[bool] = None):
+    def __init__(self, component_name: str, ascii_art: bool | None = None):
         """
         Initialize consolidated output system.
 
@@ -34,27 +34,26 @@ class ConsolidatedOutput:
 
         if ascii_art is None:
             # Auto-detect: ASCII art in development, clean in production
-            is_production = os.getenv("PRODUCTION", "false").lower() == "true"
-            self.ascii_art = not is_production
+            self.ascii_art = not is_production()
         else:
             self.ascii_art = ascii_art
 
-    def success(self, message: str, extra_data: Optional[Dict] = None) -> None:
+    def success(self, message: str, extra_data: dict | None = None) -> None:
         """Display success message and log structured data."""
         print(f"✓ {message}")
         self.logger.info(f"Success: {message}", extra_data=extra_data or {})
 
-    def error(self, message: str, extra_data: Optional[Dict] = None) -> None:
+    def error(self, message: str, extra_data: dict | None = None) -> None:
         """Display error message and log structured data."""
         print(f"✗ {message}")
         self.logger.error(f"Error: {message}", extra_data=extra_data or {})
 
-    def info(self, message: str, extra_data: Optional[Dict] = None) -> None:
+    def info(self, message: str, extra_data: dict | None = None) -> None:
         """Display info message and log structured data."""
         print(f"• {message}")
         self.logger.info(message, extra_data=extra_data or {})
 
-    def warning(self, message: str, extra_data: Optional[Dict] = None) -> None:
+    def warning(self, message: str, extra_data: dict | None = None) -> None:
         """Display warning message and log structured data."""
         print(f"⚠ {message}")
         self.logger.warning(f"Warning: {message}", extra_data=extra_data or {})
@@ -62,8 +61,8 @@ class ConsolidatedOutput:
     def section_header(
         self,
         title: str,
-        subtitle: Optional[str] = None,
-        extra_data: Optional[Dict] = None,
+        subtitle: str | None = None,
+        extra_data: dict | None = None,
     ) -> None:
         """Display section header with optional ASCII art and log section start."""
         if self.ascii_art:
@@ -82,7 +81,7 @@ class ConsolidatedOutput:
 
         self.logger.info(f"Section started: {title}", extra_data=log_data)
 
-    def _ascii_header(self, title: str, subtitle: Optional[str] = None) -> None:
+    def _ascii_header(self, title: str, subtitle: str | None = None) -> None:
         """Display ASCII art header for development mode."""
         width = max(len(title) + 4, len(subtitle) + 4 if subtitle else 0, 50)
 
@@ -104,7 +103,7 @@ class ConsolidatedOutput:
         print(f"╚{'═' * (width - 2)}╝")
 
     def completion_summary(
-        self, title: str, stats: Dict[str, Any], extra_data: Optional[Dict] = None
+        self, title: str, stats: dict[str, Any], extra_data: dict | None = None
     ) -> None:
         """Display completion summary with ASCII art and log structured completion data."""
         if self.ascii_art:
@@ -121,7 +120,7 @@ class ConsolidatedOutput:
 
         self.logger.info(f"Process completed: {title}", extra_data=log_data)
 
-    def _ascii_completion(self, title: str, stats: Dict[str, Any]) -> None:
+    def _ascii_completion(self, title: str, stats: dict[str, Any]) -> None:
         """Display ASCII completion summary."""
         # Calculate width based on content
         max_key_len = max(len(str(key)) for key in stats.keys()) if stats else 0
@@ -143,9 +142,7 @@ class ConsolidatedOutput:
 
         print(f"╚{'═' * (width - 2)}╝")
 
-    def process_start(
-        self, process_name: str, extra_data: Optional[Dict] = None
-    ) -> None:
+    def process_start(self, process_name: str, extra_data: dict | None = None) -> None:
         """Log process start with structured data (logging only, no CLI output)."""
         log_data = {"process": process_name, "status": "started"}
         if extra_data:
@@ -153,7 +150,7 @@ class ConsolidatedOutput:
         self.logger.info(f"Process started: {process_name}", extra_data=log_data)
 
     def process_complete(
-        self, process_name: str, extra_data: Optional[Dict] = None
+        self, process_name: str, extra_data: dict | None = None
     ) -> None:
         """Log process completion with structured data (logging only, no CLI output)."""
         log_data = {"process": process_name, "status": "completed"}

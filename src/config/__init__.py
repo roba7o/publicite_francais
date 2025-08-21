@@ -3,17 +3,16 @@ Configuration module for French Article Scraper.
 
 This module contains all configuration settings, including:
 - Website scraper and parser configurations
-- Application settings
+- Application settings using centralized environment management
 
 Note: Text processing and filtering is now handled by dbt/SQL.
 Stopwords and junk word configurations are in french_flashcards/config/ as JSON files.
 """
 
-from .settings import DEBUG, OFFLINE
-from .source_configs import SCRAPER_CONFIGS
+from .environment import env_config
+from .site_configs import SCRAPER_CONFIGS
 
 __all__ = [
-    "DEBUG",
-    "OFFLINE",
+    "env_config",
     "SCRAPER_CONFIGS",
 ]

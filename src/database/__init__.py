@@ -1,16 +1,15 @@
 """
-Database module for French news scraper.
+Database package for French news scraper.
 
-Provides database connectivity infrastructure without modifying existing
-scraper logic.
+Provides database connection, models, and utilities.
 """
 
-from .article_repository import ArticleRepository
-from .database import get_database_manager, get_session, initialize_database
+from database.database import get_session, initialize_database, store_raw_article
+from database.models import RawArticle
 
 __all__ = [
-    "get_database_manager",
-    "initialize_database",
     "get_session",
-    "ArticleRepository",
+    "initialize_database",
+    "store_raw_article",
+    "RawArticle",
 ]

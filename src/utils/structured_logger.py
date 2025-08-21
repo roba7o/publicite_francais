@@ -4,9 +4,8 @@ Simplified structured logging system for the French article scraper.
 
 import logging
 import sys
-from typing import Dict, Optional
 
-from config.settings import DEBUG
+from config.environment import env_config
 
 
 class StructuredLogger:
@@ -16,33 +15,27 @@ class StructuredLogger:
         self.name = name
         self.logger = logging.getLogger(name)
 
-    def debug(self, message: str, extra_data: Optional[Dict] = None, **kwargs) -> None:
+    def debug(self, message: str, extra_data: dict | None = None, **kwargs) -> None:
         """Log debug message with optional structured data."""
         self.logger.debug(message, **kwargs)
 
-    def info(self, message: str, extra_data: Optional[Dict] = None, **kwargs) -> None:
+    def info(self, message: str, extra_data: dict | None = None, **kwargs) -> None:
         """Log info message with optional structured data."""
         self.logger.info(message, **kwargs)
 
-    def warning(
-        self, message: str, extra_data: Optional[Dict] = None, **kwargs
-    ) -> None:
+    def warning(self, message: str, extra_data: dict | None = None, **kwargs) -> None:
         """Log warning message with optional structured data."""
         self.logger.warning(message, **kwargs)
 
-    def error(self, message: str, extra_data: Optional[Dict] = None, **kwargs) -> None:
+    def error(self, message: str, extra_data: dict | None = None, **kwargs) -> None:
         """Log error message with optional structured data."""
         self.logger.error(message, **kwargs)
 
-    def critical(
-        self, message: str, extra_data: Optional[Dict] = None, **kwargs
-    ) -> None:
+    def critical(self, message: str, extra_data: dict | None = None, **kwargs) -> None:
         """Log critical message with optional structured data."""
         self.logger.critical(message, **kwargs)
 
-    def exception(
-        self, message: str, extra_data: Optional[Dict] = None, **kwargs
-    ) -> None:
+    def exception(self, message: str, extra_data: dict | None = None, **kwargs) -> None:
         """Log exception message with traceback."""
         self.logger.exception(message, **kwargs)
 
@@ -55,9 +48,11 @@ def get_structured_logger(name: str) -> StructuredLogger:
 # Initialize basic logging
 def _initialize_logging() -> None:
     """Initialize basic logging configuration."""
-    root_logger = logging.getLogger()
+    root_logger = logging.getLogger()  # Get the root logger (if not already configured)
     if not root_logger.handlers:
-        log_level = logging.DEBUG if DEBUG else logging.INFO
+        log_level = (
+            logging.DEBUG if env_config.is_debug_mode() else logging.INFO
+        )  # uses DEBUG settings
         logging.basicConfig(
             level=log_level,
             format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",

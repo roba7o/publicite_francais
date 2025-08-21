@@ -7,7 +7,9 @@ name = "publicite-francais"
 version = "0.1.0"
 description = "French article scraper for vocabulary learning"
 readme = "README.md"
-requires-python = ">=3.8"
+authors = [{name = "roba7o"}]
+license = {text = "MIT"}
+requires-python = ">=3.12"
 dependencies = [
     "requests>=2.25.1",
     "beautifulsoup4>=4.9.3",
@@ -15,14 +17,15 @@ dependencies = [
     "urllib3>=1.26.5",
     "psycopg2-binary>=2.9.9",
     "sqlalchemy>=2.0.23",
+    "python-dotenv>=1.0.0",
+    "tldextract>=5.0.0",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=6.2.4",
     "ruff>=0.1.0",
-    "mypy>=1.0.0",
-    "types-requests>=2.25.0",
+    "mypy>=1.10.0",
+    "pytest>=8.2.1",
 ]
 
 [tool.setuptools.packages.find]
@@ -33,7 +36,7 @@ where = ["src"]
 
 [tool.ruff]
 line-length = 88
-target-version = "py38"
+target-version = "py312"
 src = ["src", "tests"]
 
 [tool.ruff.lint]
@@ -55,7 +58,7 @@ quote-style = "double"
 indent-style = "space"
 
 [tool.mypy]
-python_version = "3.8"
+python_version = "3.12"
 warn_unused_configs = false
 disallow_untyped_defs = false
 disallow_incomplete_defs = false  
@@ -85,4 +88,11 @@ markers = [
     "e2e: marks tests as end-to-end tests",
     "performance: marks tests as performance tests",
 ]
+
+[tool.pylsp-mypy]
+enabled = false
+
+[tool.pyright]
+reportArgumentType = "none"
+reportOptionalMemberAccess = "none"
 

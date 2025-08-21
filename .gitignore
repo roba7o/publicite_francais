@@ -1,38 +1,19 @@
-# Output directory
-output/
-
 # Python
 __pycache__/
 *.py[cod]
 *.egg-info/
 
-# Testing and Coverage
+# Testing
 .pytest_cache/
-.coverage
-.coverage.*
-htmlcov/
-.tox/
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-.hypothesis/
-
-# Type checking
 .mypy_cache/
 
-# Venv
-venv/
-.venv/
-env/
-.env/
-
-# Logs
-logs/
-
 # Environment
+venv/
 .env
-*.env
+
+# Project
+output/
+logs/
 
 # OS
 .DS_Store
@@ -40,10 +21,9 @@ logs/
 # IDE
 .vscode/
 !.vscode/settings.json
-.idea/
-*.swp
-*.swo
 
-
-#claude 
+# Claude
 CLAUDE.md
+
+# misc
+misc/

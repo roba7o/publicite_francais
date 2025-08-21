@@ -734,6 +734,251 @@ def test_example_news_integration(self):
 
 ---
 
+## Step 7.5: Iterative Development Workflow
+
+> [!tip] Essential Development Process
+> For efficient parser and scraper development, follow this iterative workflow to quickly test and debug your implementation.
+
+### Development Environment Setup
+
+**One-time setup:**
+```bash
+# Start database once (keeps running)
+make db-start
+
+# Verify database is ready
+docker compose exec postgres psql -U news_user -d french_news -c "SELECT 1;"
+```
+
+### Rapid Development Cycle
+
+**For iterative parser/scraper development:**
+
+1. **Clear test data between iterations:**
+   ```bash
+   # Quick schema cleanup (keeps DB running)
+   docker compose exec postgres sh -c 'psql -U $POSTGRES_USER -d $POSTGRES_DB -c "TRUNCATE news_data_test.articles CASCADE;"'
+   ```
+
+2. **Run your parser quickly:**
+   ```bash
+   # Fast iteration - no DB restart
+   make run
+   ```
+
+3. **Check results immediately:**
+   ```bash
+   # Quick success check
+   docker compose exec postgres psql -U news_user -d french_news -c "
+   SELECT 
+       source, 
+       COUNT(*) as articles,
+       COUNT(CASE WHEN title = 'No title found' THEN 1 END) as failed_titles,
+       COUNT(CASE WHEN article_date = 'No date found' THEN 1 END) as failed_dates
+   FROM news_data_test.articles 
+   GROUP BY source;"
+   ```
+
+### Debug Soup and Parsing Issues
+
+**Create a debug script** (`debug_parser.py`):
+```python
+#!/usr/bin/env python3
+import sys
+sys.path.insert(0, 'src')
+
+from scrapers.example_news_scraper import ExampleNewsURLScraper
+from parsers.database_example_news_parser import DatabaseExampleNewsParser
+
+def debug_soup():
+    """Debug soup structure and parsing logic."""
+    scraper = ExampleNewsURLScraper()
+    parser = DatabaseExampleNewsParser("example_news_source_id")
+    
+    print("🔍 Getting URLs...")
+    urls = scraper.get_article_urls()
+    print(f"Found {len(urls)} URLs")
+    
+    for i, url in enumerate(urls[:2]):  # Test first 2
+        print(f"\n🌐 Testing URL {i+1}: {url}")
+        soup = scraper.get_soup(url)
+        
+        if not soup:
+            print("❌ Failed to get soup")
+            continue
+            
+        print("📰 Title elements found:")
+        for tag in soup.find_all(['h1', 'h2']):
+            classes = tag.get('class', [])
+            print(f"  {tag.name}.{'.'.join(classes)}: {tag.get_text()[:100]}")
+            
+        print("📅 Date elements found:")
+        for tag in soup.find_all('time'):
+            print(f"  time: datetime='{tag.get('datetime')}' | text='{tag.get_text()}'")
+            
+        print("📄 Content containers found:")
+        for tag in soup.find_all(['article', 'main', 'div']):
+            classes = tag.get('class', [])
+            if classes:
+                text_preview = tag.get_text()[:100].replace('\n', ' ')
+                print(f"  {tag.name}.{'.'.join(classes)}: {text_preview}...")
+        
+        # Test your parser
+        print("\n🔧 Testing parser...")
+        article_data = parser.parse_article(soup)
+        if article_data:
+            print(f"✅ Title: {article_data.title[:50]}...")
+            print(f"📊 Text length: {len(article_data.full_text)} chars")
+            print(f"📅 Date: {article_data.article_date}")
+        else:
+            print("❌ Parser returned None")
+
+if __name__ == "__main__":
+    debug_soup()
+```
+
+**Run debug script:**
+```bash
+PYTHONPATH=src python debug_parser.py
+```
+
+### Database Inspection Commands
+
+**Check soup quality and parsing results:**
+
+```bash
+# View recent articles with details
+docker compose exec postgres psql -U news_user -d french_news -c "
+SELECT 
+    title, 
+    LENGTH(full_text) as text_length,
+    article_date,
+    scraped_at,
+    url
+FROM news_data_test.articles 
+WHERE source = 'YourNewSite'
+ORDER BY scraped_at DESC 
+LIMIT 5;"
+
+# Check for parsing issues
+docker compose exec postgres psql -U news_user -d french_news -c "
+SELECT 
+    source,
+    COUNT(*) as total,
+    COUNT(CASE WHEN title LIKE '%No title%' THEN 1 END) as no_title,
+    COUNT(CASE WHEN article_date LIKE '%No date%' THEN 1 END) as no_date,
+    ROUND(AVG(LENGTH(full_text)), 0) as avg_text_length
+FROM news_data_test.articles 
+WHERE source = 'YourNewSite'
+GROUP BY source;"
+
+# Check for duplicate detection
+docker compose exec postgres psql -U news_user -d french_news -c "
+SELECT 
+    title,
+    COUNT(*) as occurrences
+FROM news_data_test.articles 
+WHERE source = 'YourNewSite'
+GROUP BY title
+HAVING COUNT(*) > 1;"
+```
+
+### Add Debug Prints to Your Parser
+
+**Temporarily add debug output to your parser methods:**
+
+```python
+def _extract_title(self, soup):
+    """Extract title with debug output."""
+    # Debug what's available
+    if self.debug:
+        print(f"🔍 Looking for title...")
+        h1_tags = soup.find_all('h1')
+        print(f"  Found {len(h1_tags)} h1 tags:")
+        for i, tag in enumerate(h1_tags[:3]):
+            classes = tag.get('class', [])
+            print(f"    {i+1}. h1.{'.'.join(classes)}: {tag.get_text()[:50]}...")
+    
+    # Your extraction logic here
+    title_tag = soup.find("h1", class_="article-title")
+    if title_tag:
+        title = title_tag.get_text(strip=True)
+        if self.debug:
+            print(f"✅ Extracted title: {title[:50]}...")
+        return title
+    
+    if self.debug:
+        print("❌ No title found with expected selector")
+    return "No title found"
+```
+
+### When to Use Different Commands
+
+**Command choice for different scenarios:**
+
+| **Use Case** | **Command** | **Why** |
+|--------------|-------------|---------|
+| **First-time setup** | `make db-start` | Start database once |
+| **Quick parser testing** | `make run` | Fast, no DB restart |
+| **Full validation** | `make test-pipeline` | Clears data + runs full pipeline |
+| **Clean slate testing** | Schema truncate + `make run` | Manual control over data |
+| **Debug soup issues** | `debug_parser.py` | Inspect HTML structure |
+| **Live website testing** | `run-live` override | Test with real websites |
+
+### Complete Development Example
+
+**Example workflow for adding "Le Monde" parser:**
+
+```bash
+# 1. Setup (once)
+make db-start
+
+# 2. Iterative development cycle (repeat)
+# Clear test data
+docker compose exec postgres sh -c 'psql -U $POSTGRES_USER -d $POSTGRES_DB -c "TRUNCATE news_data_test.articles CASCADE;"'
+
+# Test your parser
+make run
+
+# Check results
+docker compose exec postgres psql -U news_user -d french_news -c "SELECT source, COUNT(*), AVG(LENGTH(full_text)) FROM news_data_test.articles GROUP BY source;"
+
+# Debug issues (if needed)
+PYTHONPATH=src python debug_parser.py
+
+# 3. Final validation
+make test-pipeline
+```
+
+### Performance Optimization Tips
+
+**For faster development cycles:**
+
+1. **Use offline mode** (`OFFLINE=true`) with test HTML files
+2. **Limit URLs** during development (test with 2-3 articles)
+3. **Add debug prints** to see what's being extracted
+4. **Check database immediately** after each run
+5. **Use specific CSS selectors** rather than broad searches
+
+**Example debug-optimized parser:**
+```python
+def get_article_urls(self, max_articles: int = 3):  # Limit during development
+    """Get URLs with debug output."""
+    if self.debug:
+        print(f"🔍 Scraping max {max_articles} articles...")
+    
+    # Your scraping logic...
+    
+    if self.debug:
+        print(f"✅ Found {len(urls)} URLs:")
+        for i, url in enumerate(urls):
+            print(f"  {i+1}. {url}")
+    
+    return urls
+```
+
+---
+
 ## Step 8: Integration Testing
 
 ### Test with Offline Mode
@@ -749,7 +994,7 @@ OFFLINE=True DEBUG=True python -m main
 
 ```python
 # test_integration.py
-from config.source_configs import get_scraper_configs
+from config.site_configs import get_scraper_configs
 from core.processor import ArticleProcessor
 
 # Test configuration loading
@@ -782,7 +1027,7 @@ else:
 ```bash
 # Test just your source
 python -c "
-from config.source_configs import SCRAPER_CONFIGS
+from config.site_configs import SCRAPER_CONFIGS
 from core.processor import ArticleProcessor
 
 # Find your config
