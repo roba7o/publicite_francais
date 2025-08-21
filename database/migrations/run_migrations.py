@@ -25,17 +25,20 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 from database.database import get_session, initialize_database
 from sqlalchemy import text
-from utils.structured_logger import get_structured_logger
+from utils.structured_logger import MigrationLogger
 
-logger = get_structured_logger(__name__)
+logger = MigrationLogger(__name__)
 
 
 class MigrationRunner:
     def __init__(self):
         self.migrations_dir = Path(__file__).parent
-        # Initialize database connection first
+        # Ensure our logger's SQLAlchemy filter is applied BEFORE database initialization
+        logger._configure()  # Re-run configuration to ensure filters are in place
+        
+        # Initialize database connection 
         if not initialize_database():
-            logger.error("Failed to initialize database connection")
+            print("\033[31m✗ Failed to initialize database connection\033[0m")
             sys.exit(1)
         self.ensure_migration_table()
     
@@ -50,7 +53,6 @@ class MigrationRunner:
                     checksum VARCHAR(64)
                 )
             """))
-            logger.info("Migration tracking table ready")
     
     def get_migration_files(self) -> List[Tuple[str, Path]]:
         """Get all migration files sorted by number."""
@@ -83,9 +85,7 @@ class MigrationRunner:
         checksum = self.calculate_checksum(content)
         
         if dry_run:
-            logger.info(f"DRY RUN: Would execute migration {migration_name}")
-            logger.info(f"File: {file_path}")
-            logger.info(f"Content preview: {content[:200]}...")
+            # Dry run - just return success, parent handles output
             return True
         
         try:
@@ -98,19 +98,13 @@ class MigrationRunner:
                     INSERT INTO public.schema_migrations (migration_name, checksum)
                     VALUES (:name, :checksum)
                 """), {"name": migration_name, "checksum": checksum})
-                
-            logger.info(
-                f"Migration {migration_name} applied successfully", 
-                extra_data={"migration": migration_name, "checksum": checksum}
-            )
+            
+            # Migration succeeded - no logging needed, parent will handle output
             return True
             
         except Exception as e:
-            logger.error(
-                f"Migration {migration_name} failed: {str(e)}", 
-                extra_data={"migration": migration_name, "error": str(e)},
-                exc_info=True
-            )
+            # Only show error for failed migrations
+            print(f"\n\033[31m✗ Migration failed: {str(e)}\033[0m")
             return False
     
     def run_migrations(self, target: str = None, dry_run: bool = False) -> None:
@@ -121,7 +115,7 @@ class MigrationRunner:
         applied = self.get_applied_migrations()
         
         if not migrations:
-            logger.info("No migration files found")
+            print("\033[33m⚠ No migration files found\033[0m")
             return
         
         pending = []
@@ -135,26 +129,29 @@ class MigrationRunner:
                 pending.append((migration_name, file_path))
         
         if not pending:
-            logger.info("No pending migrations")
+            print("\033[32m✓ Database is up to date - no pending migrations\033[0m")
             return
         
-        logger.info(f"Found {len(pending)} pending migrations")
+        # Clean, focused output
+        action = "DRY RUN" if dry_run else "APPLYING"
+        print(f"\033[34m◆ {action}: {len(pending)} pending migration{'s' if len(pending) > 1 else ''}\033[0m")
         
         for migration_name, file_path in pending:
-            print(f"\n┌─ Running Migration: {migration_name}")
-            print(f"└─ File: {file_path.name}")
-            
-            if self.run_migration(migration_name, file_path, dry_run):
-                print(f"   ✓ Success")
+            if dry_run:
+                print(f"\033[36m  • Would run: {migration_name}\033[0m")
             else:
-                print(f"   ✗ Failed")
-                if not dry_run:
+                print(f"\033[36m  • Running: {migration_name}\033[0m", end="", flush=True)
+                
+                if self.run_migration(migration_name, file_path, dry_run):
+                    print(" \033[32m✓\033[0m")
+                else:
+                    print(" \033[31m✗\033[0m")
                     sys.exit(1)
         
         if dry_run:
-            print(f"\n🔍 DRY RUN COMPLETE - {len(pending)} migrations would be applied")
+            print(f"\n\033[33m🔍 DRY RUN COMPLETE - {len(pending)} migrations would be applied\033[0m")
         else:
-            print(f"\n✅ MIGRATION COMPLETE - {len(pending)} migrations applied")
+            print(f"\n\033[32m✅ SUCCESS - {len(pending)} migration{'s' if len(pending) > 1 else ''} applied\033[0m")
 
 
 def main():

@@ -10,7 +10,7 @@ Provides a shared instance for the entire application to eliminate duplicate cre
 from typing import Any
 
 from config.environment import is_production
-from utils.structured_logger import get_structured_logger
+from utils.structured_logger import GeneralLogger
 
 
 class ConsolidatedOutput:
@@ -30,7 +30,7 @@ class ConsolidatedOutput:
             ascii_art: Whether to use ASCII art. If None, auto-detects from PRODUCTION env var.
         """
         self.component_name = component_name
-        self.logger = get_structured_logger(component_name)
+        self.logger = GeneralLogger(component_name)
 
         if ascii_art is None:
             # Auto-detect: ASCII art in development, clean in production

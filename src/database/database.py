@@ -19,9 +19,9 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from config.environment import env_config
 from database.models import RawArticle
-from utils.structured_logger import get_structured_logger
+from utils.structured_logger import DatabaseLogger
 
-logger = get_structured_logger(__name__)
+logger = DatabaseLogger(__name__)
 
 # Simple module-level session factory
 _SessionLocal = None

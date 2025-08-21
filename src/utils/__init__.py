@@ -9,8 +9,16 @@ This module contains utility functions and classes for:
 Note: Text processing is now handled by dbt/SQL for better performance.
 """
 
-from .structured_logger import get_structured_logger
+from .structured_logger import (
+    MigrationLogger,
+    DatabaseLogger,
+    WebScraperLogger,
+    GeneralLogger,
+)
 
 __all__ = [
-    "get_structured_logger",
+    "MigrationLogger",
+    "DatabaseLogger", 
+    "WebScraperLogger",
+    "GeneralLogger",
 ]
