@@ -130,8 +130,10 @@ def store_raw_article(raw_article: RawArticle) -> bool:
             session.execute(
                 text(f"""
                     INSERT INTO {schema_name}.raw_articles
-                    (id, url, raw_html, site, scraped_at, response_status, content_length)
-                    VALUES (:id, :url, :raw_html, :site, :scraped_at, :response_status, :content_length)
+                    (id, url, raw_html, site, scraped_at, response_status, content_length,
+                     extracted_text, title, author, date_published, language, summary, keywords, extraction_status)
+                    VALUES (:id, :url, :raw_html, :site, :scraped_at, :response_status, :content_length,
+                            :extracted_text, :title, :author, :date_published, :language, :summary, :keywords, :extraction_status)
                 """),
                 {
                     "id": str(uuid4()),
@@ -141,6 +143,14 @@ def store_raw_article(raw_article: RawArticle) -> bool:
                     "scraped_at": raw_article.scraped_at,
                     "response_status": raw_article.response_status,
                     "content_length": raw_article.content_length,
+                    "extracted_text": raw_article.extracted_text,
+                    "title": raw_article.title,
+                    "author": raw_article.author,
+                    "date_published": raw_article.date_published,
+                    "language": raw_article.language,
+                    "summary": raw_article.summary,
+                    "keywords": raw_article.keywords,
+                    "extraction_status": raw_article.extraction_status,
                 },
             )
 

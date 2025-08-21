@@ -11,6 +11,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
+import trafilatura
+
 __all__ = ["RawArticle"]
 
 
@@ -35,14 +37,58 @@ class RawArticle:
     response_status: int | None = None
     content_length: int | None = None
 
+    # Extracted content fields (populated by trafilatura)
+    extracted_text: str | None = None
+    title: str | None = None
+    author: str | None = None
+    date_published: str | None = None
+    language: str | None = None
+    summary: str | None = None
+    keywords: list[str] | None = None
+    extraction_status: str = "pending"
+
     def __post_init__(self) -> None:
-        """Validate raw data after initialization."""
+        """Validate raw data and extract content using trafilatura."""
         if not self.url or not self.raw_html or not self.site:
             raise ValueError("url, raw_html, and site are required")
 
         # Set content_length if not provided
         if self.content_length is None:
             self.content_length = len(self.raw_html)
+
+        # Extract content using trafilatura
+        self._extract_content()
+
+    def _extract_content(self) -> None:
+        """Extract content from raw HTML using trafilatura."""
+        try:
+            # Extract main text content
+            self.extracted_text = trafilatura.extract(self.raw_html)
+
+            # Extract metadata
+            metadata = trafilatura.extract_metadata(self.raw_html)
+
+            if metadata:
+                self.title = metadata.title
+                self.author = metadata.author
+                self.date_published = metadata.date
+                self.language = metadata.language
+
+                # Handle categories/tags as keywords
+                if hasattr(metadata, 'categories') and metadata.categories:
+                    self.keywords = metadata.categories
+                elif hasattr(metadata, 'tags') and metadata.tags:
+                    self.keywords = metadata.tags
+
+            # Mark as successful if we got at least some content
+            if self.extracted_text:
+                self.extraction_status = "success"
+            else:
+                self.extraction_status = "failed"
+
+        except Exception:
+            # Don't break the pipeline on extraction failures
+            self.extraction_status = "failed"
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for database storage."""
@@ -53,4 +99,12 @@ class RawArticle:
             "scraped_at": self.scraped_at,
             "response_status": self.response_status,
             "content_length": self.content_length,
+            "extracted_text": self.extracted_text,
+            "title": self.title,
+            "author": self.author,
+            "date_published": self.date_published,
+            "language": self.language,
+            "summary": self.summary,
+            "keywords": self.keywords,
+            "extraction_status": self.extraction_status,
         }
