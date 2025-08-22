@@ -116,7 +116,13 @@ db-start:  ## Start PostgreSQL database only
 db-stop:  ## Stop all containers
 	docker compose down
 
-db-clean:  ## Stop and remove all containers and volumes
+db-clean:  ## Stop and remove all containers and volumes (DESTRUCTIVE!)
+	@if [ "$(PRODUCTION)" = "true" ]; then \
+		echo "\033[31m✗ BLOCKED: db-clean disabled in production mode\033[0m"; \
+		exit 1; \
+	fi
+	@echo "\033[31m⚠ WARNING: This will destroy ALL data and containers!\033[0m"
+	@echo "\033[33m◆ Stopping and removing containers...\033[0m"
 	docker compose down -v
 	docker compose rm -f
 
