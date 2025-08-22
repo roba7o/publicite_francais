@@ -5,7 +5,6 @@ Simple connectivity tests without the full database connection test suite.
 These are unit-level tests for basic database functionality.
 """
 
-import pytest
 
 
 class TestBasicDatabaseConnectivity:
@@ -28,7 +27,7 @@ class TestBasicDatabaseConnectivity:
 
     def test_database_initialization_import(self):
         """Test that database initialization functions can be imported."""
-        from database.database import initialize_database, get_session
+        from database.database import get_session, initialize_database
 
         assert initialize_database is not None
         assert get_session is not None

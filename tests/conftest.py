@@ -116,23 +116,23 @@ def mock_requests_response():
 def test_html_files(raw_test_files_dir):
     """
     Access to your existing 16 HTML test files organized by news source.
-    
+
     Returns a dictionary mapping source names to their test file paths.
     This fixture makes it easy to access your existing test data.
     """
     from pathlib import Path
-    
+
     base_dir = Path(raw_test_files_dir)
     test_files = {}
-    
+
     # Map your actual directory names to standardized source names
     source_mapping = {
         "Slate.fr": "slate.fr",
-        "FranceInfo.fr": "franceinfo.fr", 
+        "FranceInfo.fr": "franceinfo.fr",
         "TF1 Info": "tf1info.fr",
         "Depeche.fr": "ladepeche.fr"
     }
-    
+
     for actual_dir, source_name in source_mapping.items():
         source_dir = base_dir / actual_dir
         if source_dir.exists():
@@ -141,7 +141,7 @@ def test_html_files(raw_test_files_dir):
             test_files[source_name] = files
         else:
             test_files[source_name] = []
-    
+
     return test_files
 
 
@@ -151,7 +151,7 @@ def slate_test_files(test_html_files):
     return test_html_files.get("slate.fr", [])
 
 
-@pytest.fixture  
+@pytest.fixture
 def franceinfo_test_files(test_html_files):
     """List of FranceInfo.fr test files."""
     return test_html_files.get("franceinfo.fr", [])
@@ -159,7 +159,7 @@ def franceinfo_test_files(test_html_files):
 
 @pytest.fixture
 def tf1_test_files(test_html_files):
-    """List of TF1Info.fr test files.""" 
+    """List of TF1Info.fr test files."""
     return test_html_files.get("tf1info.fr", [])
 
 
@@ -180,26 +180,26 @@ def all_test_files(test_html_files):
 def clean_test_database():
     """
     Ensure clean database state for integration tests.
-    
+
     This fixture initializes the database and ensures tables are clean
     before each test that needs database operations.
     """
-    from database.database import initialize_database, get_session
-    from database.models import RawArticle
     from sqlalchemy import text
+
     from config.environment import env_config
-    
+    from database.database import get_session, initialize_database
+
     # Initialize database
     initialize_database()
-    
+
     # Clean the test tables
     with get_session() as session:
         schema = env_config.get_news_data_schema()
         session.execute(text(f"TRUNCATE {schema}.raw_articles CASCADE;"))
         session.commit()
-    
+
     yield
-    
+
     # Optional cleanup after test (if needed)
 
 
@@ -207,22 +207,23 @@ def clean_test_database():
 def mock_article_orchestrator():
     """
     Mock ArticleOrchestrator using your existing mock classes.
-    
+
     This provides a test-friendly orchestrator that uses your existing
     MockScraper and MockDatabaseParser for isolated unit testing.
     """
-    from tests.fixtures.mock_scraper import MockScraper
-    from tests.fixtures.mock_parser_unified import MockDatabaseParser
     from unittest.mock import Mock
-    
+
+    from tests.fixtures.mock_parser_unified import MockDatabaseParser
+    from tests.fixtures.mock_scraper import MockScraper
+
     # Create mock orchestrator
     mock_orchestrator = Mock()
     mock_orchestrator.component_factory = Mock()
-    
+
     # Configure factory to return your existing mocks
     mock_orchestrator.component_factory.create_scraper.return_value = MockScraper(debug=True)
     mock_orchestrator.component_factory.create_parser.return_value = MockDatabaseParser("test-source")
-    
+
     return mock_orchestrator
 
 
@@ -230,12 +231,12 @@ def mock_article_orchestrator():
 def sample_site_config():
     """
     Sample site configuration matching your actual site_configs.py structure.
-    
+
     This provides a realistic test configuration that matches your actual
     configuration format for testing component factory and orchestrator.
     """
     from config.environment import env_config
-    
+
     return {
         "site": "test-site.fr",
         "enabled": True,

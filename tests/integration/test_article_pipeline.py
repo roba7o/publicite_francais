@@ -5,7 +5,6 @@ Tests the complete end-to-end pipeline: URL Collection â†’ Content Extraction â†
 using your existing 16 HTML test files for deterministic, repeatable results.
 """
 
-import pytest
 from sqlalchemy import text
 
 from config.environment import env_config
@@ -22,21 +21,21 @@ class TestHtmlTestDataIntegrity:
         # Should have all 4 sources
         expected_sources = ["slate.fr", "franceinfo.fr", "tf1info.fr", "ladepeche.fr"]
         assert set(test_html_files.keys()) == set(expected_sources)
-        
+
         # Each source should have exactly 4 files
         for source, files in test_html_files.items():
             assert len(files) == 4, f"Expected 4 files for {source}, got {len(files)}"
-            
+
         # Total should be 16 files
         total_files = sum(len(files) for files in test_html_files.values())
         assert total_files == 16, f"Expected 16 total HTML files, got {total_files}"
 
     def test_html_files_are_readable(self, test_html_files):
         """Test that all HTML files can be read and contain content."""
-        for source, files in test_html_files.items():
+        for _source, files in test_html_files.items():
             for file_path in files:
                 assert file_path.exists(), f"File should exist: {file_path}"
-                
+
                 content = file_path.read_text(encoding='utf-8')
                 assert len(content) > 100, f"File {file_path} should have substantial content"
                 assert "<html" in content.lower() or "<!doctype" in content.lower(), f"File {file_path} should contain HTML"
@@ -57,16 +56,16 @@ class TestArticleOrchestrator:
         orchestrator = ArticleOrchestrator()
         total_processed = 0
         total_attempted = 0
-        
+
         for config in SCRAPER_CONFIGS:
             if config.get("enabled", True):
                 processed, attempted = orchestrator.process_site(config)
                 total_processed += processed
                 total_attempted += attempted
-                
+
                 # Each source should attempt to process files
                 assert attempted >= 0, f"Source {config['site']} should attempt processing"
-        
+
         # Should have some successful processing
         assert total_processed > 0, f"Expected some articles processed, got {total_processed}"
         assert total_attempted >= total_processed, "Attempted count should be >= processed count"
@@ -74,7 +73,7 @@ class TestArticleOrchestrator:
 
 class TestDeterministicPipeline:
     """Test deterministic results from the complete pipeline using test HTML files."""
-    
+
     def test_pipeline_produces_consistent_results(self, clean_test_database):
         """Test that the complete pipeline produces consistent, expected results."""
         # Run the pipeline
@@ -90,14 +89,14 @@ class TestDeterministicPipeline:
 
         # Verify processing occurred
         assert total_processed > 0, f"Expected articles processed, got {total_processed}"
-        
+
         # Verify database storage
         with get_session() as session:
             schema = env_config.get_news_data_schema()
             db_count = session.execute(
                 text(f"SELECT COUNT(*) FROM {schema}.raw_articles")
             ).scalar()
-            
+
             assert db_count == total_processed, (
                 f"Database has {db_count} articles but processor reported {total_processed}"
             )
@@ -123,7 +122,7 @@ class TestDeterministicPipeline:
             ).fetchall()
 
             source_dict = {row[0]: row[1] for row in source_counts}
-            
+
             # All 4 sources should be present
             expected_sources = ["slate.fr", "tf1info.fr", "ladepeche.fr", "franceinfo.fr"]
             for source in expected_sources:
@@ -135,7 +134,7 @@ class TestDeterministicPipeline:
             assert 14 <= total_articles <= 18, (
                 f"Expected 14-18 total articles, got {total_articles}"
             )
-            
+
             # Each source should process ~4 articles (one per test file)
             for source in expected_sources:
                 if source in source_dict:
@@ -146,7 +145,7 @@ class TestDeterministicPipeline:
     def test_pipeline_multiple_runs(self, clean_test_database):
         """Test that running the pipeline multiple times stores all versions (ELT approach)."""
         orchestrator = ArticleOrchestrator()
-        
+
         # Run pipeline first time
         first_run_processed = 0
         for config in SCRAPER_CONFIGS:
@@ -173,7 +172,7 @@ class TestDeterministicPipeline:
             second_count = session.execute(
                 text(f"SELECT COUNT(*) FROM {schema}.raw_articles")
             ).scalar()
-            
+
         # ELT approach allows duplicates for historical tracking
         assert second_count >= first_count, (
             f"ELT should allow multiple versions. First: {first_count}, Second: {second_count}"

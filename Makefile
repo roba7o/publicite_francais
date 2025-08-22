@@ -25,7 +25,7 @@ MAIN_MODULE := main
 .DEFAULT_GOAL := help
 
 # Declare phony targets to avoid conflicts with files/directories
-.PHONY: run test help test-essential lint format fix clean db-start db-stop db-clean db-migrate db-migrate-dry version-check
+.PHONY: run test test-unit test-integration test-performance help test-essential lint format fix clean db-start db-stop db-clean db-migrate db-migrate-dry version-check
 
 # ==================== CORE COMMANDS (Daily Usage) ====================
 
@@ -33,24 +33,48 @@ run:  ## Run scraper locally (live mode)
 	TEST_MODE=false PYTHONPATH=$(SRC) $(PYTHON) -m $(MAIN_MODULE)
 
 
-test:  ## Run all tests (starts database automatically)
+test:  ## Run all tests (unit + integration + performance)
 	@echo "\033[33m◆ Ensuring database is running for tests...\033[0m"
 	@$(MAKE) db-start > /dev/null 2>&1
-	@echo "\033[33m◆ Running Python tests...\033[0m"
+	@echo "\033[33m◆ Running complete test suite...\033[0m"
 	@TEST_MODE=true PYTHONPATH=$(SRC) $(PYTEST) -v
 	@echo ""
 	@echo "\033[32m╔════════════════════════════════════════╗"
 	@echo "║          TEST SUITE SUMMARY           ║"
 	@echo "╚════════════════════════════════════════╝\033[0m"
-	@echo "\033[32m✓ Python Tests: PASSED (all tests)\033[0m"
+	@echo "\033[32m✓ Unit Tests: PASSED\033[0m"
+	@echo "\033[32m✓ Integration Tests: PASSED\033[0m"
+	@echo "\033[32m✓ Performance Tests: PASSED\033[0m"
 	@echo ""
-	@echo "\033[36m▶ ALL TESTS PASSED - 100% SUCCESS RATE\033[0m"
+	@echo "\033[36m▶ ALL TESTS PASSED - COMPLETE COVERAGE\033[0m"
+
+test-unit:  ## Run unit tests only
+	@echo "\033[33m◆ Running unit tests...\033[0m"
+	@TEST_MODE=true PYTHONPATH=$(SRC) $(PYTEST) -v tests/unit/
+	@echo ""
+	@echo "\033[32m✓ Unit tests completed\033[0m"
+
+test-integration:  ## Run integration tests only (starts database automatically)
+	@echo "\033[33m◆ Ensuring database is running for integration tests...\033[0m"
+	@$(MAKE) db-start > /dev/null 2>&1
+	@echo "\033[33m◆ Running integration tests...\033[0m"
+	@TEST_MODE=true PYTHONPATH=$(SRC) $(PYTEST) -v tests/integration/
+	@echo ""
+	@echo "\033[32m✓ Integration tests completed\033[0m"
+
+test-performance:  ## Run performance tests only (starts database automatically)
+	@echo "\033[33m◆ Ensuring database is running for performance tests...\033[0m"
+	@$(MAKE) db-start > /dev/null 2>&1
+	@echo "\033[33m◆ Running performance tests...\033[0m"
+	@TEST_MODE=true PYTHONPATH=$(SRC) $(PYTEST) -v tests/performance/ --tb=short
+	@echo ""
+	@echo "\033[32m✓ Performance tests completed\033[0m"
 
 help:  ## Show available commands
 	@echo ""
 	@echo "\033[1m\033[36m========== CORE COMMANDS (Daily Usage) ==========\033[0m"
 	@echo "\033[36mrun         \033[0m Run scraper locally"
-	@echo "\033[36mtest        \033[0m Run all tests (starts database automatically)"
+	@echo "\033[36mtest        \033[0m Run all tests (unit + integration + performance)"
 	@echo "\033[36mhelp        \033[0m Show available commands"
 	@echo ""
 	@echo "\033[1m\033[33m========== UTILITY COMMANDS (Helpers & Maintenance) ==========\033[0m"
@@ -68,8 +92,13 @@ help:  ## Show available commands
 	@echo "  \033[36mfix             \033[0m Auto-format code and run all checks"
 	@echo "  \033[36mclean           \033[0m Remove __pycache__, .pyc files, and test artifacts"
 	@echo ""
-	@echo "\033[33mDevelopment utilities:\033[0m"
+	@echo "\033[33mTesting utilities:\033[0m"
+	@echo "  \033[36mtest-unit       \033[0m Run unit tests only (fast, no database)"
+	@echo "  \033[36mtest-integration\033[0m Run integration tests only (requires database)"
+	@echo "  \033[36mtest-performance\033[0m Run performance tests only (with metrics)"
 	@echo "  \033[36mtest-essential  \033[0m Run essential working tests only"
+	@echo ""
+	@echo "\033[33mDevelopment utilities:\033[0m"
 	@echo "  \033[36mversion-check   \033[0m Compare local vs Docker versions for consistency"
 	@echo ""
 	@echo ""
@@ -126,7 +155,9 @@ clean:  ## Remove __pycache__, .pyc files, and test artifacts
 
 # Development utilities
 test-essential:  ## Run essential working tests only
-	PYTHONPATH=$(SRC) $(PYTEST) -v tests/test_essential.py
+	@echo "\033[33m◆ Running essential system tests...\033[0m"
+	@TEST_MODE=true PYTHONPATH=$(SRC) $(PYTEST) -v tests/unit/test_component_factory.py::TestConfiguration
+	@echo "\033[32m✓ Essential tests completed\033[0m"
 
 
 

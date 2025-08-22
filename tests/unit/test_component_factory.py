@@ -5,7 +5,6 @@ Tests for component loading, factory patterns, and basic component functionality
 Extracted from test_essential.py for better organization.
 """
 
-import pytest
 
 from config.site_configs import SCRAPER_CONFIGS
 from core.orchestrator import ArticleOrchestrator
