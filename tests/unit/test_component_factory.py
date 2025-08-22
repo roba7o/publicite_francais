@@ -1,19 +1,20 @@
 """
-Essential working tests only.
+Component Factory and Core Component Tests.
 
-These tests verify core functionality is working correctly after development.
-Focused on database pipeline functionality.
+Tests for component loading, factory patterns, and basic component functionality.
+Extracted from test_essential.py for better organization.
 """
+
 
 from config.site_configs import SCRAPER_CONFIGS
 from core.orchestrator import ArticleOrchestrator
 from database.models import RawArticle
 
 
-class TestEssential:
-    """Essential tests that must pass for the database system to work."""
+class TestComponentFactory:
+    """Tests for component factory and class loading."""
 
-    def test_article_pipeline_class_registry(self):
+    def test_component_class_loading(self):
         """Test that the component loader can load classes from class paths."""
         from core.component_loader import import_class
 
@@ -29,7 +30,12 @@ class TestEssential:
         assert soup_validator_class is not None
         assert soup_validator_class.__name__ == "SlateFrSoupValidator"
 
-    def test_article_pipeline_disabled_config(self):
+    def test_article_orchestrator_initialization(self):
+        """Test ArticleOrchestrator can be initialized."""
+        processor = ArticleOrchestrator()
+        assert processor is not None
+
+    def test_disabled_config_handling(self):
         """Test that ArticleOrchestrator handles disabled configurations."""
         # Create a disabled source configuration dictionary
         config = {
@@ -43,14 +49,12 @@ class TestEssential:
         # Test that the configuration dictionary has correct enabled state
         assert config["enabled"] is False
         assert config["site"] == "disabled-source.fr"
-        assert config["enabled"] is False
 
-    def test_article_pipeline_initialization(self):
-        """Test ArticleOrchestrator can be initialized."""
-        processor = ArticleOrchestrator()
-        assert processor is not None
 
-    def test_raw_article_model(self):
+class TestModels:
+    """Tests for database models."""
+
+    def test_raw_article_model_creation(self):
         """Test RawArticle model creation."""
         raw_data = RawArticle(
             url="https://test.example.com/article",
@@ -63,14 +67,9 @@ class TestEssential:
         assert raw_data.site == "test.example.com"
         assert raw_data.content_length > 0
 
-    def test_database_connectivity_check(self):
-        """Test database connectivity without actual database operations."""
-        # Database is always enabled (no CSV fallback)
-        # This test verifies database configuration can be imported
-        from config.environment import env_config
 
-        schema = env_config.get_news_data_schema()
-        assert isinstance(schema, str)
+class TestConfiguration:
+    """Tests for configuration loading and validation."""
 
     def test_configuration_loading(self):
         """Test that configurations can be loaded in database architecture."""
@@ -93,12 +92,19 @@ class TestEssential:
         assert "url_collector_kwargs" in config
         # soup_validator_kwargs is optional (handled by config.get("soup_validator_kwargs", {}))
 
-    def test_test_mode_setting(self):
-        """Test that test mode setting can be imported."""
+    def test_environment_configuration(self):
+        """Test that environment configuration can be loaded."""
         from config.environment import env_config
 
         test_mode = env_config.is_test_mode()
         assert isinstance(test_mode, bool)
+
+        schema = env_config.get_news_data_schema()
+        assert isinstance(schema, str)
+
+
+class TestUtilities:
+    """Tests for utility functions and imports."""
 
     def test_structured_logger_import(self):
         """Test that structured logger can be imported."""
@@ -111,6 +117,10 @@ class TestEssential:
         """Test that DataValidator was removed in favor of pure ELT approach."""
         # DataValidator removed - validation now handled by dbt
         assert True  # Placeholder test
+
+
+class TestMockClasses:
+    """Tests for mock classes used in testing."""
 
     def test_mock_classes_aligned_with_architecture(self):
         """Test that mock classes work with the ELT database architecture."""

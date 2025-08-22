@@ -43,7 +43,7 @@ class TestScrapeUploadPipeline:
         from pathlib import Path
 
         test_data_dir = (
-            Path(__file__).parent.parent / "src" / "test_data" / "raw_url_soup"
+            Path(__file__).parent.parent.parent / "src" / "test_data" / "raw_url_soup"
         )
 
         # Count HTML files by source

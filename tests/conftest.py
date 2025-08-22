@@ -111,52 +111,139 @@ def mock_requests_response():
     return mock_response
 
 
+# Enhanced fixtures for your existing 16 HTML test files
+@pytest.fixture(scope="session")
+def test_html_files(raw_test_files_dir):
+    """
+    Access to your existing 16 HTML test files organized by news source.
+
+    Returns a dictionary mapping source names to their test file paths.
+    This fixture makes it easy to access your existing test data.
+    """
+    from pathlib import Path
+
+    base_dir = Path(raw_test_files_dir)
+    test_files = {}
+
+    # Map your actual directory names to standardized source names
+    source_mapping = {
+        "Slate.fr": "slate.fr",
+        "FranceInfo.fr": "franceinfo.fr",
+        "TF1 Info": "tf1info.fr",
+        "Depeche.fr": "ladepeche.fr"
+    }
+
+    for actual_dir, source_name in source_mapping.items():
+        source_dir = base_dir / actual_dir
+        if source_dir.exists():
+            # Get all HTML and PHP files
+            files = list(source_dir.glob("*.html")) + list(source_dir.glob("*.php"))
+            test_files[source_name] = files
+        else:
+            test_files[source_name] = []
+
+    return test_files
+
+
 @pytest.fixture
-def slate_test_files(raw_test_files_dir):
+def slate_test_files(test_html_files):
     """List of Slate.fr test files."""
-    slate_dir = os.path.join(raw_test_files_dir, "slate_fr")
-    if os.path.exists(slate_dir):
-        return [f for f in os.listdir(slate_dir) if f.endswith(".html")]
-    return []
+    return test_html_files.get("slate.fr", [])
 
 
 @pytest.fixture
-def depeche_test_files(raw_test_files_dir):
-    """List of Depeche.fr test files."""
-    depeche_dir = os.path.join(raw_test_files_dir, "depeche_fr")
-    if os.path.exists(depeche_dir):
-        return [f for f in os.listdir(depeche_dir) if f.endswith((".html", ".php"))]
-    return []
+def franceinfo_test_files(test_html_files):
+    """List of FranceInfo.fr test files."""
+    return test_html_files.get("franceinfo.fr", [])
 
 
 @pytest.fixture
-def tf1_test_files(raw_test_files_dir):
-    """List of TF1 test files."""
-    tf1_dir = os.path.join(raw_test_files_dir, "tf1_fr")
-    if os.path.exists(tf1_dir):
-        return [f for f in os.listdir(tf1_dir) if f.endswith(".html")]
-    return []
+def tf1_test_files(test_html_files):
+    """List of TF1Info.fr test files."""
+    return test_html_files.get("tf1info.fr", [])
 
 
 @pytest.fixture
-def lemonde_test_files(raw_test_files_dir):
-    """List of LeMonde test files."""
-    lemonde_dir = os.path.join(raw_test_files_dir, "lemonde_fr")
-    if os.path.exists(lemonde_dir):
-        return [f for f in os.listdir(lemonde_dir) if f.endswith(".html")]
-    return []
+def ladepeche_test_files(test_html_files):
+    """List of LaDepeche.fr test files."""
+    return test_html_files.get("ladepeche.fr", [])
 
 
 @pytest.fixture
-def all_test_files(
-    slate_test_files, depeche_test_files, tf1_test_files, lemonde_test_files
-):
-    """Combined list of all test files."""
+def all_test_files(test_html_files):
+    """All test files organized by source - uses your existing 16 HTML files."""
+    return test_html_files
+
+
+# Enhanced database fixtures for better test isolation
+@pytest.fixture
+def clean_test_database():
+    """
+    Ensure clean database state for integration tests.
+
+    This fixture initializes the database and ensures tables are clean
+    before each test that needs database operations.
+    """
+    from sqlalchemy import text
+
+    from config.environment import env_config
+    from database.database import get_session, initialize_database
+
+    # Initialize database
+    initialize_database()
+
+    # Clean the test tables
+    with get_session() as session:
+        schema = env_config.get_news_data_schema()
+        session.execute(text(f"TRUNCATE {schema}.raw_articles CASCADE;"))
+        session.commit()
+
+    yield
+
+    # Optional cleanup after test (if needed)
+
+
+@pytest.fixture
+def mock_article_orchestrator():
+    """
+    Mock ArticleOrchestrator using your existing mock classes.
+
+    This provides a test-friendly orchestrator that uses your existing
+    MockScraper and MockDatabaseParser for isolated unit testing.
+    """
+    from unittest.mock import Mock
+
+    from tests.fixtures.mock_parser_unified import MockDatabaseParser
+    from tests.fixtures.mock_scraper import MockScraper
+
+    # Create mock orchestrator
+    mock_orchestrator = Mock()
+    mock_orchestrator.component_factory = Mock()
+
+    # Configure factory to return your existing mocks
+    mock_orchestrator.component_factory.create_scraper.return_value = MockScraper(debug=True)
+    mock_orchestrator.component_factory.create_parser.return_value = MockDatabaseParser("test-source")
+
+    return mock_orchestrator
+
+
+@pytest.fixture
+def sample_site_config():
+    """
+    Sample site configuration matching your actual site_configs.py structure.
+
+    This provides a realistic test configuration that matches your actual
+    configuration format for testing component factory and orchestrator.
+    """
+    from config.environment import env_config
+
     return {
-        "slate_fr": slate_test_files,
-        "depeche_fr": depeche_test_files,
-        "tf1_fr": tf1_test_files,
-        "lemonde_fr": lemonde_test_files,
+        "site": "test-site.fr",
+        "enabled": True,
+        "url_collector_class": "core.components.url_collectors.slate_fr_url_collector.SlateFrUrlCollector",
+        "soup_validator_class": "core.components.soup_validators.slate_fr_soup_validator.SlateFrSoupValidator",
+        "url_collector_kwargs": {"debug": env_config.is_debug_mode()},
+        "soup_validator_kwargs": {"debug": env_config.is_debug_mode()},
     }
 
 
@@ -166,6 +253,7 @@ def setup_test_environment(monkeypatch):
     # Force test mode for tests
     monkeypatch.setenv("TEST_MODE", "True")
     monkeypatch.setenv("DEBUG", "True")
+    monkeypatch.setenv("DATABASE_ENV", "test")
 
     # Refresh environment config to pick up test settings
     from config.environment import env_config
