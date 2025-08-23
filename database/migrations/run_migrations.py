@@ -56,6 +56,10 @@ class MigrationRunner:
         migrations = []
         
         for file_path in self.migrations_dir.glob("*.sql"):
+            # Skip rollback files - they're not regular migrations
+            if "_rollback_" in file_path.name:
+                continue
+                
             if match := re.match(r"^(\d+)_.*\.sql$", file_path.name):
                 number = match.group(1)
                 migrations.append((number, file_path))
@@ -104,8 +108,93 @@ class MigrationRunner:
             print(f"\n\033[31m✗ Migration failed: {str(e)}\033[0m")
             return False
     
-    def run_migrations(self, target: str = None, dry_run: bool = False) -> None:
-        """Run all pending migrations up to target."""
+    def run_rollback(self, target: str, dry_run: bool = False) -> None:
+        """Roll back migrations to target version."""
+        migrations = self.get_migration_files()
+        applied = self.get_applied_migrations()
+        
+        # Find target migration
+        target_found = False
+        rollback_migrations = []
+        
+        # Get migrations to roll back (in reverse order)
+        for number, file_path in reversed(migrations):
+            migration_name = file_path.stem
+            if migration_name in applied:
+                if number == target:
+                    target_found = True
+                    break
+                rollback_migrations.append((migration_name, file_path, number))
+        
+        if not target_found:
+            print(f"\033[31m✗ Target migration {target} not found or not applied\033[0m")
+            return
+        
+        if not rollback_migrations:
+            print(f"\033[32m✓ Already at target migration {target}\033[0m")
+            return
+        
+        # Look for rollback files
+        rollback_files = []
+        for migration_name, file_path, number in rollback_migrations:
+            # Extract the part after the number prefix (e.g., "003_example_add_tags" -> "example_add_tags")
+            migration_suffix = file_path.stem[len(number) + 1:]  # Skip "003_"
+            rollback_file = file_path.parent / f"{number}_rollback_{migration_suffix}.sql"
+            if rollback_file.exists():
+                rollback_files.append((migration_name, rollback_file))
+            else:
+                print(f"\033[31m✗ Rollback file missing: {rollback_file.name}\033[0m")
+                print(f"\033[33m  Create this file to enable rollback of {migration_name}\033[0m")
+                return
+        
+        # Execute rollbacks
+        action = "DRY RUN ROLLBACK" if dry_run else "ROLLING BACK"
+        print(f"\033[31m◆ {action}: {len(rollback_files)} migration{'s' if len(rollback_files) > 1 else ''}\033[0m")
+        
+        for migration_name, rollback_file in rollback_files:
+            if dry_run:
+                print(f"\033[36m  • Would rollback: {migration_name}\033[0m")
+            else:
+                print(f"\033[36m  • Rolling back: {migration_name}\033[0m", end="", flush=True)
+                
+                if self.run_rollback_file(migration_name, rollback_file):
+                    print(" \033[32m✓\033[0m")
+                else:
+                    print(" \033[31m✗\033[0m")
+                    return
+        
+        if dry_run:
+            print(f"\n\033[31m🔍 DRY RUN COMPLETE - {len(rollback_files)} migrations would be rolled back\033[0m")
+        else:
+            print(f"\n\033[32m✅ ROLLBACK COMPLETE - rolled back to migration {target}\033[0m")
+    
+    def run_rollback_file(self, migration_name: str, rollback_file: Path) -> bool:
+        """Execute a rollback file."""
+        try:
+            content = rollback_file.read_text()
+            with get_session() as session:
+                # Run the rollback SQL
+                session.execute(text(content))
+                
+                # Remove from migration tracking
+                session.execute(text("""
+                    DELETE FROM public.schema_migrations 
+                    WHERE migration_name = :name
+                """), {"name": migration_name})
+            
+            return True
+            
+        except Exception as e:
+            print(f"\n\033[31m✗ Rollback failed: {str(e)}\033[0m")
+            return False
+
+    def run_migrations(self, target: str = None, dry_run: bool = False, rollback: str = None) -> None:
+        """Run all pending migrations up to target or rollback to target."""
+        # Handle rollback mode
+        if rollback:
+            self.run_rollback(rollback, dry_run)
+            return
+        
         # Database already initialized in __init__
         
         migrations = self.get_migration_files()
@@ -155,11 +244,12 @@ def main():
     parser = argparse.ArgumentParser(description="Run database migrations")
     parser.add_argument("--dry-run", action="store_true", help="Show what would be done")
     parser.add_argument("--target", help="Run migrations up to this number (e.g., 003)")
+    parser.add_argument("--rollback", help="Roll back to this migration number (e.g., 001)")
     
     args = parser.parse_args()
     
     runner = MigrationRunner()
-    runner.run_migrations(target=args.target, dry_run=args.dry_run)
+    runner.run_migrations(target=args.target, dry_run=args.dry_run, rollback=args.rollback)
 
 
 if __name__ == "__main__":
