@@ -25,12 +25,21 @@ MAIN_MODULE := main
 .DEFAULT_GOAL := help
 
 # Declare phony targets to avoid conflicts with files/directories
-.PHONY: run test test-unit test-integration test-performance help test-essential lint format fix clean db-start db-stop db-clean db-migrate db-migrate-dry db-rollback version-check
+.PHONY: run run-test-data test test-unit test-integration test-performance help test-essential lint format fix clean db-start db-stop db-clean db-migrate db-migrate-dry db-rollback version-check
 
 # ==================== CORE COMMANDS (Daily Usage) ====================
 
 run:  ## Run scraper locally (live mode)
 	TEST_MODE=false PYTHONPATH=$(SRC) $(PYTHON) -m $(MAIN_MODULE)
+
+run-test-data:  ## Run scraper with test data (offline mode)
+	@echo "\033[33m◆ Starting database for test data run...\033[0m"
+	@$(MAKE) db-start > /dev/null 2>&1
+	@echo "\033[33m◆ Running scraper with test data...\033[0m"
+	@TEST_MODE=true PYTHONPATH=$(SRC) $(PYTHON) -m $(MAIN_MODULE)
+	@echo ""
+	@echo "\033[32m✓ Test data processing complete\033[0m"
+	@echo "\033[36m▶ Connect to DBeaver to analyze results\033[0m"
 
 
 test:  ## Run all tests (unit + integration + performance)
@@ -73,9 +82,10 @@ test-performance:  ## Run performance tests only (starts database automatically)
 help:  ## Show available commands
 	@echo ""
 	@echo "\033[1m\033[36m========== CORE COMMANDS (Daily Usage) ==========\033[0m"
-	@echo "\033[36mrun         \033[0m Run scraper locally"
-	@echo "\033[36mtest        \033[0m Run all tests (unit + integration + performance)"
-	@echo "\033[36mhelp        \033[0m Show available commands"
+	@echo "\033[36mrun              \033[0m Run scraper locally (live mode)"
+	@echo "\033[36mrun-test-data    \033[0m Run scraper with test data (offline mode)"
+	@echo "\033[36mtest             \033[0m Run all tests (unit + integration + performance)"
+	@echo "\033[36mhelp             \033[0m Show available commands"
 	@echo ""
 	@echo "\033[1m\033[33m========== UTILITY COMMANDS (Helpers & Maintenance) ==========\033[0m"
 	@echo ""
