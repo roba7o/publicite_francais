@@ -40,15 +40,23 @@ class MigrationRunner:
         self.ensure_migration_table()
     
     def ensure_migration_table(self) -> None:
-        """Create migrations tracking table if it doesn't exist."""
+        """Create migrations tracking table if it doesn't exist (Django-style)."""
         with get_session() as session:
             session.execute(text("""
-                CREATE TABLE IF NOT EXISTS public.schema_migrations (
+                CREATE TABLE IF NOT EXISTS migration_history (
                     id SERIAL PRIMARY KEY,
-                    migration_name VARCHAR(255) UNIQUE NOT NULL,
+                    migration_name VARCHAR(255) NOT NULL UNIQUE,
                     applied_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                    checksum VARCHAR(64)
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                 )
+            """))
+            
+            # Create indexes if they don't exist
+            session.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_migration_history_name ON migration_history(migration_name)
+            """))
+            session.execute(text("""
+                CREATE INDEX IF NOT EXISTS idx_migration_history_applied ON migration_history(applied_at)
             """))
     
     def get_migration_files(self) -> List[Tuple[str, Path]]:
@@ -60,30 +68,24 @@ class MigrationRunner:
             if "_rollback_" in file_path.name:
                 continue
                 
-            if match := re.match(r"^(\d+)_.*\.sql$", file_path.name):
+            if match := re.match(r"^(\d{3})_.*\.sql$", file_path.name):
                 number = match.group(1)
                 migrations.append((number, file_path))
         
         return sorted(migrations, key=lambda x: int(x[0]))
     
     def get_applied_migrations(self) -> set:
-        """Get list of already applied migrations."""
+        """Get list of already applied migrations (Django-style)."""
         with get_session() as session:
             result = session.execute(text("""
-                SELECT migration_name FROM public.schema_migrations 
+                SELECT migration_name FROM migration_history 
                 ORDER BY migration_name
             """))
             return {row[0] for row in result}
     
-    def calculate_checksum(self, content: str) -> str:
-        """Calculate simple checksum for migration content."""
-        import hashlib
-        return hashlib.sha256(content.encode()).hexdigest()[:16]
-    
     def run_migration(self, migration_name: str, file_path: Path, dry_run: bool = False) -> bool:
-        """Run a single migration."""
+        """Run a single migration (Django-style)."""
         content = file_path.read_text()
-        checksum = self.calculate_checksum(content)
         
         if dry_run:
             # Dry run - just return success, parent handles output
@@ -94,11 +96,11 @@ class MigrationRunner:
                 # Run the migration
                 session.execute(text(content))
                 
-                # Record that it was applied
+                # Record that it was applied (Django-style)
                 session.execute(text("""
-                    INSERT INTO public.schema_migrations (migration_name, checksum)
-                    VALUES (:name, :checksum)
-                """), {"name": migration_name, "checksum": checksum})
+                    INSERT INTO migration_history (migration_name)
+                    VALUES (:name)
+                """), {"name": migration_name})
             
             # Migration succeeded - no logging needed, parent will handle output
             return True
@@ -176,9 +178,9 @@ class MigrationRunner:
                 # Run the rollback SQL
                 session.execute(text(content))
                 
-                # Remove from migration tracking
+                # Remove from migration tracking (Django-style)
                 session.execute(text("""
-                    DELETE FROM public.schema_migrations 
+                    DELETE FROM migration_history 
                     WHERE migration_name = :name
                 """), {"name": migration_name})
             
