@@ -23,19 +23,31 @@ class Logger:
 
     def debug(self, message: str, extra_data: dict = None) -> None:
         """Log debug message."""
-        self.logger.debug(message)
+        if extra_data:
+            self.logger.debug(f"{message} - Data: {extra_data}")
+        else:
+            self.logger.debug(message)
 
     def info(self, message: str, extra_data: dict = None) -> None:
         """Log info message."""
-        self.logger.info(message)
+        if extra_data:
+            self.logger.info(f"{message} - Data: {extra_data}")
+        else:
+            self.logger.info(message)
 
     def warning(self, message: str, extra_data: dict = None) -> None:
         """Log warning message."""
-        self.console.print(f"[yellow]WARNING: {message}[/yellow]")
+        warning_msg = f"[yellow]WARNING: {message}[/yellow]"
+        if extra_data:
+            warning_msg += f" - Data: {extra_data}"
+        self.console.print(warning_msg)
 
     def error(self, message: str, extra_data: dict = None) -> None:
         """Log error message."""
-        self.console.print(f"[red]ERROR: {message}[/red]")
+        error_msg = f"[red]ERROR: {message}[/red]"
+        if extra_data:
+            error_msg += f" - Data: {extra_data}"
+        self.console.print(error_msg)
 
     def always(self, message: str, extra_data: dict = None) -> None:
         """Always show message with colors and icons."""
@@ -51,12 +63,16 @@ class Logger:
             "Total:": "[bold blue]📊 {msg}[/bold blue]",
         }
 
+        formatted_message = message
+        if extra_data:
+            formatted_message += f" - Data: {extra_data}"
+
         for key, style in message_types.items():
             if key in message:
-                self.console.print(style.format(msg=message))
+                self.console.print(style.format(msg=formatted_message))
                 return
 
-        self.console.print(message)
+        self.console.print(formatted_message)
 
     def summary_box(
         self, title: str, total_stored: int, total_attempted: int, success_rate: float

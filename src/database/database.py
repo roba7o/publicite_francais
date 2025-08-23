@@ -102,18 +102,39 @@ def log_pool_status() -> None:
     try:
         if hasattr(_engine, "pool"):
             pool = _engine.pool
-            status_data = {
-                "pool_size": pool.size(),
-                "checked_in": pool.checkedin(),
-                "checked_out": pool.checkedout(),
-                "overflow": pool.overflow(),
-            }
+            status_data = {}
+            # Safely access pool methods with try/except for type checker
+            try:
+                status_data["pool_size"] = pool.size()  # type: ignore
+            except (AttributeError, Exception):
+                pass
 
-            # Add invalidated count if available
-            if hasattr(pool, "invalidated"):
-                status_data["invalidated"] = pool.invalidated()
+            try:
+                status_data["checked_in"] = pool.checkedin()  # type: ignore
+            except (AttributeError, Exception):
+                pass
 
-            logger.info("Database connection pool status", extra_data=status_data)
+            try:
+                status_data["checked_out"] = pool.checkedout()  # type: ignore
+            except (AttributeError, Exception):
+                pass
+
+            try:
+                status_data["overflow"] = pool.overflow()  # type: ignore
+            except (AttributeError, Exception):
+                pass
+
+            try:
+                status_data["invalidated"] = pool.invalidated()  # type: ignore
+            except (AttributeError, Exception):
+                pass
+
+            if status_data:
+                logger.info("Database connection pool status", extra_data=status_data)
+            else:
+                logger.info(
+                    "Database connection pool active (specific metrics unavailable)"
+                )
         else:
             logger.warning("Pool status unavailable: engine has no pool attribute")
     except Exception as e:
@@ -192,17 +213,6 @@ def get_session() -> Generator[Session, None, None]:
         raise
     finally:
         session.close()  # always closes the session
-
-
-def _execute_operation(operation: str, params: dict = None) -> bool:
-    """Private helper to DRY up database operations."""
-    try:
-        with get_session() as session:
-            session.execute(text(operation), params or {})
-            return True
-    except Exception as e:
-        logger.error(f"Database operation failed: {str(e)}")
-        return False
 
 
 def store_raw_article(raw_article: RawArticle) -> bool:
