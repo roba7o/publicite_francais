@@ -168,7 +168,6 @@ format:  ## Auto-format code with ruff
 fix:  ## Auto-format code and run all checks
 	@echo "\033[36m▶ Running ruff format and linting with fixes...\033[0m"
 	$(RUFF) check --fix $(SRC) tests
-	@echo "\033[33m▶ Skipping mypy (learning project - type hints not enforced)...\033[0m"
 	@echo "\033[32m✓ Code quality checks passed!\033[0m"
 
 clean:  ## Remove __pycache__, .pyc files, and test artifacts
@@ -178,7 +177,6 @@ clean:  ## Remove __pycache__, .pyc files, and test artifacts
 	find . -name ".coverage*" -delete
 	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name "htmlcov" -exec rm -rf {} + 2>/dev/null || true
-	find . -type d -name ".mypy_cache" -exec rm -rf {} + 2>/dev/null || true
 
 # Development utilities
 test-essential:  ## Run essential working tests only

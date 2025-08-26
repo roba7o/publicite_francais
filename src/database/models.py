@@ -9,7 +9,6 @@ ELT = Extract, Load, Transform
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any
 from uuid import uuid4
 
 import trafilatura
@@ -92,7 +91,7 @@ class RawArticle:
             # Don't break the pipeline on extraction failures
             self.extraction_status = "failed"
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self):
         """Convert to dictionary for database storage."""
         return {
             "id": self.id,

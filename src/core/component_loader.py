@@ -5,10 +5,9 @@ Replaces the complex two-layer factory system with a single, straightforward fun
 """
 
 import importlib
-from typing import Any
 
 
-def create_component(class_path: str, *args, **kwargs) -> Any:
+def create_component(class_path: str, *args, **kwargs):
     """
     Create component instance from full class path.
 

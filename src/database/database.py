@@ -76,15 +76,7 @@ def initialize_database(echo: bool = None) -> bool:
         with get_session() as session:
             session.execute(text("SELECT 1"))
 
-        logger.info(
-            "Database initialized with connection pooling",
-            extra_data={
-                "pool_size": pool_size,
-                "max_overflow": max_overflow,
-                "pool_timeout": 30,
-                "pool_recycle": 3600,
-            },
-        )
+        logger.info("Database initialized with connection pooling")
 
         return True
 

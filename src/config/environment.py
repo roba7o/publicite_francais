@@ -7,7 +7,6 @@ with a structured config system.
 """
 
 import os
-from typing import Any
 
 from dotenv import load_dotenv
 
@@ -25,7 +24,7 @@ class EnvironmentConfig:
 
     def __init__(self):
         """Initialize the configuration manager."""
-        self._config_cache: dict[str, Any] = {}
+        self._config_cache = {}
         self._load_configuration()
 
     def _load_configuration(self) -> None:
@@ -82,7 +81,7 @@ class EnvironmentConfig:
         test_mode = self._get_bool_env("TEST_MODE", False)
         return "test" if test_mode else "dev"
 
-    def get(self, key: str, default: Any = None) -> Any:
+    def get(self, key: str, default=None):
         """
         Get configuration value by key.
 

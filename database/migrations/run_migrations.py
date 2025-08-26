@@ -16,7 +16,6 @@ Examples:
 import sys
 import argparse
 from pathlib import Path
-from typing import List, Tuple
 import re
 
 # Add src to path for imports
@@ -59,7 +58,7 @@ class MigrationRunner:
                 CREATE INDEX IF NOT EXISTS idx_migration_history_applied ON migration_history(applied_at)
             """))
     
-    def get_migration_files(self) -> List[Tuple[str, Path]]:
+    def get_migration_files(self) -> list[tuple[str, Path]]:
         """Get all migration files sorted by number."""
         migrations = []
         
@@ -78,7 +77,7 @@ class MigrationRunner:
         """Get list of already applied migrations (Django-style)."""
         with get_session() as session:
             result = session.execute(text("""
-                SELECT migration_name FROM migration_history 
+                SELECT migration_name FROM migration_history
                 ORDER BY migration_name
             """))
             return {row[0] for row in result}
@@ -180,7 +179,7 @@ class MigrationRunner:
                 
                 # Remove from migration tracking (Django-style)
                 session.execute(text("""
-                    DELETE FROM migration_history 
+                    DELETE FROM migration_history
                     WHERE migration_name = :name
                 """), {"name": migration_name})
             
