@@ -130,7 +130,7 @@ def test_html_files(raw_test_files_dir):
         "Slate.fr": "slate.fr",
         "FranceInfo.fr": "franceinfo.fr",
         "TF1 Info": "tf1info.fr",
-        "Depeche.fr": "ladepeche.fr"
+        "Depeche.fr": "ladepeche.fr",
     }
 
     for actual_dir, source_name in source_mapping.items():
@@ -221,8 +221,12 @@ def mock_article_orchestrator():
     mock_orchestrator.component_factory = Mock()
 
     # Configure factory to return your existing mocks
-    mock_orchestrator.component_factory.create_scraper.return_value = MockScraper(debug=True)
-    mock_orchestrator.component_factory.create_parser.return_value = MockDatabaseParser("test-source")
+    mock_orchestrator.component_factory.create_scraper.return_value = MockScraper(
+        debug=True
+    )
+    mock_orchestrator.component_factory.create_parser.return_value = MockDatabaseParser(
+        "test-source"
+    )
 
     return mock_orchestrator
 

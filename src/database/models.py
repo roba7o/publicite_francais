@@ -76,9 +76,9 @@ class RawArticle:
                 self.language = metadata.language
 
                 # Handle categories/tags as keywords
-                if hasattr(metadata, 'categories') and metadata.categories:
+                if hasattr(metadata, "categories") and metadata.categories:
                     self.keywords = metadata.categories
-                elif hasattr(metadata, 'tags') and metadata.tags:
+                elif hasattr(metadata, "tags") and metadata.tags:
                     self.keywords = metadata.tags
 
             # Mark as successful if we got at least some content

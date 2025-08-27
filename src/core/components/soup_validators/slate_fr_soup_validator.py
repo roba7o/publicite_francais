@@ -55,7 +55,9 @@ class SlateFrSoupValidator(BaseSoupValidator):
             # Domain-specific validation: Slate.fr articles use <article> tag
             article_tag = soup.find("article")
             if not article_tag or not isinstance(article_tag, Tag):
-                self.logger.warning("No article tag found - not a valid Slate.fr article")
+                self.logger.warning(
+                    "No article tag found - not a valid Slate.fr article"
+                )
                 return None
 
             # Additional validation: Check for title structure

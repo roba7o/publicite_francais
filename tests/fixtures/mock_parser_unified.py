@@ -73,7 +73,9 @@ class ConfigurableMockParser:
             },
         }
 
-    def parse_article(self, soup: BeautifulSoup, url: str = "https://test.example.com/mock-article") -> RawArticle | None:
+    def parse_article(
+        self, soup: BeautifulSoup, url: str = "https://test.example.com/mock-article"
+    ) -> RawArticle | None:
         """Parse article based on behavior configuration."""
         if self.behavior in ["failure", "empty"]:
             return None
@@ -94,11 +96,7 @@ class ConfigurableMockParser:
         else:
             html = "<html><body><h1>Mock Article Title</h1><p>Ceci est un article de test français avec du contenu pour analyse.</p></body></html>"
 
-        return RawArticle(
-            url=url,
-            raw_html=html,
-            site="test.example.com"
-        )
+        return RawArticle(url=url, raw_html=html, site="test.example.com")
 
     def get_soup_from_url(self, url: str) -> BeautifulSoup | None:
         """Get soup based on behavior configuration."""

@@ -72,13 +72,17 @@ class tf1infoSoupValidator(BaseSoupValidator):
                 session.close()
 
                 if len(response.content) < 100:
-                    self.logger.warning(f"Response content too short: {len(response.content)} bytes")
+                    self.logger.warning(
+                        f"Response content too short: {len(response.content)} bytes"
+                    )
                     continue
 
                 return self.parse_html_fast(response.content)
 
             except requests.exceptions.RequestException as e:
-                self.logger.warning(f"URL fetch failed (attempt {attempt + 1}): {str(e)}")
+                self.logger.warning(
+                    f"URL fetch failed (attempt {attempt + 1}): {str(e)}"
+                )
 
             if attempt < max_retries - 1:
                 time.sleep(1 + attempt)

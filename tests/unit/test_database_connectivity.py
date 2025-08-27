@@ -6,7 +6,6 @@ These are unit-level tests for basic database functionality.
 """
 
 
-
 class TestBasicDatabaseConnectivity:
     """Basic database connectivity tests."""
 

@@ -34,21 +34,22 @@ class TestConcurrentProcessing:
         def parse_html_file(file_path):
             """Parse a single HTML file and return basic info."""
             # Read and process the HTML file
-            html_content = file_path.read_text(encoding='utf-8')
+            html_content = file_path.read_text(encoding="utf-8")
 
             # Parse HTML (like validators do)
             from bs4 import BeautifulSoup
-            soup = BeautifulSoup(html_content, 'html.parser')
+
+            soup = BeautifulSoup(html_content, "html.parser")
 
             # Extract basic information
-            title = soup.find('title')
+            title = soup.find("title")
             text_content = soup.get_text()
 
             return {
-                'file': file_path.name,
-                'size_kb': len(html_content) / 1024,
-                'title_found': title is not None,
-                'content_length': len(text_content),
+                "file": file_path.name,
+                "size_kb": len(html_content) / 1024,
+                "title_found": title is not None,
+                "content_length": len(text_content),
             }
 
         # Test sequential processing
@@ -59,16 +60,24 @@ class TestConcurrentProcessing:
             concurrent_results = list(executor.map(parse_html_file, test_files))
 
         # Verify both approaches work correctly
-        assert len(sequential_results) == len(test_files), "Sequential processing should handle all files"
-        assert len(concurrent_results) == len(test_files), "Concurrent processing should handle all files"
+        assert len(sequential_results) == len(test_files), (
+            "Sequential processing should handle all files"
+        )
+        assert len(concurrent_results) == len(test_files), (
+            "Concurrent processing should handle all files"
+        )
 
         # Verify results are equivalent (order may differ)
-        sequential_files = {r['file'] for r in sequential_results}
-        concurrent_files = {r['file'] for r in concurrent_results}
-        assert sequential_files == concurrent_files, "Both approaches should process the same files"
+        sequential_files = {r["file"] for r in sequential_results}
+        concurrent_files = {r["file"] for r in concurrent_results}
+        assert sequential_files == concurrent_files, (
+            "Both approaches should process the same files"
+        )
 
         # Optional: Report basic metrics (no assertions on timing)
-        avg_file_size = sum(r['size_kb'] for r in sequential_results) / len(sequential_results)
+        avg_file_size = sum(r["size_kb"] for r in sequential_results) / len(
+            sequential_results
+        )
         print("\n=== HTML Parsing Verification ===")
         print(f"Files processed: {len(test_files)}")
         print(f"Average file size: {avg_file_size:.1f} KB")
@@ -88,7 +97,7 @@ class TestConcurrentProcessing:
                 article = RawArticle(
                     url=f"https://bulk-test.com/batch-{batch_size}-article-{i}",
                     raw_html=f"<html><body><h1>Test {i}</h1><p>{html_size}</p></body></html>",
-                    site="bulk-test.com"
+                    site="bulk-test.com",
                 )
                 articles.append(article)
 
@@ -96,7 +105,9 @@ class TestConcurrentProcessing:
             successful, attempted = store_articles_batch(articles)
 
             # Verify operations work correctly
-            assert successful == batch_size, f"All {batch_size} articles should be inserted"
+            assert successful == batch_size, (
+                f"All {batch_size} articles should be inserted"
+            )
             assert attempted >= 0, "Should have non-negative attempted count"
 
             # Optional: Report basic metrics (no timing assertions)
@@ -112,8 +123,9 @@ class TestConcurrentProcessing:
         from core.orchestrator import ArticleOrchestrator
 
         # Find one enabled config for testing
-        test_config = next((config for config in SCRAPER_CONFIGS
-                          if config.get("enabled", True)), None)
+        test_config = next(
+            (config for config in SCRAPER_CONFIGS if config.get("enabled", True)), None
+        )
 
         if not test_config:
             pytest.skip("No enabled source config available")
@@ -150,26 +162,32 @@ class TestConcurrentProcessing:
                 article = RawArticle(
                     url=f"https://concurrent-db.com/thread-{thread_id}-article-{i}",
                     raw_html=f"<html><body><h1>Thread {thread_id} Article {i}</h1></body></html>",
-                    site="concurrent-db.com"
+                    site="concurrent-db.com",
                 )
                 articles.append(article)
 
             successful, attempted = store_articles_batch(articles)
-            return {'successful': successful, 'attempted': attempted}
+            return {"successful": successful, "attempted": attempted}
 
         # Test concurrent database operations
         with ThreadPoolExecutor(max_workers=num_threads) as executor:
-            thread_results = list(executor.map(store_articles_for_thread, range(num_threads)))
+            thread_results = list(
+                executor.map(store_articles_for_thread, range(num_threads))
+            )
 
         # Verify all operations succeeded
-        total_successful = sum(r['successful'] for r in thread_results)
+        total_successful = sum(r["successful"] for r in thread_results)
         expected_total = num_threads * articles_per_thread
 
-        assert total_successful == expected_total, f"Should store all {expected_total} articles"
+        assert total_successful == expected_total, (
+            f"Should store all {expected_total} articles"
+        )
 
         print("\n=== Concurrent Database Test ===")
         print(f"Threads: {num_threads}, Articles per thread: {articles_per_thread}")
-        print(f"✓ Successfully stored {total_successful}/{expected_total} articles concurrently")
+        print(
+            f"✓ Successfully stored {total_successful}/{expected_total} articles concurrently"
+        )
 
 
 class TestSystemVerification:
@@ -182,7 +200,7 @@ class TestSystemVerification:
         article = RawArticle(
             url="https://system-test.com/test-article",
             raw_html="<html><body><h1>System Test</h1><p>Test content</p></body></html>",
-            site="system-test.com"
+            site="system-test.com",
         )
 
         # Verify article properties

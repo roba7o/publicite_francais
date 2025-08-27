@@ -5,7 +5,6 @@ Tests for component loading, factory patterns, and basic component functionality
 Extracted from test_essential.py for better organization.
 """
 
-
 from config.site_configs import SCRAPER_CONFIGS
 from core.orchestrator import ArticleOrchestrator
 from database.models import RawArticle
@@ -19,7 +18,9 @@ class TestComponentFactory:
         from core.component_loader import import_class
 
         # Test url collector class loading
-        url_collector_class = import_class("core.components.url_collectors.slate_fr_url_collector.SlateFrUrlCollector")
+        url_collector_class = import_class(
+            "core.components.url_collectors.slate_fr_url_collector.SlateFrUrlCollector"
+        )
         assert url_collector_class is not None
         assert url_collector_class.__name__ == "SlateFrUrlCollector"
 

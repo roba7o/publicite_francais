@@ -36,9 +36,13 @@ class TestHtmlTestDataIntegrity:
             for file_path in files:
                 assert file_path.exists(), f"File should exist: {file_path}"
 
-                content = file_path.read_text(encoding='utf-8')
-                assert len(content) > 100, f"File {file_path} should have substantial content"
-                assert "<html" in content.lower() or "<!doctype" in content.lower(), f"File {file_path} should contain HTML"
+                content = file_path.read_text(encoding="utf-8")
+                assert len(content) > 100, (
+                    f"File {file_path} should have substantial content"
+                )
+                assert "<html" in content.lower() or "<!doctype" in content.lower(), (
+                    f"File {file_path} should contain HTML"
+                )
 
 
 class TestArticleOrchestrator:
@@ -48,8 +52,8 @@ class TestArticleOrchestrator:
         """Test that ArticleOrchestrator can be initialized properly."""
         orchestrator = ArticleOrchestrator()
         assert orchestrator is not None
-        assert hasattr(orchestrator, 'process_site')
-        assert hasattr(orchestrator, 'component_factory')
+        assert hasattr(orchestrator, "process_site")
+        assert hasattr(orchestrator, "component_factory")
 
     def test_orchestrator_processes_all_sources(self, clean_test_database):
         """Test that orchestrator can process all enabled sources."""
@@ -64,11 +68,17 @@ class TestArticleOrchestrator:
                 total_attempted += attempted
 
                 # Each source should attempt to process files
-                assert attempted >= 0, f"Source {config['site']} should attempt processing"
+                assert attempted >= 0, (
+                    f"Source {config['site']} should attempt processing"
+                )
 
         # Should have some successful processing
-        assert total_processed > 0, f"Expected some articles processed, got {total_processed}"
-        assert total_attempted >= total_processed, "Attempted count should be >= processed count"
+        assert total_processed > 0, (
+            f"Expected some articles processed, got {total_processed}"
+        )
+        assert total_attempted >= total_processed, (
+            "Attempted count should be >= processed count"
+        )
 
 
 class TestDeterministicPipeline:
@@ -88,7 +98,9 @@ class TestDeterministicPipeline:
                 total_attempted += attempted
 
         # Verify processing occurred
-        assert total_processed > 0, f"Expected articles processed, got {total_processed}"
+        assert total_processed > 0, (
+            f"Expected articles processed, got {total_processed}"
+        )
 
         # Verify database storage
         with get_session() as session:
@@ -124,7 +136,12 @@ class TestDeterministicPipeline:
             source_dict = {row[0]: row[1] for row in source_counts}
 
             # All 4 sources should be present
-            expected_sources = ["slate.fr", "tf1info.fr", "ladepeche.fr", "franceinfo.fr"]
+            expected_sources = [
+                "slate.fr",
+                "tf1info.fr",
+                "ladepeche.fr",
+                "franceinfo.fr",
+            ]
             for source in expected_sources:
                 assert source in source_dict, f"Source '{source}' not found in database"
                 assert source_dict[source] > 0, f"Source '{source}' has no articles"

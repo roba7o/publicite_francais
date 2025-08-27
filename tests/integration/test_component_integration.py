@@ -24,8 +24,12 @@ class TestComponentFactory:
         for config in SCRAPER_CONFIGS:
             if config.get("enabled", True):
                 collector = factory.create_scraper(config)
-                assert collector is not None, f"Should create collector for {config['site']}"
-                assert hasattr(collector, 'get_article_urls'), "Collector should have get_article_urls method"
+                assert collector is not None, (
+                    f"Should create collector for {config['site']}"
+                )
+                assert hasattr(collector, "get_article_urls"), (
+                    "Collector should have get_article_urls method"
+                )
 
     def test_component_factory_creates_all_validators(self):
         """Test that ComponentFactory can create all configured soup validators."""
@@ -34,8 +38,12 @@ class TestComponentFactory:
         for config in SCRAPER_CONFIGS:
             if config.get("enabled", True):
                 validator = factory.create_parser(config)
-                assert validator is not None, f"Should create validator for {config['site']}"
-                assert hasattr(validator, 'validate_and_extract'), "Validator should have validate_and_extract method"
+                assert validator is not None, (
+                    f"Should create validator for {config['site']}"
+                )
+                assert hasattr(validator, "validate_and_extract"), (
+                    "Validator should have validate_and_extract method"
+                )
 
     def test_component_factory_handles_invalid_config(self):
         """Test that ComponentFactory handles invalid configurations gracefully."""
@@ -45,7 +53,7 @@ class TestComponentFactory:
         invalid_config = {
             "site": "invalid.test",
             "enabled": True,
-            "soup_validator_class": "some.valid.Class"
+            "soup_validator_class": "some.valid.Class",
         }
 
         with pytest.raises(ValueError, match="No url_collector_class specified"):
@@ -55,7 +63,7 @@ class TestComponentFactory:
         invalid_config2 = {
             "site": "invalid.test",
             "enabled": True,
-            "url_collector_class": "some.valid.Class"
+            "url_collector_class": "some.valid.Class",
         }
 
         with pytest.raises(ValueError, match="No soup_validator_class specified"):
@@ -93,7 +101,7 @@ class TestCollectorValidatorIntegration:
             "slate.fr": "slate.fr",
             "franceinfo.fr": "franceinfo.fr",
             "tf1info.fr": "tf1info.fr",
-            "ladepeche.fr": "ladepeche.fr"
+            "ladepeche.fr": "ladepeche.fr",
         }
 
         for config in SCRAPER_CONFIGS:
@@ -104,7 +112,7 @@ class TestCollectorValidatorIntegration:
                 if test_source in test_html_files and test_html_files[test_source]:
                     # Test with first available HTML file
                     test_file = test_html_files[test_source][0]
-                    html_content = test_file.read_text(encoding='utf-8')
+                    html_content = test_file.read_text(encoding="utf-8")
 
                     # Parse and validate
                     soup = validator.parse_html_fast(html_content)
@@ -113,7 +121,9 @@ class TestCollectorValidatorIntegration:
 
                     # Should either return RawArticle or None (both are valid)
                     if result is not None:
-                        assert isinstance(result, RawArticle), f"Validator for {config['site']} should return RawArticle"
+                        assert isinstance(result, RawArticle), (
+                            f"Validator for {config['site']} should return RawArticle"
+                        )
                         assert result.raw_html is not None
                         assert result.site is not None
 
@@ -124,7 +134,7 @@ class TestOrchestratorIntegration:
     def test_orchestrator_uses_component_factory(self):
         """Test that orchestrator properly uses ComponentFactory."""
         orchestrator = ArticleOrchestrator()
-        assert hasattr(orchestrator, 'component_factory')
+        assert hasattr(orchestrator, "component_factory")
         assert orchestrator.component_factory is not None
 
     def test_orchestrator_processes_enabled_sources(self, clean_test_database):
@@ -139,12 +149,18 @@ class TestOrchestratorIntegration:
                     processed_sources.append(config["site"])
 
         # Should process multiple sources
-        assert len(processed_sources) > 0, "Should process at least some enabled sources"
+        assert len(processed_sources) > 0, (
+            "Should process at least some enabled sources"
+        )
 
         # All enabled sources should be attempted (in test mode)
-        enabled_sources = [config["site"] for config in SCRAPER_CONFIGS if config.get("enabled", True)]
+        enabled_sources = [
+            config["site"] for config in SCRAPER_CONFIGS if config.get("enabled", True)
+        ]
         for source in enabled_sources:
-            assert source in processed_sources, f"Should have processed enabled source: {source}"
+            assert source in processed_sources, (
+                f"Should have processed enabled source: {source}"
+            )
 
     def test_orchestrator_handles_disabled_sources(self):
         """Test that orchestrator properly skips disabled sources."""
@@ -157,7 +173,7 @@ class TestOrchestratorIntegration:
             "url_collector_class": "core.components.url_collectors.slate_fr_url_collector.SlateFrUrlCollector",
             "soup_validator_class": "core.components.soup_validators.slate_fr_soup_validator.SlateFrSoupValidator",
             "url_collector_kwargs": {"debug": True},
-            "soup_validator_kwargs": {"debug": True}
+            "soup_validator_kwargs": {"debug": True},
         }
 
         processed, attempted = orchestrator.process_site(disabled_config)
@@ -179,7 +195,9 @@ class TestEndToEndFlow:
                 test_config = config
                 break
 
-        assert test_config is not None, "Should have at least one enabled config for testing"
+        assert test_config is not None, (
+            "Should have at least one enabled config for testing"
+        )
 
         # Process the source
         processed, attempted = orchestrator.process_site(test_config)
@@ -198,11 +216,15 @@ class TestEndToEndFlow:
             with get_session() as session:
                 schema = get_news_data_schema()
                 count = session.execute(
-                    text(f"SELECT COUNT(*) FROM {schema}.raw_articles WHERE site = :site"),
-                    {"site": test_config["site"]}
+                    text(
+                        f"SELECT COUNT(*) FROM {schema}.raw_articles WHERE site = :site"
+                    ),
+                    {"site": test_config["site"]},
                 ).scalar()
 
-                assert count == processed, f"Database should have {processed} articles for {test_config['site']}"
+                assert count == processed, (
+                    f"Database should have {processed} articles for {test_config['site']}"
+                )
 
     def test_error_handling_in_pipeline(self):
         """Test that pipeline handles errors gracefully."""
@@ -215,7 +237,7 @@ class TestEndToEndFlow:
             "url_collector_class": "non.existent.Class",
             "soup_validator_class": "also.non.existent.Class",
             "url_collector_kwargs": {},
-            "soup_validator_kwargs": {}
+            "soup_validator_kwargs": {},
         }
 
         # Should handle errors gracefully (return 0, 0)

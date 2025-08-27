@@ -18,13 +18,9 @@ def main() -> int | None:
     logger = Logger(__name__)
 
     try:
-
         mode = "TEST" if TEST_MODE else "LIVE"
 
-        logger.header(
-            "French News Collection",
-            f"Database pipeline in {mode} mode"
-        )
+        logger.header("French News Collection", f"Database pipeline in {mode} mode")
 
         # Database is always required (no CSV fallback)
 

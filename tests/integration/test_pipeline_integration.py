@@ -36,7 +36,6 @@ class TestScrapeUploadPipeline:
         # Should be test schema since we set DATABASE_ENV=test in setup_database
         return get_news_data_schema()
 
-
     def test_html_file_counts(self):
         """Test that we have the expected number of HTML test files."""
         from pathlib import Path
@@ -118,7 +117,6 @@ class TestScrapeUploadPipeline:
                 f"Database has {raw_article_count} raw articles but processor reported {processed_count}"
             )
 
-
     def test_source_distribution(self):
         """Test that articles are distributed correctly across sources."""
         from database.database import get_session
@@ -142,7 +140,12 @@ class TestScrapeUploadPipeline:
 
             # Each source should contribute articles (exact counts may vary based on HTML quality)
             # All sources should be working in offline mode
-            expected_sources = ["slate.fr", "tf1info.fr", "ladepeche.fr", "franceinfo.fr"]  # All 4 sources working in test mode
+            expected_sources = [
+                "slate.fr",
+                "tf1info.fr",
+                "ladepeche.fr",
+                "franceinfo.fr",
+            ]  # All 4 sources working in test mode
 
             for source in expected_sources:
                 assert source in source_dict, f"Source '{source}' not found in database"
@@ -161,4 +164,3 @@ class TestScrapeUploadPipeline:
                     assert source_dict[source] == 4, (
                         f"Expected 4 {source} articles, got {source_dict[source]}"
                     )
-

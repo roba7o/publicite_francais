@@ -20,4 +20,3 @@ DBT_SCHEMA_CONFIG = {
     "dev": "dbt_staging",
     "prod": "dbt_prod",
 }
-

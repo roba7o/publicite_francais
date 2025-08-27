@@ -65,13 +65,17 @@ class BaseSoupValidator(EnhancedWebMixin, ABC):
                 response.raise_for_status()
 
                 if len(response.content) < 100:
-                    self.logger.warning(f"Response content too short: {len(response.content)} bytes")
+                    self.logger.warning(
+                        f"Response content too short: {len(response.content)} bytes"
+                    )
                     continue
 
                 return self.parse_html_fast(response.content)
 
             except requests.exceptions.RequestException as e:
-                self.logger.warning(f"URL fetch failed (attempt {attempt + 1}): {str(e)}")
+                self.logger.warning(
+                    f"URL fetch failed (attempt {attempt + 1}): {str(e)}"
+                )
 
             if attempt < max_retries - 1:
                 time.sleep(1 + attempt)
@@ -111,7 +115,7 @@ class BaseSoupValidator(EnhancedWebMixin, ABC):
                     original_url = URL_MAPPING.get(filename, f"test://{filename}")
 
                     with open(file_path, encoding="utf-8") as f:
-                        soup = self.parse_html_fast(f.read().encode('utf-8'))
+                        soup = self.parse_html_fast(f.read().encode("utf-8"))
                         soup_sources.append((soup, original_url))
 
         except Exception as e:
