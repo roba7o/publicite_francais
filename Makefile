@@ -25,7 +25,7 @@ MAIN_MODULE := main
 .DEFAULT_GOAL := help
 
 # Declare phony targets to avoid conflicts with files/directories
-.PHONY: run run-test-data test test-unit test-integration test-performance help test-essential lint format fix clean db-start db-stop db-clean db-migrate db-migrate-dry db-rollback version-check
+.PHONY: run run-test-data test test-unit test-integration test-performance help test-essential lint format fix clean db-start db-stop db-clean db-migrate db-migrate-dry version-check
 
 # ==================== CORE COMMANDS (Daily Usage) ====================
 
@@ -95,7 +95,7 @@ help:  ## Show available commands
 	@echo "  \033[36mdb-clean       \033[0m Stop and remove all containers and volumes"
 	@echo "  \033[36mdb-migrate     \033[0m Run pending database migrations"
 	@echo "  \033[36mdb-migrate-dry \033[0m Show what migrations would run (dry run)"
-	@echo "  \033[36mdb-rollback    \033[0m Rollback to migration (usage: make db-rollback TARGET=001)"
+	@echo ""
 	@echo ""
 	@echo "\033[33mCode quality utilities:\033[0m"
 	@echo "  \033[36mlint            \033[0m Run ruff linting"
@@ -148,14 +148,6 @@ db-migrate-dry:  ## Show what migrations would run (dry run)
 	@$(MAKE) db-start > /dev/null 2>&1
 	@PYTHONPATH=$(SRC) $(PYTHON) database/migrations/run_migrations.py --dry-run
 
-db-rollback:  ## Rollback to specific migration (usage: make db-rollback TARGET=001)
-	@if [ -z "$(TARGET)" ]; then \
-		echo "\033[31m✗ TARGET required. Usage: make db-rollback TARGET=001\033[0m"; \
-		exit 1; \
-	fi
-	@echo "\033[31m◆ Rolling back to migration $(TARGET)...\033[0m"
-	@$(MAKE) db-start > /dev/null 2>&1
-	@PYTHONPATH=$(SRC) $(PYTHON) database/migrations/run_migrations.py --rollback $(TARGET)
 
 
 # Code quality utilities

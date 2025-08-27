@@ -32,7 +32,9 @@ _SessionLocal = None
 _engine = None
 
 
-def initialize_database(echo: bool = None) -> bool:
+def initialize_database(
+        echo: bool | None = None
+    ) -> bool:
     """Initialize database connection with optimized connection pooling."""
     global _SessionLocal, _engine
 
