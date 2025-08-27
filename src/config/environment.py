@@ -12,14 +12,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+# type helpers for reading env vars -> os.getenv returns Optional[str]
 def get_bool(key: str, default: bool = False) -> bool:
-    """Get boolean environment variable with type safety."""
     value = os.getenv(key, str(default)).lower()
     return value in ("true", "1", "yes", "on")
 
-
 def get_int(key: str, default: int) -> int:
-    """Get integer environment variable with type safety."""
     try:
         return int(os.getenv(key, str(default)))
     except (ValueError, TypeError):
@@ -45,20 +43,8 @@ CONCURRENT_FETCHERS = get_int("CONCURRENT_FETCHERS", 3)
 FETCH_TIMEOUT = get_int("FETCH_TIMEOUT", 30)
 
 
-def get_database_env() -> str:
-    """Get the current database environment (test/dev/prod)."""
-    explicit_env = os.getenv("DATABASE_ENV")
-    if explicit_env:
-        return explicit_env
-    return "test" if TEST_MODE else "dev"
-
-
 def get_news_data_schema() -> str:
-    """Get the news data schema name for current environment."""
-    env = get_database_env()
-    schema_map = {
-        "test": os.getenv("NEWS_DATA_TEST_SCHEMA", "news_data_test"),
-        "dev": os.getenv("NEWS_DATA_DEV_SCHEMA", "news_data_dev"),
-        "prod": os.getenv("NEWS_DATA_PROD_SCHEMA", "news_data_prod"),
-    }
-    return schema_map.get(env, schema_map["dev"])
+    """Get the news data schema name based on TEST_MODE."""
+    if TEST_MODE:
+        return os.getenv("NEWS_DATA_TEST_SCHEMA", "news_data_test")
+    return os.getenv("NEWS_DATA_DEV_SCHEMA", "news_data_dev")
