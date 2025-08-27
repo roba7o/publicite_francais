@@ -17,6 +17,7 @@ def get_bool(key: str, default: bool = False) -> bool:
     value = os.getenv(key, str(default)).lower()
     return value in ("true", "1", "yes", "on")
 
+
 def get_int(key: str, default: int) -> int:
     try:
         return int(os.getenv(key, str(default)))
