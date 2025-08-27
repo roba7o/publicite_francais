@@ -94,12 +94,12 @@ class TestConfiguration:
 
     def test_environment_configuration(self):
         """Test that environment configuration can be loaded."""
-        from config.environment import env_config
+        from config.environment import TEST_MODE, get_news_data_schema
 
-        test_mode = env_config.is_test_mode()
+        test_mode = TEST_MODE
         assert isinstance(test_mode, bool)
 
-        schema = env_config.get_news_data_schema()
+        schema = get_news_data_schema()
         assert isinstance(schema, str)
 
 

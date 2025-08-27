@@ -6,7 +6,6 @@ thresholds, while delegating all environment variable handling to
 the centralized config system.
 """
 
-from .environment import env_config
 
 # =============================================================================
 # APPLICATION CONFIGURATION
@@ -22,8 +21,3 @@ DBT_SCHEMA_CONFIG = {
     "prod": "dbt_prod",
 }
 
-# =============================================================================
-# CONVENIENCE ACCESS TO ENVIRONMENT CONFIG
-# =============================================================================
-# Direct access to environment config for modules that need it
-config = env_config

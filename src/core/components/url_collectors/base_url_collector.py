@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 
 import requests
 
-from config.environment import env_config
+from config.environment import DEBUG
 from core.components.enhanced_web_mixin import EnhancedWebMixin
 from utils.structured_logger import Logger
 
@@ -47,7 +47,7 @@ class BaseUrlCollector(EnhancedWebMixin, ABC):
             debug: Enable debug logging. If None, uses DEBUG from config.
         """
         self.logger = Logger(self.__class__.__name__)
-        self.debug = debug if debug is not None else env_config.is_debug_mode()
+        self.debug = debug if debug is not None else DEBUG
         self.base_url = ""  # Must be set by subclasses
 
     @abstractmethod

@@ -10,7 +10,7 @@ import os
 
 import pytest
 
-from config.environment import env_config
+from config.environment import get_news_data_schema
 from config.site_configs import SCRAPER_CONFIGS
 from core.orchestrator import ArticleOrchestrator
 
@@ -24,8 +24,7 @@ class TestScrapeUploadPipeline:
         os.environ["DATABASE_ENV"] = "test"
         os.environ["TEST_MODE"] = "true"
 
-        # Refresh environment config to pick up test settings
-        env_config.refresh()
+        # No longer needed - using direct imports
 
         # Initialize database for tests
         from database.database import initialize_database
@@ -35,7 +34,7 @@ class TestScrapeUploadPipeline:
     def _get_test_schema(self) -> str:
         """Get current schema name dynamically for tests."""
         # Should be test schema since we set DATABASE_ENV=test in setup_database
-        return env_config.get('NEWS_DATA_TEST_SCHEMA')
+        return get_news_data_schema()
 
 
     def test_html_file_counts(self):

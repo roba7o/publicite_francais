@@ -7,7 +7,7 @@ as part of the integration test suite.
 
 from sqlalchemy import text
 
-from config.environment import env_config
+from config.environment import get_news_data_schema
 from database.database import (
     get_session,
     initialize_database,
@@ -46,7 +46,7 @@ class TestDatabaseConnectivity:
 
     def test_environment_schema_access(self):
         """Test that environment-specific schema is accessible."""
-        schema = env_config.get_news_data_schema()
+        schema = get_news_data_schema()
         assert schema is not None, "Schema name should be available"
         assert isinstance(schema, str), "Schema name should be a string"
 
@@ -83,7 +83,7 @@ class TestDatabaseOperations:
         assert success, "Article should be stored successfully"
 
         # Verify it was stored by querying the database
-        schema = env_config.get_news_data_schema()
+        schema = get_news_data_schema()
         with get_session() as session:
             result = session.execute(
                 text(f"SELECT url, site, raw_html, content_length FROM {schema}.raw_articles WHERE url = :url"),
@@ -120,7 +120,7 @@ class TestDatabaseOperations:
         assert success2, "Second article should also be stored successfully"
 
         # In ELT approach, duplicates are allowed (for historical tracking)
-        schema = env_config.get_news_data_schema()
+        schema = get_news_data_schema()
         with get_session() as session:
             count = session.execute(
                 text(f"SELECT COUNT(*) FROM {schema}.raw_articles WHERE url = :url"),
@@ -148,7 +148,7 @@ class TestDatabaseOperations:
         # Note: attempted count may vary based on implementation (batch vs fallback)
 
         # Verify all were inserted by counting
-        schema = env_config.get_news_data_schema()
+        schema = get_news_data_schema()
         with get_session() as session:
             count = session.execute(
                 text(f"SELECT COUNT(*) FROM {schema}.raw_articles WHERE url LIKE :pattern"),
@@ -163,7 +163,7 @@ class TestSchemaOperations:
 
     def test_table_exists(self):
         """Test that required tables exist in the schema."""
-        schema = env_config.get_news_data_schema()
+        schema = get_news_data_schema()
 
         with get_session() as session:
             # Check if raw_articles table exists
@@ -180,7 +180,7 @@ class TestSchemaOperations:
 
     def test_table_structure(self):
         """Test that raw_articles table has expected columns."""
-        schema = env_config.get_news_data_schema()
+        schema = get_news_data_schema()
 
         with get_session() as session:
             # Get table columns
@@ -207,7 +207,7 @@ class TestSchemaOperations:
 
     def test_database_permissions(self, clean_test_database):
         """Test that we have necessary database permissions."""
-        schema = env_config.get_news_data_schema()
+        schema = get_news_data_schema()
 
         with get_session() as session:
             # Test SELECT permission

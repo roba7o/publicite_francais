@@ -7,7 +7,7 @@ using your existing 16 HTML test files for deterministic, repeatable results.
 
 from sqlalchemy import text
 
-from config.environment import env_config
+from config.environment import get_news_data_schema
 from config.site_configs import SCRAPER_CONFIGS
 from core.orchestrator import ArticleOrchestrator
 from database.database import get_session
@@ -92,7 +92,7 @@ class TestDeterministicPipeline:
 
         # Verify database storage
         with get_session() as session:
-            schema = env_config.get_news_data_schema()
+            schema = get_news_data_schema()
             db_count = session.execute(
                 text(f"SELECT COUNT(*) FROM {schema}.raw_articles")
             ).scalar()
@@ -111,7 +111,7 @@ class TestDeterministicPipeline:
 
         # Check source distribution
         with get_session() as session:
-            schema = env_config.get_news_data_schema()
+            schema = get_news_data_schema()
             source_counts = session.execute(
                 text(f"""
                 SELECT site, COUNT(*) as article_count
@@ -155,7 +155,7 @@ class TestDeterministicPipeline:
 
         # Get first run count
         with get_session() as session:
-            schema = env_config.get_news_data_schema()
+            schema = get_news_data_schema()
             first_count = session.execute(
                 text(f"SELECT COUNT(*) FROM {schema}.raw_articles")
             ).scalar()

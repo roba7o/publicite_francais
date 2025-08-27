@@ -21,7 +21,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import QueuePool
 from sqlalchemy.sql import column, table
 
-from config.environment import env_config
+from config.environment import DATABASE_CONFIG, DEBUG, TEST_MODE, get_news_data_schema
 from database.models import RawArticle
 from utils.structured_logger import Logger
 
@@ -40,7 +40,7 @@ def initialize_database(
 
     try:
         # builds connection string from config
-        db_config = env_config.get_database_config()
+        db_config = DATABASE_CONFIG
         database_url = (
             f"postgresql://{db_config['user']}:{db_config['password']}"
             f"@{db_config['host']}:{db_config['port']}/{db_config['database']}"
@@ -48,10 +48,10 @@ def initialize_database(
 
         # Allow override of echo for migrations
         if echo is None:
-            echo = env_config.is_debug_mode()
+            echo = DEBUG
 
         # Determine pool parameters based on environment
-        is_test = env_config.is_test_mode()
+        is_test = TEST_MODE
         pool_size = 5 if is_test else 10
         max_overflow = 10 if is_test else 20
 
@@ -223,7 +223,7 @@ def store_raw_article(raw_article: RawArticle) -> bool:
     Returns:
         True if stored successfully, False on error
     """
-    schema_name = env_config.get_news_data_schema()
+    schema_name = get_news_data_schema()
 
     try:
         with get_session() as session:
@@ -271,7 +271,7 @@ def store_raw_article(raw_article: RawArticle) -> bool:
 
             session.execute(stmt)
 
-            if env_config.is_debug_mode():
+            if DEBUG:
                 logger.info("Raw article stored successfully (pure ELT)")
             return True
 
@@ -303,7 +303,7 @@ def store_articles_batch(
     if not articles:
         return 0, 0
 
-    schema_name = env_config.get_news_data_schema()
+    schema_name = get_news_data_schema()
 
     # Memory management: estimate size and chunk if needed
     estimated_size_mb = (
@@ -361,7 +361,7 @@ def store_articles_batch(
             # Execute bulk insert
             session.execute(raw_articles_table.insert(), article_dicts)
 
-            if env_config.is_debug_mode():
+            if DEBUG:
                 logger.info(
                     f"Batch stored {len(articles)} articles successfully (pure ELT)"
                 )

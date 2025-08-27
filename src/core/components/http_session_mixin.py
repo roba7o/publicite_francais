@@ -15,7 +15,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from config.environment import env_config
+from config.environment import FETCH_TIMEOUT
 
 
 class HTTPSessionMixin:
@@ -108,7 +108,7 @@ class HTTPSessionMixin:
             requests.RequestException: On request failure
         """
         if timeout is None:
-            timeout = env_config.get_fetch_timeout()
+            timeout = FETCH_TIMEOUT
 
         session = self.get_session()
 

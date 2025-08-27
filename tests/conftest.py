@@ -186,7 +186,7 @@ def clean_test_database():
     """
     from sqlalchemy import text
 
-    from config.environment import env_config
+    from config.environment import get_news_data_schema
     from database.database import get_session, initialize_database
 
     # Initialize database
@@ -194,7 +194,7 @@ def clean_test_database():
 
     # Clean the test tables
     with get_session() as session:
-        schema = env_config.get_news_data_schema()
+        schema = get_news_data_schema()
         session.execute(text(f"TRUNCATE {schema}.raw_articles CASCADE;"))
         session.commit()
 
@@ -235,15 +235,15 @@ def sample_site_config():
     This provides a realistic test configuration that matches your actual
     configuration format for testing component factory and orchestrator.
     """
-    from config.environment import env_config
+    from config.environment import DEBUG
 
     return {
         "site": "test-site.fr",
         "enabled": True,
         "url_collector_class": "core.components.url_collectors.slate_fr_url_collector.SlateFrUrlCollector",
         "soup_validator_class": "core.components.soup_validators.slate_fr_soup_validator.SlateFrSoupValidator",
-        "url_collector_kwargs": {"debug": env_config.is_debug_mode()},
-        "soup_validator_kwargs": {"debug": env_config.is_debug_mode()},
+        "url_collector_kwargs": {"debug": DEBUG},
+        "soup_validator_kwargs": {"debug": DEBUG},
     }
 
 
@@ -255,9 +255,7 @@ def setup_test_environment(monkeypatch):
     monkeypatch.setenv("DEBUG", "True")
     monkeypatch.setenv("DATABASE_ENV", "test")
 
-    # Refresh environment config to pick up test settings
-    from config.environment import env_config
-    env_config.refresh()
+    # No longer needed - using direct imports
 
     yield
 

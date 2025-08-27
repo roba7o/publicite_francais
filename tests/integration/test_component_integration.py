@@ -192,11 +192,11 @@ class TestEndToEndFlow:
             # Check database storage
             from sqlalchemy import text
 
-            from config.environment import env_config
+            from config.environment import get_news_data_schema
             from database.database import get_session
 
             with get_session() as session:
-                schema = env_config.get_news_data_schema()
+                schema = get_news_data_schema()
                 count = session.execute(
                     text(f"SELECT COUNT(*) FROM {schema}.raw_articles WHERE site = :site"),
                     {"site": test_config["site"]}

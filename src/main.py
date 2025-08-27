@@ -1,6 +1,6 @@
 import sys
 
-from config.environment import env_config
+from config.environment import TEST_MODE
 from config.settings import MIN_SUCCESS_RATE_THRESHOLD
 from config.site_configs import get_site_configs
 from core.orchestrator import ArticleOrchestrator
@@ -19,7 +19,7 @@ def main() -> int | None:
 
     try:
 
-        mode = "TEST" if env_config.is_test_mode() else "LIVE"
+        mode = "TEST" if TEST_MODE else "LIVE"
 
         logger.header(
             "French News Collection",

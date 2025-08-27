@@ -1,6 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from config.environment import env_config, is_test_mode
+from config.environment import TEST_MODE, CONCURRENT_FETCHERS, FETCH_TIMEOUT, DEBUG
 from core.component_factory import ComponentFactory
 from utils.structured_logger import Logger
 
@@ -25,7 +25,7 @@ class ArticleOrchestrator:
             return 0, 0
 
         # Get content based on mode
-        if is_test_mode():
+        if TEST_MODE:
             sites = soup_validator.get_test_sources_from_directory(config["site"])
         else:
             urls = url_collector.get_article_urls()
@@ -37,8 +37,8 @@ class ArticleOrchestrator:
             sites = []
 
             # Concurrent URL fetching
-            max_workers = env_config.get_concurrent_fetchers()
-            fetch_timeout = env_config.get_fetch_timeout()
+            max_workers = CONCURRENT_FETCHERS
+            fetch_timeout = FETCH_TIMEOUT
 
             with ThreadPoolExecutor(max_workers=max_workers) as executor:
                 future_to_url = {
@@ -78,7 +78,7 @@ class ArticleOrchestrator:
 
             processed_count, failed_count = store_articles_batch(articles_batch)
 
-            if env_config.is_debug_mode():
+            if DEBUG:
                 self.logger.info(
                     f"Batch processing results: {processed_count} successful, {failed_count} failed"
                 )
