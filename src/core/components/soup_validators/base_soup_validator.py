@@ -60,7 +60,7 @@ class BaseSoupValidator(EnhancedWebMixin, ABC):
 
         for attempt in range(max_retries):
             try:
-                response = self.get_with_session(url, timeout=15)
+                response = self.make_request(url, timeout=15)
                 time.sleep(self.delay)
                 response.raise_for_status()
 

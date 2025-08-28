@@ -92,6 +92,5 @@ class LadepecheFrSoupValidator(BaseSoupValidator):
             self.logger.error(
                 f"Error validating Ladepeche.fr article structure: {e}",
                 extra_data={"url": url, "site": "ladepeche.fr"},
-                exc_info=True,
             )
             return None

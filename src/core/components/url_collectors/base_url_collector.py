@@ -84,7 +84,7 @@ class BaseUrlCollector(EnhancedWebMixin, ABC):
             requests.RequestException: If request fails
         """
         try:
-            response = self.get_with_session(url, timeout=timeout)
+            response = self.make_request(url, timeout=timeout)
             response.raise_for_status()
             return response
         except requests.exceptions.RequestException as e:

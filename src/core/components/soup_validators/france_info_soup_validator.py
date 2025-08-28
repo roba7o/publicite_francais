@@ -87,6 +87,5 @@ class FranceInfoSoupValidator(BaseSoupValidator):
             self.logger.error(
                 f"Error validating FranceInfo.fr article structure: {e}",
                 extra_data={"url": url, "site": "franceinfo.fr"},
-                exc_info=True,
             )
             return None

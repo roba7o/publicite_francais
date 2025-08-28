@@ -167,7 +167,10 @@ class EnhancedWebMixin(HTTPSessionMixin):
             return links
 
     def get_with_session_enhanced(
-        self, url: str, timeout: int = None, **kwargs
+        self,
+        url: str,
+        timeout: int | None = None,
+        **kwargs,
     ) -> tuple[bytes, str]:
         """
         Enhanced GET request that returns content and canonical URL.
@@ -183,6 +186,9 @@ class EnhancedWebMixin(HTTPSessionMixin):
         Raises:
             requests.RequestException: On request failure
         """
-        response = self.get_with_session(url, timeout=timeout, **kwargs)
+        if timeout is None:
+            response = self.get_with_session(url, **kwargs)
+        else:
+            response = self.get_with_session(url, timeout=timeout, **kwargs)
         canonical_url = self.canonicalize_url(response.url)
         return response.content, canonical_url

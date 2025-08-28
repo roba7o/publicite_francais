@@ -90,7 +90,11 @@ class HTTPSessionMixin:
         }
 
     def make_request(
-        self, url: str, method: str = "GET", timeout: int = None, **kwargs
+        self,
+        url: str,
+        method: str = "GET",
+        timeout: int | None = None,
+        **kwargs,
     ) -> requests.Response:
         """
         Make HTTP request using shared session.
@@ -118,22 +122,6 @@ class HTTPSessionMixin:
             return session.post(url, timeout=timeout, **kwargs)
         else:
             return session.request(method, url, timeout=timeout, **kwargs)
-
-    def get_with_session(
-        self, url: str, timeout: int = None, **kwargs
-    ) -> requests.Response:
-        """
-        Convenience method for GET requests.
-
-        Args:
-            url: URL to get
-            timeout: Request timeout in seconds
-            **kwargs: Additional arguments passed to requests.get
-
-        Returns:
-            requests.Response: HTTP response object
-        """
-        return self.make_request(url, method="GET", timeout=timeout, **kwargs)
 
     @classmethod
     def close_session(cls):
