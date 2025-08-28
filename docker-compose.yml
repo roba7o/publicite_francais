@@ -1,5 +1,4 @@
 services:
-  # PostgreSQL Database - Data Layer
   postgres:
     image: postgres:17-alpine
     container_name: french_news_db
@@ -18,49 +17,5 @@ services:
       timeout: 5s
       retries: 5
 
-  # Python Scraper Application - Processing Layer
-  app:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.app
-    container_name: french_news_scraper
-    restart: unless-stopped
-    environment:
-      - POSTGRES_HOST=postgres
-      - POSTGRES_PORT=${POSTGRES_PORT}
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - DATABASE_ENV=prod
-      - DEBUG=false
-      - OFFLINE=false
-    depends_on:
-      postgres:
-        condition: service_healthy
-    profiles:
-      - scraper
-      - full
-
-  # dbt Transformation - Analytics Layer
-  dbt:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.dbt
-    container_name: french_news_dbt
-    restart: unless-stopped
-    environment:
-      - POSTGRES_HOST=postgres
-      - POSTGRES_PORT=${POSTGRES_PORT}
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-    depends_on:
-      postgres:
-        condition: service_healthy
-    profiles:
-      - dbt
-      - full
-
 volumes:
   postgres_data:
-    driver: local
