@@ -39,20 +39,20 @@ class TestSoupValidatorInterface:
             FranceInfoSoupValidator,
         )
         from core.components.soup_validators.ladepeche_fr_soup_validator import (
-            ladepechefrSoupValidator,
+            LadepecheFrSoupValidator,
         )
         from core.components.soup_validators.slate_fr_soup_validator import (
             SlateFrSoupValidator,
         )
         from core.components.soup_validators.tf1_info_soup_validator import (
-            tf1infoSoupValidator,
+            Tf1InfoSoupValidator,
         )
 
         validators = [
             SlateFrSoupValidator("slate.fr", debug=True),
             FranceInfoSoupValidator("franceinfo.fr", debug=True),
-            tf1infoSoupValidator("tf1info.fr", debug=True),
-            ladepechefrSoupValidator("ladepeche.fr", debug=True),
+            Tf1InfoSoupValidator("tf1info.fr", debug=True),
+            LadepecheFrSoupValidator("ladepeche.fr", debug=True),
         ]
 
         for validator in validators:
@@ -202,8 +202,8 @@ class TestSoupValidatorWithRealHTML:
         validator_mapping = {
             "slate.fr": "core.components.soup_validators.slate_fr_soup_validator.SlateFrSoupValidator",
             "franceinfo.fr": "core.components.soup_validators.france_info_soup_validator.FranceInfoSoupValidator",
-            "tf1info.fr": "core.components.soup_validators.tf1_info_soup_validator.tf1infoSoupValidator",
-            "ladepeche.fr": "core.components.soup_validators.ladepeche_fr_soup_validator.ladepechefrSoupValidator",
+            "tf1info.fr": "core.components.soup_validators.tf1_info_soup_validator.Tf1InfoSoupValidator",
+            "ladepeche.fr": "core.components.soup_validators.ladepeche_fr_soup_validator.LadepecheFrSoupValidator",
         }
 
         # URL mapping for domain validation

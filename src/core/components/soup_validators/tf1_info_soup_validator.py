@@ -14,7 +14,7 @@ from core.components.soup_validators.base_soup_validator import BaseSoupValidato
 from database.models import RawArticle
 
 
-class tf1infoSoupValidator(BaseSoupValidator):
+class Tf1InfoSoupValidator(BaseSoupValidator):
     """
     Pure ELT parser for TF1 Info articles.
     Responsibility: Identify valid TF1 Info articles and store raw HTML.

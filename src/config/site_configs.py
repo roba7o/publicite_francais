@@ -29,7 +29,7 @@ def get_site_configs() -> list[dict]:
             "site": "tf1info.fr",  # News site identifier
             "enabled": True,
             "url_collector_class": "core.components.url_collectors.tf1_info_url_collector.TF1InfoUrlCollector",
-            "soup_validator_class": "core.components.soup_validators.tf1_info_soup_validator.tf1infoSoupValidator",
+            "soup_validator_class": "core.components.soup_validators.tf1_info_soup_validator.Tf1InfoSoupValidator",
             "url_collector_kwargs": {"debug": DEBUG},
             "soup_validator_kwargs": {"debug": DEBUG},
         },
@@ -37,7 +37,7 @@ def get_site_configs() -> list[dict]:
             "site": "ladepeche.fr",  # News site identifier
             "enabled": True,
             "url_collector_class": "core.components.url_collectors.ladepeche_fr_url_collector.LadepecheFrUrlCollector",
-            "soup_validator_class": "core.components.soup_validators.ladepeche_fr_soup_validator.ladepechefrSoupValidator",
+            "soup_validator_class": "core.components.soup_validators.ladepeche_fr_soup_validator.LadepecheFrSoupValidator",
             "url_collector_kwargs": {"debug": DEBUG},
             "soup_validator_kwargs": {"debug": DEBUG},
         },

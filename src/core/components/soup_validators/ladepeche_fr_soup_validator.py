@@ -11,7 +11,7 @@ from core.components.soup_validators.base_soup_validator import BaseSoupValidato
 from database.models import RawArticle
 
 
-class ladepechefrSoupValidator(BaseSoupValidator):
+class LadepecheFrSoupValidator(BaseSoupValidator):
     """
     Pure ELT parser for Ladepeche.fr articles.
     Responsibility: Identify valid Ladepeche.fr articles and store raw HTML.
