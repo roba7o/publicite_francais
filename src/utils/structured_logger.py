@@ -3,6 +3,7 @@ Simple logging for the French article scraper using Rich.
 """
 
 import logging
+from typing import Any
 
 from rich.console import Console
 from rich.panel import Panel
@@ -12,7 +13,7 @@ from rich.table import Table
 class Logger:
     """Simple logger with Rich formatting."""
 
-    def __init__(self, name: str):
+    def __init__(self, name: str) -> None:
         self.name = name
         self.logger = logging.getLogger(name)
         self.console = Console()
@@ -21,35 +22,40 @@ class Logger:
         if not logging.getLogger().handlers:
             logging.basicConfig(level=logging.INFO, format="%(message)s")
 
-    def debug(self, message: str, extra_data: dict = None) -> None:
+    def _log_with_data(
+        self, level: str, message: str, data: dict[str, Any] | None
+    ) -> None:
+        """Internal method to handle logging with optional data."""
+        if data:
+            full_message = f"{message} - Data: {data}"
+        else:
+            full_message = message
+
+        getattr(self.logger, level)(full_message)
+
+    def debug(self, message: str, extra_data: dict[str, Any] | None = None) -> None:
         """Log debug message."""
-        if extra_data:
-            self.logger.debug(f"{message} - Data: {extra_data}")
-        else:
-            self.logger.debug(message)
+        self._log_with_data("debug", message, extra_data)
 
-    def info(self, message: str, extra_data: dict = None) -> None:
+    def info(self, message: str, extra_data: dict[str, Any] | None = None) -> None:
         """Log info message."""
-        if extra_data:
-            self.logger.info(f"{message} - Data: {extra_data}")
-        else:
-            self.logger.info(message)
+        self._log_with_data("info", message, extra_data)
 
-    def warning(self, message: str, extra_data: dict = None) -> None:
+    def warning(self, message: str, extra_data: dict[str, Any] | None = None) -> None:
         """Log warning message."""
         warning_msg = f"[yellow]WARNING: {message}[/yellow]"
         if extra_data:
             warning_msg += f" - Data: {extra_data}"
         self.console.print(warning_msg)
 
-    def error(self, message: str, extra_data: dict = None) -> None:
+    def error(self, message: str, extra_data: dict[str, Any] | None = None) -> None:
         """Log error message."""
         error_msg = f"[red]ERROR: {message}[/red]"
         if extra_data:
             error_msg += f" - Data: {extra_data}"
         self.console.print(error_msg)
 
-    def always(self, message: str, extra_data: dict = None) -> None:
+    def always(self, message: str, extra_data: dict[str, Any] | None = None) -> None:
         """Always show message with colors and icons."""
         # Respect log level for controllability
         if self.logger.level > logging.INFO:
@@ -94,7 +100,7 @@ class Logger:
         )
         self.console.print(panel)
 
-    def header(self, title: str, subtitle: str = None) -> None:
+    def header(self, title: str, subtitle: str | None = None) -> None:
         """Display section header using Rich panel."""
         content = title
         if subtitle:
@@ -102,3 +108,8 @@ class Logger:
 
         panel = Panel(content, style="bold blue", border_style="blue", padding=(1, 2))
         self.console.print(panel)
+
+
+def get_structured_logger(name: str) -> Logger:
+    """Factory function for creating structured loggers."""
+    return Logger(name)
