@@ -11,11 +11,11 @@ from abc import ABC, abstractmethod
 import requests
 
 from config.environment import DEBUG
-from core.components.enhanced_web_mixin import EnhancedWebMixin
+from core.components.web_mixin import WebMixin
 from utils.structured_logger import Logger
 
 
-class BaseUrlCollector(EnhancedWebMixin, ABC):
+class BaseUrlCollector(WebMixin, ABC):
     """
     Abstract base class for news site URL collectors.
 

@@ -18,11 +18,11 @@ import requests
 from bs4 import BeautifulSoup
 
 from config.environment import DEBUG, TEST_MODE
-from core.components.enhanced_web_mixin import EnhancedWebMixin
+from core.components.web_mixin import WebMixin
 from database.models import RawArticle
 
 
-class BaseSoupValidator(EnhancedWebMixin, ABC):
+class BaseSoupValidator(WebMixin, ABC):
     """
     Abstract base soup validator for pure ELT raw data collection.
 

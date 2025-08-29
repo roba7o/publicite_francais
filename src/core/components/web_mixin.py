@@ -1,29 +1,35 @@
 """
-HTTP session management mixin for web scraping components.
+Web processing mixin with lxml fast parsing and tldextract domain validation.
 
-This mixin provides shared HTTP session functionality including:
-- Connection pooling and keep-alive
-- Retry logic with exponential backoff
-- Consistent headers across all web requests
-- Request timeout handling
-- Session lifecycle management
+This mixin extends the HTTPSessionMixin to provide:
+- Fast HTML parsing using lxml (3x speed improvement)
+- Domain validation using tldextract
+- URL canonicalization (handling www, mobile, amp subdomains)
 
-Used by both URL collectors and soup validators to eliminate code duplication.
+Used by URL collectors and soup validators for improved performance and robustness.
 """
 
+from urllib.parse import urlparse
+
 import requests
+import tldextract
+from bs4 import BeautifulSoup
 from requests.adapters import HTTPAdapter
+from tldextract import ExtractResult
 from urllib3.util.retry import Retry
 
 from config.environment import FETCH_TIMEOUT
 
 
-class HTTPSessionMixin:
+class WebMixin:
     """
-    Mixin class providing shared HTTP session management.
+    Web processing mixin with HTTP session management and HTML parsing.
 
-    Provides a shared session with connection pooling, retry logic,
-    and consistent headers for all web scraping components.
+    Provides:
+    - HTTP session management with connection pooling and retry logic
+    - Fast HTML parsing using lxml (3x speed improvement)
+    - Domain validation using tldextract
+    - URL canonicalization (handling www, mobile, amp subdomains)
     """
 
     # Class-level shared session for all web scraping components
@@ -129,3 +135,59 @@ class HTTPSessionMixin:
         if cls._session is not None:
             cls._session.close()
             cls._session = None
+
+    def _extract_domain_parts(self, url: str) -> ExtractResult | None:
+        """Extract domain components with error handling."""
+        try:
+            return tldextract.extract(url)
+        except Exception:
+            return None
+
+    def _build_registered_domain(self, extracted) -> str:
+        """Build registered domain string consistently."""
+        return f"{extracted.domain}.{extracted.suffix}"
+
+    def parse_html_fast(self, content: bytes) -> BeautifulSoup:
+        """Parse HTML content using lxml parser for 3x speed improvement."""
+        return BeautifulSoup(content, "lxml")
+
+    def validate_url_domain(self, url: str, expected_domain: str) -> bool:
+        """checks if url really belongs to expected domain"""
+        url_extracted = self._extract_domain_parts(url)
+        expected_extracted = self._extract_domain_parts(f"https://{expected_domain}")
+
+        if not url_extracted or not expected_extracted:
+            return False
+
+        url_registered = self._build_registered_domain(url_extracted)
+        expected_registered = self._build_registered_domain(expected_extracted)
+
+        return url_registered == expected_registered
+
+    def canonicalize_url(self, url: str) -> str:
+        """
+        Convert URL to canonical form by removing mobile/amp subdomains.
+
+        Converts:
+        - https://m.slate.fr/article -> https://slate.fr/article
+        - https://amp.franceinfo.fr/page -> https://franceinfo.fr/page
+
+        Args:
+            url: URL to canonicalize
+
+        Returns:
+            Canonical URL without mobile/amp subdomains
+        """
+        extracted = self._extract_domain_parts(url)
+        if not extracted:
+            return url
+
+        parsed = urlparse(url)
+
+        # Remove mobile/amp subdomains
+        if extracted.subdomain in ["m", "mobile", "amp", "www"]:
+            canonical_domain = self._build_registered_domain(extracted)
+            return f"{parsed.scheme}://{canonical_domain}{parsed.path}{parsed.query and '?' + parsed.query or ''}"
+
+        return url
+
