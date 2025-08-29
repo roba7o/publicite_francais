@@ -109,15 +109,7 @@ class Tf1InfoSoupValidator(BaseSoupValidator):
         """
         try:
             # Enhanced validation: Check URL domain using tldextract
-            if not self.validate_url_domain(url, "tf1info.fr"):
-                self.logger.warning(
-                    "URL domain validation failed",
-                    extra_data={
-                        "url": url,
-                        "expected_domain": "tf1info.fr",
-                        "site": "tf1info.fr",
-                    },
-                )
+            if not self._validate_domain_and_log(url, "tf1info.fr"):
                 return None
             # Domain-specific validation: TF1 Info uses specific class structure
             # Check for TF1Info title structure

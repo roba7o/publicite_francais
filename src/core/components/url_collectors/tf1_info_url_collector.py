@@ -76,7 +76,7 @@ class TF1InfoUrlCollector(BaseUrlCollector):
                 urls = self._extract_from_html(soup)
 
             # Return unique URLs up to max_articles
-            unique_urls = list(set(urls))[:max_articles]
+            unique_urls = self._deduplicate_urls(urls)[:max_articles]
             self._log_results(unique_urls)
             return unique_urls
 

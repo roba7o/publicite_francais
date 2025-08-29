@@ -48,15 +48,7 @@ class LadepecheFrSoupValidator(BaseSoupValidator):
         """
         try:
             # Enhanced validation: Check URL domain using tldextract
-            if not self.validate_url_domain(url, "ladepeche.fr"):
-                self.logger.warning(
-                    "URL domain validation failed",
-                    extra_data={
-                        "url": url,
-                        "expected_domain": "ladepeche.fr",
-                        "site": "ladepeche.fr",
-                    },
-                )
+            if not self._validate_domain_and_log(url, "ladepeche.fr"):
                 return None
             # Domain-specific validation: Ladepeche.fr uses various content containers
             article_content_area = (
@@ -73,12 +65,7 @@ class LadepecheFrSoupValidator(BaseSoupValidator):
                 return None
 
             # Additional validation: Check for title structure
-            title_tag = soup.find("h1")
-            if not title_tag or not isinstance(title_tag, Tag):
-                self.logger.warning(
-                    "No h1 tag found - possibly not an article page",
-                    extra_data={"url": url, "site": "ladepeche.fr"},
-                )
+            if not self._validate_title_structure(soup, url):
                 return None
 
             # Store raw HTML - let dbt handle all content extraction

@@ -34,12 +34,7 @@ class FranceInfoUrlCollector(BaseUrlCollector):
                         urls.append(url)
 
             # Remove duplicates while preserving order
-            seen = set()
-            unique_urls = []
-            for url in urls:
-                if url not in seen:
-                    seen.add(url)
-                    unique_urls.append(url)
+            unique_urls = self._deduplicate_urls(urls)
 
             self._log_results(unique_urls)
             return unique_urls

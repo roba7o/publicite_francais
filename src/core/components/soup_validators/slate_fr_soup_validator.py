@@ -49,8 +49,7 @@ class SlateFrSoupValidator(BaseSoupValidator):
         """
         try:
             # Enhanced validation: Check URL domain using tldextract
-            if not self.validate_url_domain(url, "slate.fr"):
-                self.logger.warning("URL domain validation failed")
+            if not self._validate_domain_and_log(url, "slate.fr"):
                 return None
             # Domain-specific validation: Slate.fr articles use <article> tag
             article_tag = soup.find("article")
@@ -61,9 +60,7 @@ class SlateFrSoupValidator(BaseSoupValidator):
                 return None
 
             # Additional validation: Check for title structure
-            title_tag = soup.find("h1")
-            if not title_tag or not isinstance(title_tag, Tag):
-                self.logger.warning("No h1 tag found - possibly not an article page")
+            if not self._validate_title_structure(soup, url):
                 return None
 
             # Store raw HTML - let dbt handle all content extraction
