@@ -146,16 +146,3 @@ class BaseSoupValidator(WebMixin, ABC):
         """
         pass
 
-    def store_to_database(self, raw_article: RawArticle) -> bool:
-        """
-        Store raw article using pure ELT approach.
-
-        Args:
-            raw_article: Complete raw HTML article data
-
-        Returns:
-            True if stored successfully, False otherwise
-        """
-        from database.database import store_raw_article
-
-        return store_raw_article(raw_article)

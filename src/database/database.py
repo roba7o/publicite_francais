@@ -85,53 +85,6 @@ def initialize_database(echo: bool | None = None) -> bool:
         return False
 
 
-def log_pool_status() -> None:
-    """Log current database connection pool status for monitoring."""
-    if _engine is None:
-        logger.warning("Cannot log pool status: database not initialized")
-        return
-
-    try:
-        if hasattr(_engine, "pool"):
-            pool = _engine.pool
-            status_data = {}
-            # Safely access pool methods with try/except for type checker
-            try:
-                status_data["pool_size"] = pool.size()  # type: ignore
-            except (AttributeError, Exception):
-                pass
-
-            try:
-                status_data["checked_in"] = pool.checkedin()  # type: ignore
-            except (AttributeError, Exception):
-                pass
-
-            try:
-                status_data["checked_out"] = pool.checkedout()  # type: ignore
-            except (AttributeError, Exception):
-                pass
-
-            try:
-                status_data["overflow"] = pool.overflow()  # type: ignore
-            except (AttributeError, Exception):
-                pass
-
-            try:
-                status_data["invalidated"] = pool.invalidated()  # type: ignore
-            except (AttributeError, Exception):
-                pass
-
-            if status_data:
-                logger.info("Database connection pool status", extra_data=status_data)
-            else:
-                logger.info(
-                    "Database connection pool active (specific metrics unavailable)"
-                )
-        else:
-            logger.warning("Pool status unavailable: engine has no pool attribute")
-    except Exception as e:
-        logger.error(f"Failed to log pool status: {str(e)}")
-
 
 @contextmanager
 def get_session() -> Generator[Session, None, None]:

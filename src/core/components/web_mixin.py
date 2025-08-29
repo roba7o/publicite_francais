@@ -129,12 +129,6 @@ class WebMixin:
         else:
             return session.request(method, url, timeout=timeout, **kwargs)
 
-    @classmethod
-    def close_session(cls):
-        """Close the shared session and cleanup resources."""
-        if cls._session is not None:
-            cls._session.close()
-            cls._session = None
 
     def _extract_domain_parts(self, url: str) -> ExtractResult | None:
         """Extract domain components with error handling."""
@@ -164,30 +158,4 @@ class WebMixin:
 
         return url_registered == expected_registered
 
-    def canonicalize_url(self, url: str) -> str:
-        """
-        Convert URL to canonical form by removing mobile/amp subdomains.
-
-        Converts:
-        - https://m.slate.fr/article -> https://slate.fr/article
-        - https://amp.franceinfo.fr/page -> https://franceinfo.fr/page
-
-        Args:
-            url: URL to canonicalize
-
-        Returns:
-            Canonical URL without mobile/amp subdomains
-        """
-        extracted = self._extract_domain_parts(url)
-        if not extracted:
-            return url
-
-        parsed = urlparse(url)
-
-        # Remove mobile/amp subdomains
-        if extracted.subdomain in ["m", "mobile", "amp", "www"]:
-            canonical_domain = self._build_registered_domain(extracted)
-            return f"{parsed.scheme}://{canonical_domain}{parsed.path}{parsed.query and '?' + parsed.query or ''}"
-
-        return url
 
