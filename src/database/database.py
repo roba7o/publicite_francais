@@ -23,9 +23,9 @@ from sqlalchemy.sql import column, table
 
 from config.environment import DATABASE_CONFIG, DEBUG, TEST_MODE, get_news_data_schema
 from database.models import RawArticle
-from utils.structured_logger import Logger
+from utils.structured_logger import get_logger
 
-logger = Logger(__name__)
+logger = get_logger(__name__)
 
 # Simple module-level session factory and engine
 _SessionLocal = None

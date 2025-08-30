@@ -12,7 +12,7 @@ import requests
 
 from config.environment import DEBUG
 from core.components.web_mixin import WebMixin
-from utils.structured_logger import Logger
+from utils.structured_logger import get_logger
 
 
 class BaseUrlCollector(WebMixin, ABC):
@@ -46,7 +46,7 @@ class BaseUrlCollector(WebMixin, ABC):
         Args:
             debug: Enable debug logging. If None, uses DEBUG from config.
         """
-        self.logger = Logger(self.__class__.__name__)
+        self.logger = get_logger(self.__class__.__name__)
         self.debug = debug if debug is not None else DEBUG
         self.base_url = ""  # Must be set by subclasses
 

@@ -9,8 +9,8 @@ This module contains utility functions and classes for:
 Note: Text processing is now handled by dbt/SQL for better performance.
 """
 
-from .structured_logger import Logger
+from .structured_logger import get_logger
 
 __all__ = [
-    "Logger",
+    "get_logger",
 ]

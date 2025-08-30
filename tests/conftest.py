@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 # Import after path setup
 # ScraperConfig removed - using dictionary configurations
 from core.orchestrator import ArticleOrchestrator
-from utils.structured_logger import Logger
+from utils.structured_logger import get_logger
 
 
 @pytest.fixture(scope="session")
@@ -96,7 +96,7 @@ def article_pipeline():
 @pytest.fixture
 def test_logger():
     """Test logger instance."""
-    return Logger("test_logger")
+    return get_logger("test_logger")
 
 
 @pytest.fixture

@@ -109,9 +109,9 @@ class TestUtilities:
 
     def test_structured_logger_import(self):
         """Test that structured logger can be imported."""
-        from utils.structured_logger import Logger
+        from utils.structured_logger import get_logger
 
-        logger = Logger("test")
+        logger = get_logger("test")
         assert logger is not None
 
     def test_validators_removed(self):

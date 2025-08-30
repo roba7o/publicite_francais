@@ -44,9 +44,9 @@ class BaseSoupValidator(WebMixin, ABC):
             site_name: Human readable source name (e.g., "Slate.fr")
             delay: Request delay in seconds for rate limiting
         """
-        from utils.structured_logger import Logger
+        from utils.structured_logger import get_logger
 
-        self.logger = Logger(self.__class__.__name__)
+        self.logger = get_logger(self.__class__.__name__)
         self.site_domain = site_domain
         self.site_name = site_name
         self.delay = delay

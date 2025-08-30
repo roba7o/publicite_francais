@@ -2,14 +2,14 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from config.environment import TEST_MODE, CONCURRENT_FETCHERS, FETCH_TIMEOUT, DEBUG
 from core.component_factory import ComponentFactory
-from utils.structured_logger import Logger
+from utils.structured_logger import get_logger, visual_summary
 
 
 class ArticleOrchestrator:
     """Simple orchestrator using components for all soup manipulation."""
 
     def __init__(self):
-        self.logger = Logger(__name__)
+        self.logger = get_logger(__name__)
         self.component_factory = ComponentFactory()
 
     def process_site(self, config: dict) -> tuple[int, int]:
@@ -32,7 +32,7 @@ class ArticleOrchestrator:
             if not urls:
                 return 0, 0
 
-            self.logger.always(f"{len(urls[:5])} URLs found for {config['site']}")
+            self.logger.info(f"{len(urls[:5])} URLs found for {config['site']}")
             target_urls = urls[:5]
             sites = []
 
@@ -55,7 +55,7 @@ class ArticleOrchestrator:
                     except Exception:
                         continue
 
-            self.logger.always(
+            self.logger.info(
                 f"{len(sites)}/{len(target_urls)} URLs successfully fetched for {config['site']}"
             )
 
@@ -85,7 +85,7 @@ class ArticleOrchestrator:
         else:
             processed_count = 0
 
-        self.logger.always(
+        self.logger.info(
             f"{processed_count}/{total_attempted} articles successfully processed for {config['site']}"
         )
         return processed_count, total_attempted
@@ -108,10 +108,10 @@ class ArticleOrchestrator:
             (total_processed / total_attempted * 100) if total_attempted > 0 else 0
         )
 
-        self.logger.always(
+        self.logger.info(
             f"Total: {total_processed}/{total_attempted} articles processed ({success_rate:.1f}% success)"
         )
-        self.logger.summary_box(
+        visual_summary(
             "Database Processing Complete",
             total_processed,
             total_attempted,
