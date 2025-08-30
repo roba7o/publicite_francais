@@ -13,11 +13,13 @@ class TestUrlCollectorImports:
     def test_all_url_collectors_importable(self):
         """Test that all configured URL collectors can be imported."""
         from config.site_configs import SCRAPER_CONFIGS
-        from core.component_loader import import_class
+        from core.component_factory import ComponentFactory
 
         for config in SCRAPER_CONFIGS:
             if config.get("enabled", True):
-                url_collector_class = import_class(config["url_collector_class"])
+                url_collector_class = ComponentFactory.import_class(
+                    config["url_collector_class"]
+                )
                 assert url_collector_class is not None, (
                     f"Should import {config['url_collector_class']}"
                 )
@@ -90,12 +92,14 @@ class TestUrlCollectorConfiguration:
     def test_collectors_match_site_configs(self):
         """Test that all collectors referenced in site_configs can be imported."""
         from config.site_configs import SCRAPER_CONFIGS
-        from core.component_loader import import_class
+        from core.component_factory import ComponentFactory
 
         for config in SCRAPER_CONFIGS:
             if config.get("enabled", True):
                 # Test that the URL collector class can be imported
-                url_collector_class = import_class(config["url_collector_class"])
+                url_collector_class = ComponentFactory.import_class(
+                    config["url_collector_class"]
+                )
                 assert url_collector_class is not None
 
                 # Test that it can be instantiated with the config kwargs

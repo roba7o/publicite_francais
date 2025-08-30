@@ -44,13 +44,13 @@ def main() -> int | None:
         # Quality check
         if success_rate < MIN_SUCCESS_RATE_THRESHOLD:
             logger.warning(
-                f"Low success rate ({success_rate:.1f}%) - check logs for issues"
+                f"Low success rate ({success_rate:.1f}%) - check logs for issues (soup componetnts may be dated)"
             )
 
         return 0
 
     except KeyboardInterrupt:
-        logger.warning("Pipeline interrupted by user (Ctrl+C)")
+        logger.warning("Pipeline interrupted by user using: Ctrl+C")
         return 1
 
     except Exception as e:

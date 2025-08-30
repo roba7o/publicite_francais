@@ -15,11 +15,13 @@ class TestSoupValidatorImports:
     def test_all_soup_validators_importable(self):
         """Test that all configured soup validators can be imported."""
         from config.site_configs import SCRAPER_CONFIGS
-        from core.component_loader import import_class
+        from core.component_factory import ComponentFactory
 
         for config in SCRAPER_CONFIGS:
             if config.get("enabled", True):
-                validator_class = import_class(config["soup_validator_class"])
+                validator_class = ComponentFactory.import_class(
+                    config["soup_validator_class"]
+                )
                 assert validator_class is not None, (
                     f"Should import {config['soup_validator_class']}"
                 )
@@ -92,12 +94,14 @@ class TestSoupValidatorConfiguration:
     def test_validators_match_site_configs(self):
         """Test that all validators referenced in site_configs can be imported."""
         from config.site_configs import SCRAPER_CONFIGS
-        from core.component_loader import import_class
+        from core.component_factory import ComponentFactory
 
         for config in SCRAPER_CONFIGS:
             if config.get("enabled", True):
                 # Test that the soup validator class can be imported
-                soup_validator_class = import_class(config["soup_validator_class"])
+                soup_validator_class = ComponentFactory.import_class(
+                    config["soup_validator_class"]
+                )
                 assert soup_validator_class is not None
 
                 # Test that it can be instantiated with the config kwargs
@@ -214,11 +218,11 @@ class TestSoupValidatorWithRealHTML:
             "ladepeche.fr": "https://ladepeche.fr/test-article",
         }
 
-        from core.component_loader import import_class
+        from core.component_factory import ComponentFactory
 
         for source, validator_class_path in validator_mapping.items():
             if source in test_html_files and test_html_files[source]:
-                validator_class = import_class(validator_class_path)
+                validator_class = ComponentFactory.import_class(validator_class_path)
                 validator = validator_class(source, debug=True)
 
                 # Test with first HTML file for this source

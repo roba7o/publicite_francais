@@ -15,17 +15,17 @@ class TestComponentFactory:
 
     def test_component_class_loading(self):
         """Test that the component loader can load classes from class paths."""
-        from core.component_loader import import_class
+        from core.component_factory import ComponentFactory
 
         # Test url collector class loading
-        url_collector_class = import_class(
+        url_collector_class = ComponentFactory.import_class(
             "core.components.url_collectors.slate_fr_url_collector.SlateFrUrlCollector"
         )
         assert url_collector_class is not None
         assert url_collector_class.__name__ == "SlateFrUrlCollector"
 
         # Test soup validator class loading
-        soup_validator_class = import_class(
+        soup_validator_class = ComponentFactory.import_class(
             "core.components.soup_validators.slate_fr_soup_validator.SlateFrSoupValidator"
         )
         assert soup_validator_class is not None
