@@ -14,10 +14,14 @@ console = Console()
 
 
 class RichFormatter(logging.Formatter):
-    """Custom formatter for Rich handler."""
+    """
+    Custom formatter for Rich handler.
+    It inherits the standard logging.Formatter class
+    and overrides the format method to customize log message formatting.
+
+    """
 
     def format(self, record):
-        # Add module context for clarity
         return f"[{record.name}] {record.getMessage()}"
 
 
@@ -43,8 +47,11 @@ def setup_logging():
 
 def get_logger(name: str):
     """Get logger for module with Rich formatting."""
-    setup_logging()
+    setup_logging()  # sets up only once if handlers already exist
     return logging.getLogger(name)
+
+
+# ---- console related visual functions -------
 
 
 def visual_header(title: str, subtitle: str | None = None) -> None:
@@ -90,5 +97,3 @@ def visual_status(message: str, status_type: str = "info") -> None:
 
     style = status_styles.get(status_type, status_styles["info"])
     console.print(style.format(msg=message))
-
-
