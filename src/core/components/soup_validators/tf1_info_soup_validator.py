@@ -117,7 +117,7 @@ class Tf1InfoSoupValidator(BaseSoupValidator):
             if not title_wrapper:
                 self.logger.warning(
                     "No TF1 Info title structure found (.ArticleHeaderTitle__Wrapper h1)",
-                    extra_data={"url": url, "site": "tf1info.fr"},
+                    extra={"url": url, "site": "tf1info.fr"},
                 )
                 return None
 
@@ -126,7 +126,7 @@ class Tf1InfoSoupValidator(BaseSoupValidator):
             if not content_elements:
                 self.logger.warning(
                     "No TF1 Info content structure found (.ArticleChapo__Point)",
-                    extra_data={"url": url, "site": "tf1info.fr"},
+                    extra={"url": url, "site": "tf1info.fr"},
                 )
                 return None
 
@@ -140,6 +140,6 @@ class Tf1InfoSoupValidator(BaseSoupValidator):
         except Exception as e:
             self.logger.error(
                 f"Error validating TF1 Info article structure: {e}",
-                extra_data={"url": url, "site": "tf1info.fr"},
+                extra={"url": url, "site": "tf1info.fr"},
             )
             return None

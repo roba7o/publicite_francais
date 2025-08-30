@@ -33,7 +33,7 @@ class ArticleOrchestrator:
                 return 0, 0
 
             self.logger.info(f"{len(urls[:5])} URLs found for {config['site']}")
-            target_urls = urls[:5]
+            target_urls = urls
             sites = []
 
             # Concurrent URL fetching

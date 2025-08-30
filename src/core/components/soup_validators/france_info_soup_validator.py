@@ -55,7 +55,7 @@ class FranceInfoSoupValidator(BaseSoupValidator):
             if not content_div or not isinstance(content_div, Tag):
                 self.logger.warning(
                     "No c-body div found - not a valid FranceInfo.fr article",
-                    extra_data={"url": url, "site": "franceinfo.fr"},
+                    extra={"url": url, "site": "franceinfo.fr"},
                 )
                 return None
 
@@ -73,6 +73,6 @@ class FranceInfoSoupValidator(BaseSoupValidator):
         except Exception as e:
             self.logger.error(
                 f"Error validating FranceInfo.fr article structure: {e}",
-                extra_data={"url": url, "site": "franceinfo.fr"},
+                extra={"url": url, "site": "franceinfo.fr"},
             )
             return None

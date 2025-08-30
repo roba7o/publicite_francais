@@ -149,18 +149,18 @@ class BaseSoupValidator(WebMixin, ABC):
     def _validate_domain_and_log(self, url: str, expected_domain: str) -> bool:
         """
         Validate URL domain with consistent logging.
-        
+
         Args:
             url: URL to validate
             expected_domain: Expected domain (e.g., "slate.fr")
-            
+
         Returns:
             True if domain is valid, False otherwise
         """
         if not self.validate_url_domain(url, expected_domain):
             self.logger.warning(
                 "URL domain validation failed",
-                extra_data={"url": url, "expected_domain": expected_domain}
+                extra={"url": url, "expected_domain": expected_domain},
             )
             return False
         return True
@@ -168,22 +168,21 @@ class BaseSoupValidator(WebMixin, ABC):
     def _validate_title_structure(self, soup: BeautifulSoup, url: str) -> bool:
         """
         Validate basic article title structure.
-        
+
         Args:
             soup: BeautifulSoup object to validate
             url: URL for logging purposes
-            
+
         Returns:
             True if title structure is valid, False otherwise
         """
         from bs4 import Tag
-        
+
         title_tag = soup.find("h1")
         if not title_tag or not isinstance(title_tag, Tag):
             self.logger.warning(
                 "No h1 tag found - possibly not an article page",
-                extra_data={"url": url, "site": self.site_domain}
+                extra={"url": url, "site": self.site_domain},
             )
             return False
         return True
-

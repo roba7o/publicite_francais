@@ -60,7 +60,7 @@ class LadepecheFrSoupValidator(BaseSoupValidator):
             if not article_content_area or not isinstance(article_content_area, Tag):
                 self.logger.warning(
                     "No article content area found - not a valid Ladepeche.fr article",
-                    extra_data={"url": url, "site": "ladepeche.fr"},
+                    extra={"url": url, "site": "ladepeche.fr"},
                 )
                 return None
 
@@ -78,6 +78,6 @@ class LadepecheFrSoupValidator(BaseSoupValidator):
         except Exception as e:
             self.logger.error(
                 f"Error validating Ladepeche.fr article structure: {e}",
-                extra_data={"url": url, "site": "ladepeche.fr"},
+                extra={"url": url, "site": "ladepeche.fr"},
             )
             return None
