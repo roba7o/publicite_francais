@@ -85,7 +85,7 @@ class TestUrlCollectorConfiguration:
         factory = ComponentFactory()
 
         # Test that factory can create collector from config
-        collector = factory.create_scraper(sample_site_config)
+        collector = factory.create_collector(sample_site_config)
         assert collector is not None
         assert hasattr(collector, "get_article_urls")
 

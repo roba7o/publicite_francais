@@ -23,7 +23,7 @@ class TestComponentFactory:
 
         for config in SCRAPER_CONFIGS:
             if config.get("enabled", True):
-                collector = factory.create_scraper(config)
+                collector = factory.create_collector(config)
                 assert collector is not None, (
                     f"Should create collector for {config['site']}"
                 )
@@ -37,7 +37,7 @@ class TestComponentFactory:
 
         for config in SCRAPER_CONFIGS:
             if config.get("enabled", True):
-                validator = factory.create_parser(config)
+                validator = factory.create_validator(config)
                 assert validator is not None, (
                     f"Should create validator for {config['site']}"
                 )
@@ -57,7 +57,7 @@ class TestComponentFactory:
         }
 
         with pytest.raises(ValueError, match="No url_collector_class specified"):
-            factory.create_scraper(invalid_config)
+            factory.create_collector(invalid_config)
 
         # Test missing soup_validator_class
         invalid_config2 = {
@@ -67,7 +67,7 @@ class TestComponentFactory:
         }
 
         with pytest.raises(ValueError, match="No soup_validator_class specified"):
-            factory.create_parser(invalid_config2)
+            factory.create_validator(invalid_config2)
 
 
 class TestCollectorValidatorIntegration:
@@ -80,8 +80,8 @@ class TestCollectorValidatorIntegration:
         for config in SCRAPER_CONFIGS:
             if config.get("enabled", True):
                 # Both should be creatable
-                collector = factory.create_scraper(config)
-                validator = factory.create_parser(config)
+                collector = factory.create_collector(config)
+                validator = factory.create_validator(config)
 
                 assert collector is not None
                 assert validator is not None
@@ -106,7 +106,7 @@ class TestCollectorValidatorIntegration:
 
         for config in SCRAPER_CONFIGS:
             if config.get("enabled", True) and config["site"] in site_to_test_mapping:
-                validator = factory.create_parser(config)
+                validator = factory.create_validator(config)
                 test_source = site_to_test_mapping[config["site"]]
 
                 if test_source in test_html_files and test_html_files[test_source]:

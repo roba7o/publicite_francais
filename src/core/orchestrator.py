@@ -1,6 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from config.environment import TEST_MODE, CONCURRENT_FETCHERS, FETCH_TIMEOUT, DEBUG
+from config.environment import CONCURRENT_FETCHERS, DEBUG, FETCH_TIMEOUT, TEST_MODE
 from core.component_factory import ComponentFactory
 from utils.structured_logger import get_logger, visual_summary
 
@@ -18,8 +18,8 @@ class ArticleOrchestrator:
             return 0, 0
 
         try:
-            url_collector = self.component_factory.create_scraper(config)
-            soup_validator = self.component_factory.create_parser(config)
+            url_collector = self.component_factory.create_collector(config)
+            soup_validator = self.component_factory.create_validator(config)
         except Exception as e:
             self.logger.error(f"Component initialization failed: {str(e)}")
             return 0, 0

@@ -221,11 +221,11 @@ def mock_article_orchestrator():
     mock_orchestrator.component_factory = Mock()
 
     # Configure factory to return your existing mocks
-    mock_orchestrator.component_factory.create_scraper.return_value = MockScraper(
+    mock_orchestrator.component_factory.create_collector.return_value = MockScraper(
         debug=True
     )
-    mock_orchestrator.component_factory.create_parser.return_value = MockDatabaseParser(
-        "test-source"
+    mock_orchestrator.component_factory.create_validator.return_value = (
+        MockDatabaseParser("test-source")
     )
 
     return mock_orchestrator

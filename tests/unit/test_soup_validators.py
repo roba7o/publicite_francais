@@ -87,7 +87,7 @@ class TestSoupValidatorConfiguration:
         factory = ComponentFactory()
 
         # Test that factory can create validator from config
-        validator = factory.create_parser(sample_site_config)
+        validator = factory.create_validator(sample_site_config)
         assert validator is not None
         assert hasattr(validator, "validate_and_extract")
 

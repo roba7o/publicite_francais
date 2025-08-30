@@ -8,7 +8,7 @@ import importlib
 
 
 class ComponentFactory:
-    """Factory for creating scrapers and parsers from configuration dictionaries."""
+    """Factory for creating collectors and validators from configuration dictionaries."""
 
     # -----helper functions----
 
@@ -45,7 +45,7 @@ class ComponentFactory:
         component_class = ComponentFactory.import_class(class_path)  # get class
         return component_class(*args, **kwargs)  # Calls constructor (__init__)
 
-    def create_scraper(self, config: dict):
+    def create_collector(self, config: dict):
         """Create url collector from configuration."""
         class_path = config.get("url_collector_class")
         if not class_path:
@@ -56,7 +56,7 @@ class ComponentFactory:
         kwargs = config.get("url_collector_kwargs", {})
         return self.create_component(class_path, **kwargs)
 
-    def create_parser(self, config: dict):
+    def create_validator(self, config: dict):
         """Create soup validator from configuration."""
         class_path = config.get("soup_validator_class")
         if not class_path:
