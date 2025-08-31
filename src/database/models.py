@@ -13,6 +13,7 @@ from uuid import uuid4
 
 import trafilatura
 
+# just ensuring public api seeing this only
 __all__ = ["RawArticle"]
 
 
@@ -30,7 +31,7 @@ class RawArticle:
     raw_html: str  # Complete HTML content as text
     site: str  # News site: "slate.fr", "franceinfo.fr"
 
-    # Auto-generated fields
+    # Auto-generated fields -> at instantiaion not model is loaded
     id: str = field(default_factory=lambda: str(uuid4()))
     scraped_at: str = field(default_factory=lambda: datetime.now().isoformat())
 
@@ -48,6 +49,7 @@ class RawArticle:
     keywords: list[str] | None = None
     extraction_status: str = "pending"
 
+    # Post-initialization processing -> assign default values and extract content
     def __post_init__(self) -> None:
         """Validate raw data and extract content using trafilatura."""
         if not self.url or not self.raw_html or not self.site:

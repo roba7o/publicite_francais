@@ -40,12 +40,14 @@ class ArticleOrchestrator:
             max_workers = CONCURRENT_FETCHERS
             fetch_timeout = FETCH_TIMEOUT
 
+            # Submitting all jobs
             with ThreadPoolExecutor(max_workers=max_workers) as executor:
                 future_to_url = {
                     executor.submit(soup_validator.get_soup_from_url, url): url
                     for url in target_urls
                 }
 
+                # Collecting results as they complete
                 for future in as_completed(future_to_url, timeout=fetch_timeout):
                     url = future_to_url[future]
                     try:
@@ -63,7 +65,7 @@ class ArticleOrchestrator:
             return 0, 0
 
         # Collect articles for batch processing
-        articles_batch = []
+        articles_batch = []  # list of RawArticle objects
         total_attempted = len(sites)
 
         for soup, site_identifier in sites:
