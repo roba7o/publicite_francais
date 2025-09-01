@@ -89,7 +89,7 @@ class BaseSoupValidator(WebMixin, ABC):
         """Load test HTML files for offline mode testing."""
         current_file_dir = Path(__file__).parent
         project_root_dir = current_file_dir.parent.parent.parent.parent
-        test_data_dir = project_root_dir / "src" / "test_data" / "raw_url_soup"
+        test_data_dir = project_root_dir / "tests" / "fixtures" / "test_html"
 
         # Map config source names to directory names
         source_dir_mapping = {
@@ -107,7 +107,7 @@ class BaseSoupValidator(WebMixin, ABC):
 
         soup_sources = []
         try:
-            from test_data.url_mapping import URL_MAPPING
+            from utils.url_mapping import URL_MAPPING
 
             for file_path in source_dir.iterdir():
                 if file_path.suffix in (".html", ".php"):

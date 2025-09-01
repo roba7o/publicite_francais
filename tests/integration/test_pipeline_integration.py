@@ -40,9 +40,7 @@ class TestScrapeUploadPipeline:
         """Test that we have the expected number of HTML test files."""
         from pathlib import Path
 
-        test_data_dir = (
-            Path(__file__).parent.parent.parent / "src" / "test_data" / "raw_url_soup"
-        )
+        test_data_dir = Path(__file__).parent.parent / "fixtures" / "test_html"
 
         # Count HTML files by source
         expected_files = {

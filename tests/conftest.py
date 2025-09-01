@@ -26,13 +26,13 @@ from utils.structured_logger import get_logger
 @pytest.fixture(scope="session")
 def test_data_dir():
     """Path to the test data directory."""
-    return os.path.join(os.path.dirname(__file__), "..", "src", "test_data")
+    return os.path.join(os.path.dirname(__file__), "fixtures", "test_html")
 
 
 @pytest.fixture(scope="session")
 def raw_test_files_dir(test_data_dir):
     """Path to the raw HTML test files."""
-    return os.path.join(test_data_dir, "raw_url_soup")
+    return test_data_dir
 
 
 @pytest.fixture
