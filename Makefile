@@ -25,7 +25,7 @@ MAIN_MODULE := main
 .DEFAULT_GOAL := help
 
 # Declare phony targets to avoid conflicts with files/directories
-.PHONY: run run-test-data test test-unit test-integration test-performance help test-essential lint format fix clean db-start db-stop db-clean db-migrate db-migrate-dry db-rebuild db-restart version-check
+.PHONY: run run-test-data lint format fix clean db-start db-stop db-clean db-migrate db-migrate-dry db-rebuild db-restart version-check
 
 # ==================== CORE COMMANDS (Daily Usage) ====================
 
@@ -34,32 +34,6 @@ run:  ## Run scraper locally (live mode)
 
 run-test-data:  ## Run scraper with test data (offline mode)
 	@./scripts/run-test-data.sh
-
-
-test:  ## Run all tests (unit + integration + performance)
-	@./scripts/run-tests.sh
-
-test-unit:  ## Run unit tests only
-	@echo "\033[33m◆ Running unit tests...\033[0m"
-	@TEST_MODE=true PYTHONPATH=$(SRC) $(PYTEST) -v tests/unit/
-	@echo ""
-	@echo "\033[32m✓ Unit tests completed\033[0m"
-
-test-integration:  ## Run integration tests only (starts database automatically)
-	@echo "\033[33m◆ Ensuring database is running for integration tests...\033[0m"
-	@$(MAKE) db-start > /dev/null 2>&1
-	@echo "\033[33m◆ Running integration tests...\033[0m"
-	@TEST_MODE=true PYTHONPATH=$(SRC) $(PYTEST) -v tests/integration/
-	@echo ""
-	@echo "\033[32m✓ Integration tests completed\033[0m"
-
-test-performance:  ## Run performance tests only (starts database automatically)
-	@echo "\033[33m◆ Ensuring database is running for performance tests...\033[0m"
-	@$(MAKE) db-start > /dev/null 2>&1
-	@echo "\033[33m◆ Running performance tests...\033[0m"
-	@TEST_MODE=true PYTHONPATH=$(SRC) $(PYTEST) -v tests/performance/ --tb=short
-	@echo ""
-	@echo "\033[32m✓ Performance tests completed\033[0m"
 
 help:  ## Show available commands
 	@echo ""
@@ -87,11 +61,6 @@ help:  ## Show available commands
 	@echo "  \033[36mfix             \033[0m Auto-format code and run all checks"
 	@echo "  \033[36mclean           \033[0m Remove __pycache__, .pyc files, and test artifacts"
 	@echo ""
-	@echo "\033[33mTesting utilities:\033[0m"
-	@echo "  \033[36mtest-unit       \033[0m Run unit tests only (fast, no database)"
-	@echo "  \033[36mtest-integration\033[0m Run integration tests only (requires database)"
-	@echo "  \033[36mtest-performance\033[0m Run performance tests only (with metrics)"
-	@echo "  \033[36mtest-essential  \033[0m Run essential working tests only"
 	@echo ""
 	@echo "\033[33mDevelopment utilities:\033[0m"
 	@echo "  \033[36mversion-check   \033[0m Compare local vs Docker versions for consistency"
@@ -175,14 +144,6 @@ clean:  ## Remove __pycache__, .pyc files, and test artifacts
 	find . -name ".coverage*" -delete
 	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name "htmlcov" -exec rm -rf {} + 2>/dev/null || true
-
-# Development utilities
-test-essential:  ## Run essential working tests only
-	@echo "\033[33m◆ Running essential system tests...\033[0m"
-	@TEST_MODE=true PYTHONPATH=$(SRC) $(PYTEST) -v tests/unit/test_component_factory.py::TestConfiguration
-	@echo "\033[32m✓ Essential tests completed\033[0m"
-
-
 
 version-check:  ## Compare local vs Docker versions for consistency
 	@echo "\033[36m◆ Environment Version Comparison\033[0m"
