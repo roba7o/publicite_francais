@@ -11,34 +11,42 @@ classes to get database sessions with proper transaction handling.
 """
 
 import time
-from collections.abc import Generator
-from contextlib import contextmanager
+from collections.abc import Generator  # for type hinting
+from contextlib import contextmanager  # for context manager decorator
 
 import sqlalchemy.exc
-from sqlalchemy import create_engine, text
+from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy.pool import QueuePool
-from sqlalchemy.sql import column, table
+from sqlalchemy.orm import (
+    Session,  # type hint for DB sessions
+    sessionmaker,  # factory to create new sessions
+)
+from sqlalchemy.pool import QueuePool  # for optimized connection pooling
+from sqlalchemy.sql import column, table  # for dynamic table references
 
-from config.environment import env_config
+from config.environment import DATABASE_CONFIG, DEBUG, TEST_MODE, get_news_data_schema
 from database.models import RawArticle
-from utils.structured_logger import Logger
+from utils.structured_logger import get_logger
 
-logger = Logger(__name__)
+logger = get_logger(__name__)
 
 # Simple module-level session factory and engine
-_SessionLocal = None
-_engine = None
+_SessionLocal: sessionmaker | None = None
+_engine: Engine | None = None
 
 
-def initialize_database(echo: bool = None) -> bool:
+def initialize_database(echo: bool | None = None) -> bool:
     """Initialize database connection with optimized connection pooling."""
     global _SessionLocal, _engine
 
+    if _engine is not None:
+        if DEBUG:
+            logger.info("Database already initialized, skipping re-initialization")
+        return True  # Already initialized
+
     try:
         # builds connection string from config
-        db_config = env_config.get_database_config()
+        db_config = DATABASE_CONFIG
         database_url = (
             f"postgresql://{db_config['user']}:{db_config['password']}"
             f"@{db_config['host']}:{db_config['port']}/{db_config['database']}"
@@ -46,10 +54,10 @@ def initialize_database(echo: bool = None) -> bool:
 
         # Allow override of echo for migrations
         if echo is None:
-            echo = env_config.is_debug_mode()
+            echo = DEBUG
 
         # Determine pool parameters based on environment
-        is_test = env_config.is_test_mode()
+        is_test = TEST_MODE
         pool_size = 5 if is_test else 10
         max_overflow = 10 if is_test else 20
 
@@ -76,48 +84,13 @@ def initialize_database(echo: bool = None) -> bool:
         with get_session() as session:
             session.execute(text("SELECT 1"))
 
-        logger.info(
-            "Database initialized with connection pooling",
-            extra_data={
-                "pool_size": pool_size,
-                "max_overflow": max_overflow,
-                "pool_timeout": 30,
-                "pool_recycle": 3600,
-            },
-        )
+        logger.info("Database initialized with connection pooling")
 
         return True
 
     except Exception as e:
         logger.error(f"Database initialization failed: {str(e)}")
         return False
-
-
-def log_pool_status() -> None:
-    """Log current database connection pool status for monitoring."""
-    if _engine is None:
-        logger.warning("Cannot log pool status: database not initialized")
-        return
-
-    try:
-        if hasattr(_engine, "pool"):
-            pool = _engine.pool
-            status_data = {
-                "pool_size": pool.size(),
-                "checked_in": pool.checkedin(),
-                "checked_out": pool.checkedout(),
-                "overflow": pool.overflow(),
-            }
-
-            # Add invalidated count if available
-            if hasattr(pool, "invalidated"):
-                status_data["invalidated"] = pool.invalidated()
-
-            logger.info("Database connection pool status", extra_data=status_data)
-        else:
-            logger.warning("Pool status unavailable: engine has no pool attribute")
-    except Exception as e:
-        logger.error(f"Failed to log pool status: {str(e)}")
 
 
 @contextmanager
@@ -166,7 +139,9 @@ def get_session() -> Generator[Session, None, None]:
 
     for attempt in range(max_retries):
         try:
-            session = _SessionLocal()  # fresh session from the session factory
+            session = (
+                _SessionLocal()
+            )  # fresh session from the session factory (calling the factory)
             break
         except sqlalchemy.exc.TimeoutError:
             if attempt == max_retries - 1:
@@ -185,24 +160,13 @@ def get_session() -> Generator[Session, None, None]:
         raise RuntimeError("Failed to create database session")
 
     try:
-        yield session  # hands session to the caller
-        session.commit()  # saves
+        yield session  # hands session to the caller ('with' block)
+        session.commit()  # attempts to commit if no exceptions
     except Exception:
-        session.rollback()  # discards
+        session.rollback()  # discards uncommitted changes on error
         raise
     finally:
-        session.close()  # always closes the session
-
-
-def _execute_operation(operation: str, params: dict = None) -> bool:
-    """Private helper to DRY up database operations."""
-    try:
-        with get_session() as session:
-            session.execute(text(operation), params or {})
-            return True
-    except Exception as e:
-        logger.error(f"Database operation failed: {str(e)}")
-        return False
+        session.close()  # always closes the session (cleanup, returns connection to pool)
 
 
 def store_raw_article(raw_article: RawArticle) -> bool:
@@ -219,7 +183,7 @@ def store_raw_article(raw_article: RawArticle) -> bool:
     Returns:
         True if stored successfully, False on error
     """
-    schema_name = env_config.get_news_data_schema()
+    schema_name = get_news_data_schema()
 
     try:
         with get_session() as session:
@@ -267,7 +231,7 @@ def store_raw_article(raw_article: RawArticle) -> bool:
 
             session.execute(stmt)
 
-            if env_config.is_debug_mode():
+            if DEBUG:
                 logger.info("Raw article stored successfully (pure ELT)")
             return True
 
@@ -278,7 +242,8 @@ def store_raw_article(raw_article: RawArticle) -> bool:
 
 
 def store_articles_batch(
-    articles: list[RawArticle], max_memory_mb: int = 100
+    articles: list[RawArticle],
+    max_memory_mb: int = 100,
 ) -> tuple[int, int]:
     """
     Store multiple articles in optimized batches using SQLAlchemy bulk operations.
@@ -299,13 +264,17 @@ def store_articles_batch(
     if not articles:
         return 0, 0
 
-    schema_name = env_config.get_news_data_schema()
+    schema_name = get_news_data_schema()
 
-    # Memory management: estimate size and chunk if needed
+    # Memory management: estimate size and chunk if needed for this batch
     estimated_size_mb = (
         sum(len(article.raw_html or "") for article in articles) / 1024 / 1024
     )
 
+    """
+    Recursively process in smaller chunks if estimated size exceeds max_memory_mb.
+    If we end up with a chunk size of 1 [RawArticle], we fall back to individual inserts.
+    """
     if estimated_size_mb > max_memory_mb and len(articles) > 1:
         # Process in chunks to manage memory
         chunk_size = max(1, int(len(articles) * max_memory_mb / estimated_size_mb))
@@ -355,9 +324,12 @@ def store_articles_batch(
             )
 
             # Execute bulk insert
+            """
+            SQL: INSERT INTO schema.raw_articles (columns...) VALUES (...), (...), ...
+            """
             session.execute(raw_articles_table.insert(), article_dicts)
 
-            if env_config.is_debug_mode():
+            if DEBUG:
                 logger.info(
                     f"Batch stored {len(articles)} articles successfully (pure ELT)"
                 )

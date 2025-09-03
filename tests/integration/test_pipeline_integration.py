@@ -10,7 +10,7 @@ import os
 
 import pytest
 
-from config.environment import env_config
+from config.environment import get_news_data_schema
 from config.site_configs import SCRAPER_CONFIGS
 from core.orchestrator import ArticleOrchestrator
 
@@ -24,8 +24,7 @@ class TestScrapeUploadPipeline:
         os.environ["DATABASE_ENV"] = "test"
         os.environ["TEST_MODE"] = "true"
 
-        # Refresh environment config to pick up test settings
-        env_config.refresh()
+        # No longer needed - using direct imports
 
         # Initialize database for tests
         from database.database import initialize_database
@@ -35,16 +34,13 @@ class TestScrapeUploadPipeline:
     def _get_test_schema(self) -> str:
         """Get current schema name dynamically for tests."""
         # Should be test schema since we set DATABASE_ENV=test in setup_database
-        return env_config.get('NEWS_DATA_TEST_SCHEMA')
-
+        return get_news_data_schema()
 
     def test_html_file_counts(self):
         """Test that we have the expected number of HTML test files."""
         from pathlib import Path
 
-        test_data_dir = (
-            Path(__file__).parent.parent.parent / "src" / "test_data" / "raw_url_soup"
-        )
+        test_data_dir = Path(__file__).parent.parent / "fixtures" / "test_html"
 
         # Count HTML files by source
         expected_files = {
@@ -119,7 +115,6 @@ class TestScrapeUploadPipeline:
                 f"Database has {raw_article_count} raw articles but processor reported {processed_count}"
             )
 
-
     def test_source_distribution(self):
         """Test that articles are distributed correctly across sources."""
         from database.database import get_session
@@ -143,7 +138,12 @@ class TestScrapeUploadPipeline:
 
             # Each source should contribute articles (exact counts may vary based on HTML quality)
             # All sources should be working in offline mode
-            expected_sources = ["slate.fr", "tf1info.fr", "ladepeche.fr", "franceinfo.fr"]  # All 4 sources working in test mode
+            expected_sources = [
+                "slate.fr",
+                "tf1info.fr",
+                "ladepeche.fr",
+                "franceinfo.fr",
+            ]  # All 4 sources working in test mode
 
             for source in expected_sources:
                 assert source in source_dict, f"Source '{source}' not found in database"
@@ -162,4 +162,3 @@ class TestScrapeUploadPipeline:
                     assert source_dict[source] == 4, (
                         f"Expected 4 {source} articles, got {source_dict[source]}"
                     )
-

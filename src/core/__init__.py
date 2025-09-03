@@ -1,13 +1,13 @@
 """
-Database module for French news scraper.
+Core module for French news scraper.
 
-Provides database connectivity infrastructure without modifying existing
-scraper logic.
+Provides orchestration and component management for the scraping pipeline.
 """
 
-from database.database import get_session, initialize_database
+from .component_factory import ComponentFactory
+from .orchestrator import ArticleOrchestrator
 
 __all__ = [
-    "initialize_database",
-    "get_session",
+    "ComponentFactory",
+    "ArticleOrchestrator",
 ]

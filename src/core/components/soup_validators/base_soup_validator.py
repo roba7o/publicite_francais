@@ -17,12 +17,12 @@ from pathlib import Path
 import requests
 from bs4 import BeautifulSoup
 
-from config.environment import env_config, is_test_mode
-from core.components.enhanced_web_mixin import EnhancedWebMixin
+from config.environment import DEBUG, TEST_MODE
+from core.components.web_mixin import WebMixin
 from database.models import RawArticle
 
 
-class BaseSoupValidator(EnhancedWebMixin, ABC):
+class BaseSoupValidator(WebMixin, ABC):
     """
     Abstract base soup validator for pure ELT raw data collection.
 
@@ -44,34 +44,38 @@ class BaseSoupValidator(EnhancedWebMixin, ABC):
             site_name: Human readable source name (e.g., "Slate.fr")
             delay: Request delay in seconds for rate limiting
         """
-        from utils.structured_logger import Logger
+        from utils.structured_logger import get_logger
 
-        self.logger = Logger(self.__class__.__name__)
+        self.logger = get_logger(self.__class__.__name__)
         self.site_domain = site_domain
         self.site_name = site_name
         self.delay = delay
-        self.debug = env_config.is_debug_mode()
+        self.debug = DEBUG
 
     def get_soup_from_url(self, url: str, max_retries: int = 3) -> BeautifulSoup | None:
         """Fetch and parse HTML from URL with retry logic."""
-        if is_test_mode():
+        if TEST_MODE:
             self.logger.warning("URL fetch attempted in offline mode")
             return None
 
         for attempt in range(max_retries):
             try:
-                response = self.get_with_session(url, timeout=15)
+                response = self.make_request(url, timeout=15)
                 time.sleep(self.delay)
                 response.raise_for_status()
 
                 if len(response.content) < 100:
-                    self.logger.warning(f"Response content too short: {len(response.content)} bytes")
+                    self.logger.warning(
+                        f"Response content too short: {len(response.content)} bytes"
+                    )
                     continue
 
                 return self.parse_html_fast(response.content)
 
             except requests.exceptions.RequestException as e:
-                self.logger.warning(f"URL fetch failed (attempt {attempt + 1}): {str(e)}")
+                self.logger.warning(
+                    f"URL fetch failed (attempt {attempt + 1}): {str(e)}"
+                )
 
             if attempt < max_retries - 1:
                 time.sleep(1 + attempt)
@@ -85,7 +89,7 @@ class BaseSoupValidator(EnhancedWebMixin, ABC):
         """Load test HTML files for offline mode testing."""
         current_file_dir = Path(__file__).parent
         project_root_dir = current_file_dir.parent.parent.parent.parent
-        test_data_dir = project_root_dir / "src" / "test_data" / "raw_url_soup"
+        test_data_dir = project_root_dir / "tests" / "fixtures" / "test_html"
 
         # Map config source names to directory names
         source_dir_mapping = {
@@ -103,7 +107,7 @@ class BaseSoupValidator(EnhancedWebMixin, ABC):
 
         soup_sources = []
         try:
-            from test_data.url_mapping import URL_MAPPING
+            from utils.url_mapping import URL_MAPPING
 
             for file_path in source_dir.iterdir():
                 if file_path.suffix in (".html", ".php"):
@@ -111,7 +115,7 @@ class BaseSoupValidator(EnhancedWebMixin, ABC):
                     original_url = URL_MAPPING.get(filename, f"test://{filename}")
 
                     with open(file_path, encoding="utf-8") as f:
-                        soup = self.parse_html_fast(f.read().encode('utf-8'))
+                        soup = self.parse_html_fast(f.read().encode("utf-8"))
                         soup_sources.append((soup, original_url))
 
         except Exception as e:
@@ -142,16 +146,43 @@ class BaseSoupValidator(EnhancedWebMixin, ABC):
         """
         pass
 
-    def store_to_database(self, raw_article: RawArticle) -> bool:
+    def _validate_domain_and_log(self, url: str, expected_domain: str) -> bool:
         """
-        Store raw article using pure ELT approach.
+        Validate URL domain with consistent logging.
 
         Args:
-            raw_article: Complete raw HTML article data
+            url: URL to validate
+            expected_domain: Expected domain (e.g., "slate.fr")
 
         Returns:
-            True if stored successfully, False otherwise
+            True if domain is valid, False otherwise
         """
-        from database.database import store_raw_article
+        if not self.validate_url_domain(url, expected_domain):
+            self.logger.warning(
+                "URL domain validation failed",
+                extra={"url": url, "expected_domain": expected_domain},
+            )
+            return False
+        return True
 
-        return store_raw_article(raw_article)
+    def _validate_title_structure(self, soup: BeautifulSoup, url: str) -> bool:
+        """
+        Validate basic article title structure.
+
+        Args:
+            soup: BeautifulSoup object to validate
+            url: URL for logging purposes
+
+        Returns:
+            True if title structure is valid, False otherwise
+        """
+        from bs4 import Tag
+
+        title_tag = soup.find("h1")
+        if not title_tag or not isinstance(title_tag, Tag):
+            self.logger.warning(
+                "No h1 tag found - possibly not an article page",
+                extra={"url": url, "site": self.site_domain},
+            )
+            return False
+        return True

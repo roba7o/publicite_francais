@@ -28,7 +28,7 @@ from database.database import (  # noqa: E402
     get_session,
     initialize_database,
 )
-from utils.structured_logger import Logger  # noqa: E402
+from utils.structured_logger import get_logger  # noqa: E402
 
 
 def test_basic_connection():
@@ -230,7 +230,7 @@ def test_health_check():
 
 def main():
     """Run all database connection tests."""
-    logger = Logger("DatabaseConnectionTest")
+    logger = get_logger("DatabaseConnectionTest")
 
     print("\033[36m▲ French News Scraper - Database Connection Test\033[0m")
     print("\033[36m" + "=" * 50 + "\033[0m")
@@ -282,7 +282,7 @@ def main():
         print("\033[34m▲ Database is ready for your future refactor steps.\033[0m")
         logger.info(
             "Database connection tests completed successfully",
-            extra_data={
+            extra={
                 "tests_passed": passed,
                 "total_tests": len(test_results),
                 "success_rate": f"{passed / len(test_results) * 100:.1f}%",
@@ -296,7 +296,7 @@ def main():
         print("\033[35m◆ Try: docker compose up -d postgres\033[0m")
         logger.error(
             "Database connection tests failed",
-            extra_data={
+            extra={
                 "tests_passed": passed,
                 "total_tests": len(test_results),
                 "failed_tests": [name for name, result in test_results if not result],

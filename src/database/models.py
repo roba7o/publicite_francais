@@ -9,11 +9,11 @@ ELT = Extract, Load, Transform
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any
 from uuid import uuid4
 
 import trafilatura
 
+# just ensuring public api seeing this only
 __all__ = ["RawArticle"]
 
 
@@ -31,7 +31,7 @@ class RawArticle:
     raw_html: str  # Complete HTML content as text
     site: str  # News site: "slate.fr", "franceinfo.fr"
 
-    # Auto-generated fields
+    # Auto-generated fields -> at instantiaion not model is loaded
     id: str = field(default_factory=lambda: str(uuid4()))
     scraped_at: str = field(default_factory=lambda: datetime.now().isoformat())
 
@@ -49,6 +49,7 @@ class RawArticle:
     keywords: list[str] | None = None
     extraction_status: str = "pending"
 
+    # Post-initialization processing -> assign default values and extract content
     def __post_init__(self) -> None:
         """Validate raw data and extract content using trafilatura."""
         if not self.url or not self.raw_html or not self.site:
@@ -77,9 +78,9 @@ class RawArticle:
                 self.language = metadata.language
 
                 # Handle categories/tags as keywords
-                if hasattr(metadata, 'categories') and metadata.categories:
+                if hasattr(metadata, "categories") and metadata.categories:
                     self.keywords = metadata.categories
-                elif hasattr(metadata, 'tags') and metadata.tags:
+                elif hasattr(metadata, "tags") and metadata.tags:
                     self.keywords = metadata.tags
 
             # Mark as successful if we got at least some content
@@ -92,7 +93,7 @@ class RawArticle:
             # Don't break the pipeline on extraction failures
             self.extraction_status = "failed"
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self):
         """Convert to dictionary for database storage."""
         return {
             "id": self.id,

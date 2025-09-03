@@ -20,19 +20,19 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 # Import after path setup
 # ScraperConfig removed - using dictionary configurations
 from core.orchestrator import ArticleOrchestrator
-from utils.structured_logger import Logger
+from utils.structured_logger import get_logger
 
 
 @pytest.fixture(scope="session")
 def test_data_dir():
     """Path to the test data directory."""
-    return os.path.join(os.path.dirname(__file__), "..", "src", "test_data")
+    return os.path.join(os.path.dirname(__file__), "fixtures", "test_html")
 
 
 @pytest.fixture(scope="session")
 def raw_test_files_dir(test_data_dir):
     """Path to the raw HTML test files."""
-    return os.path.join(test_data_dir, "raw_url_soup")
+    return test_data_dir
 
 
 @pytest.fixture
@@ -96,7 +96,7 @@ def article_pipeline():
 @pytest.fixture
 def test_logger():
     """Test logger instance."""
-    return Logger("test_logger")
+    return get_logger("test_logger")
 
 
 @pytest.fixture
@@ -130,7 +130,7 @@ def test_html_files(raw_test_files_dir):
         "Slate.fr": "slate.fr",
         "FranceInfo.fr": "franceinfo.fr",
         "TF1 Info": "tf1info.fr",
-        "Depeche.fr": "ladepeche.fr"
+        "Depeche.fr": "ladepeche.fr",
     }
 
     for actual_dir, source_name in source_mapping.items():
@@ -186,7 +186,7 @@ def clean_test_database():
     """
     from sqlalchemy import text
 
-    from config.environment import env_config
+    from config.environment import get_news_data_schema
     from database.database import get_session, initialize_database
 
     # Initialize database
@@ -194,7 +194,7 @@ def clean_test_database():
 
     # Clean the test tables
     with get_session() as session:
-        schema = env_config.get_news_data_schema()
+        schema = get_news_data_schema()
         session.execute(text(f"TRUNCATE {schema}.raw_articles CASCADE;"))
         session.commit()
 
@@ -221,8 +221,12 @@ def mock_article_orchestrator():
     mock_orchestrator.component_factory = Mock()
 
     # Configure factory to return your existing mocks
-    mock_orchestrator.component_factory.create_scraper.return_value = MockScraper(debug=True)
-    mock_orchestrator.component_factory.create_parser.return_value = MockDatabaseParser("test-source")
+    mock_orchestrator.component_factory.create_collector.return_value = MockScraper(
+        debug=True
+    )
+    mock_orchestrator.component_factory.create_validator.return_value = (
+        MockDatabaseParser("test-source")
+    )
 
     return mock_orchestrator
 
@@ -235,15 +239,15 @@ def sample_site_config():
     This provides a realistic test configuration that matches your actual
     configuration format for testing component factory and orchestrator.
     """
-    from config.environment import env_config
+    from config.environment import DEBUG
 
     return {
         "site": "test-site.fr",
         "enabled": True,
         "url_collector_class": "core.components.url_collectors.slate_fr_url_collector.SlateFrUrlCollector",
         "soup_validator_class": "core.components.soup_validators.slate_fr_soup_validator.SlateFrSoupValidator",
-        "url_collector_kwargs": {"debug": env_config.is_debug_mode()},
-        "soup_validator_kwargs": {"debug": env_config.is_debug_mode()},
+        "url_collector_kwargs": {"debug": DEBUG},
+        "soup_validator_kwargs": {"debug": DEBUG},
     }
 
 
@@ -255,9 +259,7 @@ def setup_test_environment(monkeypatch):
     monkeypatch.setenv("DEBUG", "True")
     monkeypatch.setenv("DATABASE_ENV", "test")
 
-    # Refresh environment config to pick up test settings
-    from config.environment import env_config
-    env_config.refresh()
+    # No longer needed - using direct imports
 
     yield
 

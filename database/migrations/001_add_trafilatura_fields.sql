@@ -1,34 +1,40 @@
--- Migration: Add trafilatura extraction fields
--- Created: 2025-08-21
--- Description: Adds columns for storing trafilatura-extracted content
+-- Add trafilatura extraction fields to raw_articles table
+-- These fields store extracted content from raw HTML
 
--- Add trafilatura fields to existing raw_articles tables
-DO $$
-DECLARE
-    schema_name text;
-BEGIN
-    FOR schema_name IN VALUES ('news_data_dev'), ('news_data_test'), ('news_data_prod')
-    LOOP
-        -- Check if columns already exist before adding
-        IF NOT EXISTS (
-            SELECT 1 FROM information_schema.columns 
-            WHERE table_schema = schema_name 
-            AND table_name = 'raw_articles' 
-            AND column_name = 'extracted_text'
-        ) THEN
-            -- Add each column separately (PostgreSQL requires separate ADD COLUMN statements)
-            EXECUTE format('ALTER TABLE %I.raw_articles ADD COLUMN extracted_text TEXT', schema_name);
-            EXECUTE format('ALTER TABLE %I.raw_articles ADD COLUMN title TEXT', schema_name);
-            EXECUTE format('ALTER TABLE %I.raw_articles ADD COLUMN author TEXT', schema_name);
-            EXECUTE format('ALTER TABLE %I.raw_articles ADD COLUMN date_published TEXT', schema_name);
-            EXECUTE format('ALTER TABLE %I.raw_articles ADD COLUMN language TEXT', schema_name);
-            EXECUTE format('ALTER TABLE %I.raw_articles ADD COLUMN summary TEXT', schema_name);
-            EXECUTE format('ALTER TABLE %I.raw_articles ADD COLUMN keywords TEXT[]', schema_name);
-            EXECUTE format('ALTER TABLE %I.raw_articles ADD COLUMN extraction_status TEXT DEFAULT ''pending''', schema_name);
-            
-            RAISE NOTICE 'Added trafilatura columns to %.raw_articles', schema_name;
-        ELSE
-            RAISE NOTICE 'Trafilatura columns already exist in %.raw_articles', schema_name;
-        END IF;
-    END LOOP;
-END $$;
+-- Add trafilatura fields to dev schema
+ALTER TABLE news_data_dev.raw_articles 
+ADD COLUMN IF NOT EXISTS extracted_text TEXT,
+ADD COLUMN IF NOT EXISTS title TEXT,
+ADD COLUMN IF NOT EXISTS author TEXT,
+ADD COLUMN IF NOT EXISTS date_published TEXT,
+ADD COLUMN IF NOT EXISTS language TEXT,
+ADD COLUMN IF NOT EXISTS summary TEXT,
+ADD COLUMN IF NOT EXISTS keywords TEXT[],
+ADD COLUMN IF NOT EXISTS extraction_status TEXT DEFAULT 'pending';
+
+-- Add trafilatura fields to test schema
+ALTER TABLE news_data_test.raw_articles 
+ADD COLUMN IF NOT EXISTS extracted_text TEXT,
+ADD COLUMN IF NOT EXISTS title TEXT,
+ADD COLUMN IF NOT EXISTS author TEXT,
+ADD COLUMN IF NOT EXISTS date_published TEXT,
+ADD COLUMN IF NOT EXISTS language TEXT,
+ADD COLUMN IF NOT EXISTS summary TEXT,
+ADD COLUMN IF NOT EXISTS keywords TEXT[],
+ADD COLUMN IF NOT EXISTS extraction_status TEXT DEFAULT 'pending';
+
+-- Add trafilatura fields to prod schema
+ALTER TABLE news_data_prod.raw_articles 
+ADD COLUMN IF NOT EXISTS extracted_text TEXT,
+ADD COLUMN IF NOT EXISTS title TEXT,
+ADD COLUMN IF NOT EXISTS author TEXT,
+ADD COLUMN IF NOT EXISTS date_published TEXT,
+ADD COLUMN IF NOT EXISTS language TEXT,
+ADD COLUMN IF NOT EXISTS summary TEXT,
+ADD COLUMN IF NOT EXISTS keywords TEXT[],
+ADD COLUMN IF NOT EXISTS extraction_status TEXT DEFAULT 'pending';
+
+-- Create index on extraction status for filtering
+CREATE INDEX IF NOT EXISTS idx_dev_raw_articles_extraction_status ON news_data_dev.raw_articles(extraction_status);
+CREATE INDEX IF NOT EXISTS idx_test_raw_articles_extraction_status ON news_data_test.raw_articles(extraction_status);
+CREATE INDEX IF NOT EXISTS idx_prod_raw_articles_extraction_status ON news_data_prod.raw_articles(extraction_status);

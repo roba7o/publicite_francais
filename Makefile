@@ -25,7 +25,7 @@ MAIN_MODULE := main
 .DEFAULT_GOAL := help
 
 # Declare phony targets to avoid conflicts with files/directories
-.PHONY: run run-test-data test test-unit test-integration test-performance help test-essential lint format fix clean db-start db-stop db-clean db-migrate db-migrate-dry db-rollback version-check
+.PHONY: run run-test-data test test-unit test-integration test-performance help test-essential lint format fix clean db-start db-stop db-clean db-migrate db-migrate-dry db-rebuild db-restart version-check
 
 # ==================== CORE COMMANDS (Daily Usage) ====================
 
@@ -33,29 +33,11 @@ run:  ## Run scraper locally (live mode)
 	TEST_MODE=false PYTHONPATH=$(SRC) $(PYTHON) -m $(MAIN_MODULE)
 
 run-test-data:  ## Run scraper with test data (offline mode)
-	@echo "\033[33m◆ Starting database for test data run...\033[0m"
-	@$(MAKE) db-start > /dev/null 2>&1
-	@echo "\033[33m◆ Running scraper with test data...\033[0m"
-	@TEST_MODE=true PYTHONPATH=$(SRC) $(PYTHON) -m $(MAIN_MODULE)
-	@echo ""
-	@echo "\033[32m✓ Test data processing complete\033[0m"
-	@echo "\033[36m▶ Connect to DBeaver to analyze results\033[0m"
+	@./scripts/run-test-data.sh
 
 
 test:  ## Run all tests (unit + integration + performance)
-	@echo "\033[33m◆ Ensuring database is running for tests...\033[0m"
-	@$(MAKE) db-start > /dev/null 2>&1
-	@echo "\033[33m◆ Running complete test suite...\033[0m"
-	@TEST_MODE=true PYTHONPATH=$(SRC) $(PYTEST) -v
-	@echo ""
-	@echo "\033[32m╔════════════════════════════════════════╗"
-	@echo "║          TEST SUITE SUMMARY           ║"
-	@echo "╚════════════════════════════════════════╝\033[0m"
-	@echo "\033[32m✓ Unit Tests: PASSED\033[0m"
-	@echo "\033[32m✓ Integration Tests: PASSED\033[0m"
-	@echo "\033[32m✓ Performance Tests: PASSED\033[0m"
-	@echo ""
-	@echo "\033[36m▶ ALL TESTS PASSED - COMPLETE COVERAGE\033[0m"
+	@./scripts/run-tests.sh
 
 test-unit:  ## Run unit tests only
 	@echo "\033[33m◆ Running unit tests...\033[0m"
@@ -95,7 +77,9 @@ help:  ## Show available commands
 	@echo "  \033[36mdb-clean       \033[0m Stop and remove all containers and volumes"
 	@echo "  \033[36mdb-migrate     \033[0m Run pending database migrations"
 	@echo "  \033[36mdb-migrate-dry \033[0m Show what migrations would run (dry run)"
-	@echo "  \033[36mdb-rollback    \033[0m Rollback to migration (usage: make db-rollback TARGET=001)"
+	@echo "  \033[36mdb-rebuild     \033[0m Drop all tables and rebuild from scratch (DESTRUCTIVE!)"
+	@echo "  \033[36mdb-restart     \033[0m Clean database and apply all migrations (DESTRUCTIVE!)"
+	@echo ""
 	@echo ""
 	@echo "\033[33mCode quality utilities:\033[0m"
 	@echo "  \033[36mlint            \033[0m Run ruff linting"
@@ -133,6 +117,7 @@ db-clean:  ## Stop and remove all containers and volumes (DESTRUCTIVE!)
 		exit 1; \
 	fi
 	@echo "\033[31m⚠ WARNING: This will destroy ALL data and containers!\033[0m"
+	@read -p "Are you sure? (y/N): " confirm && [ "$$confirm" = "y" ] || exit 1
 	@echo "\033[33m◆ Stopping and removing containers...\033[0m"
 	docker compose down -v
 	docker compose rm -f
@@ -144,18 +129,31 @@ db-migrate:  ## Run pending database migrations
 	@echo "\033[32m✓ Migrations complete!\033[0m"
 
 db-migrate-dry:  ## Show what migrations would run (dry run)
-	@echo "\033[34m◆ Checking pending migrations (dry run)...\033[0m"
-	@$(MAKE) db-start > /dev/null 2>&1
-	@PYTHONPATH=$(SRC) $(PYTHON) database/migrations/run_migrations.py --dry-run
+	@./scripts/check-migrations.sh
 
-db-rollback:  ## Rollback to specific migration (usage: make db-rollback TARGET=001)
-	@if [ -z "$(TARGET)" ]; then \
-		echo "\033[31m✗ TARGET required. Usage: make db-rollback TARGET=001\033[0m"; \
+db-rebuild:  ## Drop all tables and rebuild from scratch (DESTRUCTIVE!)
+	@if [ "$(PRODUCTION)" = "true" ]; then \
+		echo "\033[31m✗ BLOCKED: db-rebuild disabled in production mode\033[0m"; \
 		exit 1; \
 	fi
-	@echo "\033[31m◆ Rolling back to migration $(TARGET)...\033[0m"
-	@$(MAKE) db-start > /dev/null 2>&1
-	@PYTHONPATH=$(SRC) $(PYTHON) database/migrations/run_migrations.py --rollback $(TARGET)
+	@echo "\033[31m⚠ WARNING: This will destroy ALL data and rebuild from scratch!\033[0m"
+	@read -p "Are you sure? (y/N): " confirm && [ "$$confirm" = "y" ] || exit 1
+	@./scripts/rebuild-db.sh
+
+db-restart:  ## Clean database and apply all migrations (DESTRUCTIVE!)
+	@if [ "$(PRODUCTION)" = "true" ]; then \
+		echo "\033[31m✗ BLOCKED: db-restart disabled in production mode\033[0m"; \
+		exit 1; \
+	fi
+	@echo "\033[31m⚠ WARNING: This will destroy ALL data and restart fresh!\033[0m"
+	@read -p "Are you sure? (y/N): " confirm && [ "$$confirm" = "y" ] || exit 1
+	@echo "\033[34m◆ Restarting database from scratch...\033[0m"
+	@echo "\033[33m◆ Stopping and removing containers...\033[0m"
+	@docker compose down -v
+	@docker compose rm -f
+	@$(MAKE) db-migrate
+	@echo "\033[32m✓ Database restart complete!\033[0m"
+
 
 
 # Code quality utilities
@@ -168,7 +166,6 @@ format:  ## Auto-format code with ruff
 fix:  ## Auto-format code and run all checks
 	@echo "\033[36m▶ Running ruff format and linting with fixes...\033[0m"
 	$(RUFF) check --fix $(SRC) tests
-	@echo "\033[33m▶ Skipping mypy (learning project - type hints not enforced)...\033[0m"
 	@echo "\033[32m✓ Code quality checks passed!\033[0m"
 
 clean:  ## Remove __pycache__, .pyc files, and test artifacts
@@ -178,7 +175,6 @@ clean:  ## Remove __pycache__, .pyc files, and test artifacts
 	find . -name ".coverage*" -delete
 	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name "htmlcov" -exec rm -rf {} + 2>/dev/null || true
-	find . -type d -name ".mypy_cache" -exec rm -rf {} + 2>/dev/null || true
 
 # Development utilities
 test-essential:  ## Run essential working tests only

@@ -1,11 +1,11 @@
 import sys
 
-from config.environment import env_config
+from config.environment import TEST_MODE
 from config.settings import MIN_SUCCESS_RATE_THRESHOLD
 from config.site_configs import get_site_configs
 from core.orchestrator import ArticleOrchestrator
 from database.database import initialize_database
-from utils.structured_logger import Logger
+from utils.structured_logger import get_logger, visual_header
 
 
 def main() -> int | None:
@@ -15,16 +15,12 @@ def main() -> int | None:
     Returns:
         Optional[int]: Exit code (0 for success, 1 for failure, None for normal exit)
     """
-    logger = Logger(__name__)
+    logger = get_logger(__name__)
 
     try:
+        mode = "TEST" if TEST_MODE else "LIVE"
 
-        mode = "TEST" if env_config.is_test_mode() else "LIVE"
-
-        logger.header(
-            "French News Collection",
-            f"Database pipeline in {mode} mode"
-        )
+        visual_header("French News Collection", f"Database pipeline in {mode} mode")
 
         # Database is always required (no CSV fallback)
 
@@ -48,13 +44,13 @@ def main() -> int | None:
         # Quality check
         if success_rate < MIN_SUCCESS_RATE_THRESHOLD:
             logger.warning(
-                f"Low success rate ({success_rate:.1f}%) - check logs for issues"
+                f"Low success rate ({success_rate:.1f}%) - check logs for issues (soup componetnts may be dated)"
             )
 
         return 0
 
     except KeyboardInterrupt:
-        logger.warning("Pipeline interrupted by user (Ctrl+C)")
+        logger.warning("Pipeline interrupted by user using: Ctrl+C")
         return 1
 
     except Exception as e:

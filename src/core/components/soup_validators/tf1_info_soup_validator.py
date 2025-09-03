@@ -14,7 +14,7 @@ from core.components.soup_validators.base_soup_validator import BaseSoupValidato
 from database.models import RawArticle
 
 
-class tf1infoSoupValidator(BaseSoupValidator):
+class Tf1InfoSoupValidator(BaseSoupValidator):
     """
     Pure ELT parser for TF1 Info articles.
     Responsibility: Identify valid TF1 Info articles and store raw HTML.
@@ -39,9 +39,9 @@ class tf1infoSoupValidator(BaseSoupValidator):
         TF1Info has sophisticated anti-bot protection that returns truncated
         content. Use the same bypass technique as the URL collector.
         """
-        from config.environment import is_test_mode
+        from config.environment import TEST_MODE
 
-        if is_test_mode():
+        if TEST_MODE:
             self.logger.warning("URL fetch attempted in offline mode")
             return None
 
@@ -72,13 +72,17 @@ class tf1infoSoupValidator(BaseSoupValidator):
                 session.close()
 
                 if len(response.content) < 100:
-                    self.logger.warning(f"Response content too short: {len(response.content)} bytes")
+                    self.logger.warning(
+                        f"Response content too short: {len(response.content)} bytes"
+                    )
                     continue
 
                 return self.parse_html_fast(response.content)
 
             except requests.exceptions.RequestException as e:
-                self.logger.warning(f"URL fetch failed (attempt {attempt + 1}): {str(e)}")
+                self.logger.warning(
+                    f"URL fetch failed (attempt {attempt + 1}): {str(e)}"
+                )
 
             if attempt < max_retries - 1:
                 time.sleep(1 + attempt)
@@ -105,15 +109,7 @@ class tf1infoSoupValidator(BaseSoupValidator):
         """
         try:
             # Enhanced validation: Check URL domain using tldextract
-            if not self.validate_url_domain(url, "tf1info.fr"):
-                self.logger.warning(
-                    "URL domain validation failed",
-                    extra_data={
-                        "url": url,
-                        "expected_domain": "tf1info.fr",
-                        "site": "tf1info.fr",
-                    },
-                )
+            if not self._validate_domain_and_log(url, "tf1info.fr"):
                 return None
             # Domain-specific validation: TF1 Info uses specific class structure
             # Check for TF1Info title structure
@@ -121,7 +117,7 @@ class tf1infoSoupValidator(BaseSoupValidator):
             if not title_wrapper:
                 self.logger.warning(
                     "No TF1 Info title structure found (.ArticleHeaderTitle__Wrapper h1)",
-                    extra_data={"url": url, "site": "tf1info.fr"},
+                    extra={"url": url, "site": "tf1info.fr"},
                 )
                 return None
 
@@ -130,7 +126,7 @@ class tf1infoSoupValidator(BaseSoupValidator):
             if not content_elements:
                 self.logger.warning(
                     "No TF1 Info content structure found (.ArticleChapo__Point)",
-                    extra_data={"url": url, "site": "tf1info.fr"},
+                    extra={"url": url, "site": "tf1info.fr"},
                 )
                 return None
 
@@ -144,6 +140,6 @@ class tf1infoSoupValidator(BaseSoupValidator):
         except Exception as e:
             self.logger.error(
                 f"Error validating TF1 Info article structure: {e}",
-                extra_data={"url": url, "site": "tf1info.fr"},
+                extra={"url": url, "site": "tf1info.fr"},
             )
             return None

@@ -11,7 +11,7 @@ from core.components.soup_validators.base_soup_validator import BaseSoupValidato
 from database.models import RawArticle
 
 
-class ladepechefrSoupValidator(BaseSoupValidator):
+class LadepecheFrSoupValidator(BaseSoupValidator):
     """
     Pure ELT parser for Ladepeche.fr articles.
     Responsibility: Identify valid Ladepeche.fr articles and store raw HTML.
@@ -48,15 +48,7 @@ class ladepechefrSoupValidator(BaseSoupValidator):
         """
         try:
             # Enhanced validation: Check URL domain using tldextract
-            if not self.validate_url_domain(url, "ladepeche.fr"):
-                self.logger.warning(
-                    "URL domain validation failed",
-                    extra_data={
-                        "url": url,
-                        "expected_domain": "ladepeche.fr",
-                        "site": "ladepeche.fr",
-                    },
-                )
+            if not self._validate_domain_and_log(url, "ladepeche.fr"):
                 return None
             # Domain-specific validation: Ladepeche.fr uses various content containers
             article_content_area = (
@@ -68,17 +60,12 @@ class ladepechefrSoupValidator(BaseSoupValidator):
             if not article_content_area or not isinstance(article_content_area, Tag):
                 self.logger.warning(
                     "No article content area found - not a valid Ladepeche.fr article",
-                    extra_data={"url": url, "site": "ladepeche.fr"},
+                    extra={"url": url, "site": "ladepeche.fr"},
                 )
                 return None
 
             # Additional validation: Check for title structure
-            title_tag = soup.find("h1")
-            if not title_tag or not isinstance(title_tag, Tag):
-                self.logger.warning(
-                    "No h1 tag found - possibly not an article page",
-                    extra_data={"url": url, "site": "ladepeche.fr"},
-                )
+            if not self._validate_title_structure(soup, url):
                 return None
 
             # Store raw HTML - let dbt handle all content extraction
@@ -91,7 +78,6 @@ class ladepechefrSoupValidator(BaseSoupValidator):
         except Exception as e:
             self.logger.error(
                 f"Error validating Ladepeche.fr article structure: {e}",
-                extra_data={"url": url, "site": "ladepeche.fr"},
-                exc_info=True,
+                extra={"url": url, "site": "ladepeche.fr"},
             )
             return None

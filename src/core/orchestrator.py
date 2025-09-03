@@ -1,15 +1,15 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from config.environment import env_config, is_test_mode
+from config.environment import CONCURRENT_FETCHERS, DEBUG, FETCH_TIMEOUT, TEST_MODE
 from core.component_factory import ComponentFactory
-from utils.structured_logger import Logger
+from utils.structured_logger import get_logger, visual_summary
 
 
 class ArticleOrchestrator:
     """Simple orchestrator using components for all soup manipulation."""
 
     def __init__(self):
-        self.logger = Logger(__name__)
+        self.logger = get_logger(__name__)
         self.component_factory = ComponentFactory()
 
     def process_site(self, config: dict) -> tuple[int, int]:
@@ -18,34 +18,36 @@ class ArticleOrchestrator:
             return 0, 0
 
         try:
-            url_collector = self.component_factory.create_scraper(config)
-            soup_validator = self.component_factory.create_parser(config)
+            url_collector = self.component_factory.create_collector(config)
+            soup_validator = self.component_factory.create_validator(config)
         except Exception as e:
             self.logger.error(f"Component initialization failed: {str(e)}")
             return 0, 0
 
         # Get content based on mode
-        if is_test_mode():
+        if TEST_MODE:
             sites = soup_validator.get_test_sources_from_directory(config["site"])
         else:
             urls = url_collector.get_article_urls()
             if not urls:
                 return 0, 0
 
-            self.logger.always(f"{len(urls[:5])} URLs found for {config['site']}")
-            target_urls = urls[:5]
+            self.logger.info(f"{len(urls[:5])} URLs found for {config['site']}")
+            target_urls = urls
             sites = []
 
             # Concurrent URL fetching
-            max_workers = env_config.get_concurrent_fetchers()
-            fetch_timeout = env_config.get_fetch_timeout()
+            max_workers = CONCURRENT_FETCHERS
+            fetch_timeout = FETCH_TIMEOUT
 
+            # Submitting all jobs
             with ThreadPoolExecutor(max_workers=max_workers) as executor:
                 future_to_url = {
                     executor.submit(soup_validator.get_soup_from_url, url): url
                     for url in target_urls
                 }
 
+                # Collecting results as they complete
                 for future in as_completed(future_to_url, timeout=fetch_timeout):
                     url = future_to_url[future]
                     try:
@@ -55,7 +57,7 @@ class ArticleOrchestrator:
                     except Exception:
                         continue
 
-            self.logger.always(
+            self.logger.info(
                 f"{len(sites)}/{len(target_urls)} URLs successfully fetched for {config['site']}"
             )
 
@@ -63,7 +65,7 @@ class ArticleOrchestrator:
             return 0, 0
 
         # Collect articles for batch processing
-        articles_batch = []
+        articles_batch = []  # list of RawArticle objects
         total_attempted = len(sites)
 
         for soup, site_identifier in sites:
@@ -78,14 +80,14 @@ class ArticleOrchestrator:
 
             processed_count, failed_count = store_articles_batch(articles_batch)
 
-            if env_config.is_debug_mode():
+            if DEBUG:
                 self.logger.info(
                     f"Batch processing results: {processed_count} successful, {failed_count} failed"
                 )
         else:
             processed_count = 0
 
-        self.logger.always(
+        self.logger.info(
             f"{processed_count}/{total_attempted} articles successfully processed for {config['site']}"
         )
         return processed_count, total_attempted
@@ -108,10 +110,10 @@ class ArticleOrchestrator:
             (total_processed / total_attempted * 100) if total_attempted > 0 else 0
         )
 
-        self.logger.always(
+        self.logger.info(
             f"Total: {total_processed}/{total_attempted} articles processed ({success_rate:.1f}% success)"
         )
-        self.logger.summary_box(
+        visual_summary(
             "Database Processing Complete",
             total_processed,
             total_attempted,

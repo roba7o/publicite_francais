@@ -20,12 +20,12 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "tldextract>=5.0.0",
     "trafilatura>=1.8.0",
+    "sqlparse>=0.4.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "ruff>=0.1.0",
-    "mypy>=1.10.0",
     "pytest>=8.2.1",
 ]
 
@@ -52,32 +52,13 @@ select = [
 ]
 ignore = [
     "E501",  # line too long (handled by formatter)
+    "W293",  # blank line contains whitespace
+    "I001",  # import block is un-sorted or un-formatted
 ]
 
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
-
-[tool.mypy]
-python_version = "3.12"
-warn_unused_configs = false
-disallow_untyped_defs = false
-disallow_incomplete_defs = false  
-check_untyped_defs = false
-disallow_untyped_decorators = false
-no_implicit_optional = false
-warn_redundant_casts = false
-warn_unused_ignores = false
-warn_no_return = false
-warn_return_any = false
-warn_unreachable = false
-strict_equality = false
-mypy_path = "src"
-
-# Ignore common issues in learning projects
-[[tool.mypy.overrides]]
-module = ["config.settings", "services.*", "parsers.*"]
-ignore_errors = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -90,10 +71,4 @@ markers = [
     "performance: marks tests as performance tests",
 ]
 
-[tool.pylsp-mypy]
-enabled = false
-
-[tool.pyright]
-reportArgumentType = "none"
-reportOptionalMemberAccess = "none"
 

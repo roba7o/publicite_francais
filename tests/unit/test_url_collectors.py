@@ -7,24 +7,27 @@ focus on component structure rather than live web scraping.
 """
 
 
-
 class TestUrlCollectorImports:
     """Test that all URL collector classes can be imported and instantiated."""
 
     def test_all_url_collectors_importable(self):
         """Test that all configured URL collectors can be imported."""
         from config.site_configs import SCRAPER_CONFIGS
-        from core.component_loader import import_class
+        from core.component_factory import ComponentFactory
 
         for config in SCRAPER_CONFIGS:
-            if config.get('enabled', True):
-                url_collector_class = import_class(config['url_collector_class'])
-                assert url_collector_class is not None, f"Should import {config['url_collector_class']}"
+            if config.get("enabled", True):
+                url_collector_class = ComponentFactory.import_class(
+                    config["url_collector_class"]
+                )
+                assert url_collector_class is not None, (
+                    f"Should import {config['url_collector_class']}"
+                )
 
                 # Verify it can be instantiated with debug=True
                 collector = url_collector_class(debug=True)
                 assert collector is not None
-                assert hasattr(collector, 'get_article_urls')
+                assert hasattr(collector, "get_article_urls")
 
 
 class TestUrlCollectorInterface:
@@ -54,7 +57,7 @@ class TestUrlCollectorInterface:
 
         for collector in collectors:
             # All collectors should have get_article_urls method
-            assert hasattr(collector, 'get_article_urls')
+            assert hasattr(collector, "get_article_urls")
             assert callable(collector.get_article_urls)
 
     def test_collectors_debug_mode(self):
@@ -82,26 +85,28 @@ class TestUrlCollectorConfiguration:
         factory = ComponentFactory()
 
         # Test that factory can create collector from config
-        collector = factory.create_scraper(sample_site_config)
+        collector = factory.create_collector(sample_site_config)
         assert collector is not None
-        assert hasattr(collector, 'get_article_urls')
+        assert hasattr(collector, "get_article_urls")
 
     def test_collectors_match_site_configs(self):
         """Test that all collectors referenced in site_configs can be imported."""
         from config.site_configs import SCRAPER_CONFIGS
-        from core.component_loader import import_class
+        from core.component_factory import ComponentFactory
 
         for config in SCRAPER_CONFIGS:
-            if config.get('enabled', True):
+            if config.get("enabled", True):
                 # Test that the URL collector class can be imported
-                url_collector_class = import_class(config['url_collector_class'])
+                url_collector_class = ComponentFactory.import_class(
+                    config["url_collector_class"]
+                )
                 assert url_collector_class is not None
 
                 # Test that it can be instantiated with the config kwargs
-                kwargs = config.get('url_collector_kwargs', {})
+                kwargs = config.get("url_collector_kwargs", {})
                 collector = url_collector_class(**kwargs)
                 assert collector is not None
-                assert hasattr(collector, 'get_article_urls')
+                assert hasattr(collector, "get_article_urls")
 
 
 class TestUrlCollectorErrorHandling:
@@ -137,4 +142,8 @@ class TestUrlCollectorErrorHandling:
         except Exception as e:
             # In isolated unit test, network calls might fail - that's OK
             # We're testing the interface, not live functionality
-            assert "requests" in str(e).lower() or "network" in str(e).lower() or "connection" in str(e).lower()
+            assert (
+                "requests" in str(e).lower()
+                or "network" in str(e).lower()
+                or "connection" in str(e).lower()
+            )

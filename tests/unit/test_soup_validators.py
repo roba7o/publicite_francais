@@ -6,7 +6,6 @@ HTML test files. These tests verify that validators can process real
 HTML content and extract meaningful data.
 """
 
-
 import pytest
 
 
@@ -16,17 +15,21 @@ class TestSoupValidatorImports:
     def test_all_soup_validators_importable(self):
         """Test that all configured soup validators can be imported."""
         from config.site_configs import SCRAPER_CONFIGS
-        from core.component_loader import import_class
+        from core.component_factory import ComponentFactory
 
         for config in SCRAPER_CONFIGS:
-            if config.get('enabled', True):
-                validator_class = import_class(config['soup_validator_class'])
-                assert validator_class is not None, f"Should import {config['soup_validator_class']}"
+            if config.get("enabled", True):
+                validator_class = ComponentFactory.import_class(
+                    config["soup_validator_class"]
+                )
+                assert validator_class is not None, (
+                    f"Should import {config['soup_validator_class']}"
+                )
 
                 # Verify it can be instantiated (requires site_name parameter)
-                validator = validator_class(config['site'], debug=True)
+                validator = validator_class(config["site"], debug=True)
                 assert validator is not None
-                assert hasattr(validator, 'validate_and_extract')
+                assert hasattr(validator, "validate_and_extract")
 
 
 class TestSoupValidatorInterface:
@@ -38,25 +41,25 @@ class TestSoupValidatorInterface:
             FranceInfoSoupValidator,
         )
         from core.components.soup_validators.ladepeche_fr_soup_validator import (
-            ladepechefrSoupValidator,
+            LadepecheFrSoupValidator,
         )
         from core.components.soup_validators.slate_fr_soup_validator import (
             SlateFrSoupValidator,
         )
         from core.components.soup_validators.tf1_info_soup_validator import (
-            tf1infoSoupValidator,
+            Tf1InfoSoupValidator,
         )
 
         validators = [
             SlateFrSoupValidator("slate.fr", debug=True),
             FranceInfoSoupValidator("franceinfo.fr", debug=True),
-            tf1infoSoupValidator("tf1info.fr", debug=True),
-            ladepechefrSoupValidator("ladepeche.fr", debug=True),
+            Tf1InfoSoupValidator("tf1info.fr", debug=True),
+            LadepecheFrSoupValidator("ladepeche.fr", debug=True),
         ]
 
         for validator in validators:
             # All validators should have validate_and_extract method
-            assert hasattr(validator, 'validate_and_extract')
+            assert hasattr(validator, "validate_and_extract")
             assert callable(validator.validate_and_extract)
 
     def test_validators_debug_mode(self):
@@ -84,26 +87,28 @@ class TestSoupValidatorConfiguration:
         factory = ComponentFactory()
 
         # Test that factory can create validator from config
-        validator = factory.create_parser(sample_site_config)
+        validator = factory.create_validator(sample_site_config)
         assert validator is not None
-        assert hasattr(validator, 'validate_and_extract')
+        assert hasattr(validator, "validate_and_extract")
 
     def test_validators_match_site_configs(self):
         """Test that all validators referenced in site_configs can be imported."""
         from config.site_configs import SCRAPER_CONFIGS
-        from core.component_loader import import_class
+        from core.component_factory import ComponentFactory
 
         for config in SCRAPER_CONFIGS:
-            if config.get('enabled', True):
+            if config.get("enabled", True):
                 # Test that the soup validator class can be imported
-                soup_validator_class = import_class(config['soup_validator_class'])
+                soup_validator_class = ComponentFactory.import_class(
+                    config["soup_validator_class"]
+                )
                 assert soup_validator_class is not None
 
                 # Test that it can be instantiated with the config kwargs
-                kwargs = config.get('soup_validator_kwargs', {})
-                validator = soup_validator_class(config['site'], **kwargs)
+                kwargs = config.get("soup_validator_kwargs", {})
+                validator = soup_validator_class(config["site"], **kwargs)
                 assert validator is not None
-                assert hasattr(validator, 'validate_and_extract')
+                assert hasattr(validator, "validate_and_extract")
 
 
 class TestSoupValidatorWithRealHTML:
@@ -123,12 +128,14 @@ class TestSoupValidatorWithRealHTML:
 
         # Test with first available HTML file
         test_file = slate_test_files[0]
-        html_content = test_file.read_text(encoding='utf-8')
+        html_content = test_file.read_text(encoding="utf-8")
 
         # Parse the HTML
         try:
             soup = validator.parse_html_fast(html_content)
-            result = validator.validate_and_extract(soup, "https://slate.fr/test-article")
+            result = validator.validate_and_extract(
+                soup, "https://slate.fr/test-article"
+            )
 
             # Should return a RawArticle object
             assert isinstance(result, RawArticle)
@@ -155,11 +162,13 @@ class TestSoupValidatorWithRealHTML:
 
         # Test with first available HTML file
         test_file = franceinfo_test_files[0]
-        html_content = test_file.read_text(encoding='utf-8')
+        html_content = test_file.read_text(encoding="utf-8")
 
         try:
             soup = validator.parse_html_fast(html_content)
-            result = validator.validate_and_extract(soup, "https://franceinfo.fr/test-article")
+            result = validator.validate_and_extract(
+                soup, "https://franceinfo.fr/test-article"
+            )
             assert isinstance(result, RawArticle)
             assert result.raw_html is not None
             assert result.site is not None
@@ -179,10 +188,12 @@ class TestSoupValidatorWithRealHTML:
         # Test with empty content
         try:
             soup = validator.parse_html_fast("")
-            result = validator.validate_and_extract(soup, "https://slate.fr/test-article")
+            result = validator.validate_and_extract(
+                soup, "https://slate.fr/test-article"
+            )
             # Should either return None or raise appropriate exception
             if result is not None:
-                assert hasattr(result, 'raw_html')
+                assert hasattr(result, "raw_html")
         except Exception as e:
             # Acceptable if validator rejects empty content
             assert isinstance(e, ValueError | AttributeError | TypeError)
@@ -195,8 +206,8 @@ class TestSoupValidatorWithRealHTML:
         validator_mapping = {
             "slate.fr": "core.components.soup_validators.slate_fr_soup_validator.SlateFrSoupValidator",
             "franceinfo.fr": "core.components.soup_validators.france_info_soup_validator.FranceInfoSoupValidator",
-            "tf1info.fr": "core.components.soup_validators.tf1_info_soup_validator.tf1infoSoupValidator",
-            "ladepeche.fr": "core.components.soup_validators.ladepeche_fr_soup_validator.ladepechefrSoupValidator",
+            "tf1info.fr": "core.components.soup_validators.tf1_info_soup_validator.Tf1InfoSoupValidator",
+            "ladepeche.fr": "core.components.soup_validators.ladepeche_fr_soup_validator.LadepecheFrSoupValidator",
         }
 
         # URL mapping for domain validation
@@ -207,23 +218,25 @@ class TestSoupValidatorWithRealHTML:
             "ladepeche.fr": "https://ladepeche.fr/test-article",
         }
 
-        from core.component_loader import import_class
+        from core.component_factory import ComponentFactory
 
         for source, validator_class_path in validator_mapping.items():
             if source in test_html_files and test_html_files[source]:
-                validator_class = import_class(validator_class_path)
+                validator_class = ComponentFactory.import_class(validator_class_path)
                 validator = validator_class(source, debug=True)
 
                 # Test with first HTML file for this source
                 test_file = test_html_files[source][0]
-                html_content = test_file.read_text(encoding='utf-8')
+                html_content = test_file.read_text(encoding="utf-8")
 
                 try:
                     soup = validator.parse_html_fast(html_content)
                     test_url = url_mapping[source]
                     result = validator.validate_and_extract(soup, test_url)
                     if result is not None:
-                        assert isinstance(result, RawArticle), f"Validator for {source} should return RawArticle"
+                        assert isinstance(result, RawArticle), (
+                            f"Validator for {source} should return RawArticle"
+                        )
                         assert result.raw_html is not None
 
                 except Exception:

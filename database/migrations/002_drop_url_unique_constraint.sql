@@ -1,25 +1,42 @@
--- Migration: Drop URL unique constraint to allow duplicate URLs
--- Created: 2025-08-21
--- Description: Removes UNIQUE constraint on URL field to allow storing duplicate URLs with different UUIDs
+-- Drop URL unique constraint to allow duplicate URLs
+-- Allows storing same URL multiple times with different UUIDs
+-- This removes the UNIQUE constraint added in migration 000
 
--- Drop the URL unique constraint from all schemas
-DO $$
-DECLARE
-    schema_name text;
+-- Check and drop constraint if it exists in dev schema
+DO $$ 
 BEGIN
-    FOR schema_name IN VALUES ('news_data_dev'), ('news_data_test'), ('news_data_prod')
-    LOOP
-        -- Check if the constraint exists before trying to drop it
-        IF EXISTS (
-            SELECT 1 FROM information_schema.table_constraints 
-            WHERE table_schema = schema_name 
-            AND table_name = 'raw_articles' 
-            AND constraint_name = 'raw_articles_url_key'
-        ) THEN
-            EXECUTE format('ALTER TABLE %I.raw_articles DROP CONSTRAINT raw_articles_url_key', schema_name);
-            RAISE NOTICE 'Dropped URL unique constraint from %.raw_articles', schema_name;
-        ELSE
-            RAISE NOTICE 'URL unique constraint does not exist in %.raw_articles', schema_name;
-        END IF;
-    END LOOP;
+    IF EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE table_schema = 'news_data_dev' 
+        AND table_name = 'raw_articles' 
+        AND constraint_name = 'raw_articles_url_key'
+    ) THEN
+        ALTER TABLE news_data_dev.raw_articles DROP CONSTRAINT raw_articles_url_key;
+    END IF;
+END $$;
+
+-- Check and drop constraint if it exists in test schema  
+DO $$ 
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE table_schema = 'news_data_test' 
+        AND table_name = 'raw_articles' 
+        AND constraint_name = 'raw_articles_url_key'
+    ) THEN
+        ALTER TABLE news_data_test.raw_articles DROP CONSTRAINT raw_articles_url_key;
+    END IF;
+END $$;
+
+-- Check and drop constraint if it exists in prod schema
+DO $$ 
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE table_schema = 'news_data_prod' 
+        AND table_name = 'raw_articles' 
+        AND constraint_name = 'raw_articles_url_key'
+    ) THEN
+        ALTER TABLE news_data_prod.raw_articles DROP CONSTRAINT raw_articles_url_key;
+    END IF;
 END $$;

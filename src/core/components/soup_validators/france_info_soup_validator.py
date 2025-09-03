@@ -48,32 +48,19 @@ class FranceInfoSoupValidator(BaseSoupValidator):
         """
         try:
             # Enhanced validation: Check URL domain using tldextract
-            if not self.validate_url_domain(url, "franceinfo.fr"):
-                self.logger.warning(
-                    "URL domain validation failed",
-                    extra_data={
-                        "url": url,
-                        "expected_domain": "franceinfo.fr",
-                        "site": "franceinfo.fr",
-                    },
-                )
+            if not self._validate_domain_and_log(url, "franceinfo.fr"):
                 return None
             # Domain-specific validation: FranceInfo.fr uses div.c-body for content
             content_div = soup.find("div", class_="c-body")
             if not content_div or not isinstance(content_div, Tag):
                 self.logger.warning(
                     "No c-body div found - not a valid FranceInfo.fr article",
-                    extra_data={"url": url, "site": "franceinfo.fr"},
+                    extra={"url": url, "site": "franceinfo.fr"},
                 )
                 return None
 
             # Additional validation: Check for title structure
-            title_tag = soup.find("h1")
-            if not title_tag or not isinstance(title_tag, Tag):
-                self.logger.warning(
-                    "No h1 tag found - possibly not an article page",
-                    extra_data={"url": url, "site": "franceinfo.fr"},
-                )
+            if not self._validate_title_structure(soup, url):
                 return None
 
             # Store raw HTML - let dbt handle all content extraction
@@ -86,7 +73,6 @@ class FranceInfoSoupValidator(BaseSoupValidator):
         except Exception as e:
             self.logger.error(
                 f"Error validating FranceInfo.fr article structure: {e}",
-                extra_data={"url": url, "site": "franceinfo.fr"},
-                exc_info=True,
+                extra={"url": url, "site": "franceinfo.fr"},
             )
             return None

@@ -5,7 +5,6 @@ Tests for component loading, factory patterns, and basic component functionality
 Extracted from test_essential.py for better organization.
 """
 
-
 from config.site_configs import SCRAPER_CONFIGS
 from core.orchestrator import ArticleOrchestrator
 from database.models import RawArticle
@@ -16,15 +15,17 @@ class TestComponentFactory:
 
     def test_component_class_loading(self):
         """Test that the component loader can load classes from class paths."""
-        from core.component_loader import import_class
+        from core.component_factory import ComponentFactory
 
         # Test url collector class loading
-        url_collector_class = import_class("core.components.url_collectors.slate_fr_url_collector.SlateFrUrlCollector")
+        url_collector_class = ComponentFactory.import_class(
+            "core.components.url_collectors.slate_fr_url_collector.SlateFrUrlCollector"
+        )
         assert url_collector_class is not None
         assert url_collector_class.__name__ == "SlateFrUrlCollector"
 
         # Test soup validator class loading
-        soup_validator_class = import_class(
+        soup_validator_class = ComponentFactory.import_class(
             "core.components.soup_validators.slate_fr_soup_validator.SlateFrSoupValidator"
         )
         assert soup_validator_class is not None
@@ -94,12 +95,12 @@ class TestConfiguration:
 
     def test_environment_configuration(self):
         """Test that environment configuration can be loaded."""
-        from config.environment import env_config
+        from config.environment import TEST_MODE, get_news_data_schema
 
-        test_mode = env_config.is_test_mode()
+        test_mode = TEST_MODE
         assert isinstance(test_mode, bool)
 
-        schema = env_config.get_news_data_schema()
+        schema = get_news_data_schema()
         assert isinstance(schema, str)
 
 
@@ -108,9 +109,9 @@ class TestUtilities:
 
     def test_structured_logger_import(self):
         """Test that structured logger can be imported."""
-        from utils.structured_logger import Logger
+        from utils.structured_logger import get_logger
 
-        logger = Logger("test")
+        logger = get_logger("test")
         assert logger is not None
 
     def test_validators_removed(self):
