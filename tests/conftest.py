@@ -8,11 +8,13 @@ from core.component_factory import ComponentFactory
 
 @pytest.fixture
 def factory():
+    """ComponentFactory instance for testing."""
     return ComponentFactory()
 
 
 @pytest.fixture
 def mock_import_class():
+    """Mock ComponentFactory.import_class to return DummyClass."""
     with mock.patch.object(ComponentFactory, "import_class") as mock_import:
         mock_import.return_value = DummyClass
         yield mock_import
@@ -20,6 +22,7 @@ def mock_import_class():
 
 @pytest.fixture
 def collector_config():
+    """Standard collector configuration for testing."""
     return {
         "site": "example",
         "url_collector_class": "tests.fixtures.helpers.DummyClass",
