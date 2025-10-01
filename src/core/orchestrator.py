@@ -76,7 +76,7 @@ class ArticleOrchestrator:
 
         # Store articles in batch for better performance
         if articles_batch:
-            from database import store_articles_batch
+            from database import store_articles_batch, store_word_events
 
             processed_count, failed_count = store_articles_batch(articles_batch)
 
@@ -84,6 +84,20 @@ class ArticleOrchestrator:
                 self.logger.info(
                     f"Batch processing results: {processed_count} successful, {failed_count} failed"
                 )
+
+            # Store word events for successfully processed articles
+            if processed_count > 0:
+                all_word_events = []
+                for article in articles_batch:
+                    if article.word_events:
+                        all_word_events.extend(article.word_events)
+
+                if all_word_events:
+                    word_events_stored = store_word_events(all_word_events)
+                    if DEBUG:
+                        self.logger.info(
+                            f"Word events: {len(all_word_events) if word_events_stored else 0} stored successfully"
+                        )
         else:
             processed_count = 0
 
