@@ -12,7 +12,6 @@ from datetime import datetime
 from uuid import uuid4
 
 import re
-from pathlib import Path
 
 import trafilatura
 
@@ -102,20 +101,6 @@ class RawArticle:
             # Don't break the pipeline on extraction failures
             self.extraction_status = "failed"
 
-    def _load_stop_words(self) -> set[str]:
-        """Load French stop words from file."""
-        try:
-            stop_words_path = Path(__file__).parent.parent.parent / "dbt" / "resources" / "french-stop-words.txt"
-            with open(stop_words_path, 'r', encoding='utf-8') as f:
-                stop_words = set()
-                for line in f:
-                    line = line.strip()
-                    if line and not line.startswith('#'):
-                        stop_words.add(line.lower())
-                return stop_words
-        except Exception:
-            return set()
-
     def _extract_french_words(self) -> None:
         """Extract French words from extracted text and create word events."""
         if not self.extracted_text:
@@ -123,19 +108,16 @@ class RawArticle:
             return
 
         try:
-            # Load stop words
-            stop_words = self._load_stop_words()
-
             # Clean and tokenize text
             text = self.extracted_text.lower()
             # Remove punctuation and split into words
             words = re.findall(r'\b[a-záàâäéèêëíìîïóòôöúùûüÿç]+\b', text)
 
-            # Create word events
+            # Create word events for ALL words (no filtering - dbt will handle this)
             word_events = []
             for position, word in enumerate(words):
-                # Filter out stop words and short words
-                if len(word) >= 3 and word not in stop_words:
+                # Only filter out very short words (< 2 characters)
+                if len(word) >= 2:
                     word_events.append({
                         'word': word,
                         'position_in_article': position,
