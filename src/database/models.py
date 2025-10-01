@@ -11,6 +11,9 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from uuid import uuid4
 
+import re
+from pathlib import Path
+
 import trafilatura
 
 # just ensuring public api seeing this only
@@ -49,6 +52,9 @@ class RawArticle:
     keywords: list[str] | None = None
     extraction_status: str = "pending"
 
+    # Word extraction fields
+    word_events: list[dict] | None = None
+
     # Post-initialization processing -> assign default values and extract content
     def __post_init__(self) -> None:
         """Validate raw data and extract content using trafilatura."""
@@ -61,6 +67,9 @@ class RawArticle:
 
         # Extract content using trafilatura
         self._extract_content()
+
+        # Extract French words for event storage
+        self._extract_french_words()
 
     def _extract_content(self) -> None:
         """Extract content from raw HTML using trafilatura."""
@@ -93,6 +102,53 @@ class RawArticle:
             # Don't break the pipeline on extraction failures
             self.extraction_status = "failed"
 
+    def _load_stop_words(self) -> set[str]:
+        """Load French stop words from file."""
+        try:
+            stop_words_path = Path(__file__).parent.parent.parent / "dbt" / "resources" / "french-stop-words.txt"
+            with open(stop_words_path, 'r', encoding='utf-8') as f:
+                stop_words = set()
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith('#'):
+                        stop_words.add(line.lower())
+                return stop_words
+        except Exception:
+            return set()
+
+    def _extract_french_words(self) -> None:
+        """Extract French words from extracted text and create word events."""
+        if not self.extracted_text:
+            self.word_events = []
+            return
+
+        try:
+            # Load stop words
+            stop_words = self._load_stop_words()
+
+            # Clean and tokenize text
+            text = self.extracted_text.lower()
+            # Remove punctuation and split into words
+            words = re.findall(r'\b[a-záàâäéèêëíìîïóòôöúùûüÿç]+\b', text)
+
+            # Create word events
+            word_events = []
+            for position, word in enumerate(words):
+                # Filter out stop words and short words
+                if len(word) >= 3 and word not in stop_words:
+                    word_events.append({
+                        'word': word,
+                        'position_in_article': position,
+                        'article_id': self.id,
+                        'scraped_at': self.scraped_at
+                    })
+
+            self.word_events = word_events
+
+        except Exception:
+            # Don't break the pipeline on word extraction failures
+            self.word_events = []
+
     def to_dict(self):
         """Convert to dictionary for database storage."""
         return {
@@ -111,4 +167,5 @@ class RawArticle:
             "summary": self.summary,
             "keywords": self.keywords,
             "extraction_status": self.extraction_status,
+            "word_events": self.word_events,
         }

@@ -380,3 +380,49 @@ def _fallback_individual_inserts(articles: list[RawArticle]) -> tuple[int, int]:
         f"Fallback complete: {successful_count} successful, {failed_count} failed"
     )
     return successful_count, failed_count
+
+
+def store_word_events(word_events: list[dict]) -> bool:
+    """
+    Store word events from article processing.
+
+    Args:
+        word_events: List of word event dictionaries with keys:
+                    - word: str
+                    - article_id: str
+                    - position_in_article: int
+                    - scraped_at: str
+
+    Returns:
+        True if stored successfully, False on error
+    """
+    if not word_events:
+        return True
+
+    schema_name = get_news_data_schema()
+
+    try:
+        with get_session() as session:
+            # Ensure schema exists
+            session.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema_name}"))
+
+            # Use table() for bulk insert
+            word_events_table = table(
+                "word_events",
+                column("word"),
+                column("article_id"),
+                column("position_in_article"),
+                column("scraped_at"),
+                schema=schema_name,
+            )
+
+            # Execute bulk insert
+            session.execute(word_events_table.insert(), word_events)
+
+            if DEBUG:
+                logger.info(f"Stored {len(word_events)} word events successfully")
+            return True
+
+    except Exception as e:
+        logger.error(f"Failed to store word events: {str(e)}")
+        return False

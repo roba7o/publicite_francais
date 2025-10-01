@@ -9,6 +9,7 @@ from .database import (
     initialize_database,
     store_articles_batch,
     store_raw_article,
+    store_word_events,
 )
 from .models import RawArticle
 
@@ -17,5 +18,6 @@ __all__ = [
     "initialize_database",
     "store_raw_article",
     "store_articles_batch",
+    "store_word_events",
     "RawArticle",
 ]
