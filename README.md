@@ -67,5 +67,3 @@ make fix
 - TF1 Info
 
 ## TODO
-
-*Add your future enhancement plans here*
