@@ -12,12 +12,13 @@ import subprocess
 from pathlib import Path
 from sqlalchemy import text
 
+from database.database import get_session
 from config.environment import get_news_data_schema
-from database import get_session, initialize_database
+
 from utils.url_mapping import URL_MAPPING
 
 
-def test_html_fixture_to_database_mapping():
+def test_html_fixture_to_database_mapping(clean_test_db):
     """Test that each HTML fixture file creates a corresponding database entry.
 
     Verifies:
@@ -28,18 +29,10 @@ def test_html_fixture_to_database_mapping():
 
     print("\n=== Stage 4: Testing HTML Fixture to Database Mapping ===")
 
-    # Initialize database connection
-    success = initialize_database()
-    assert success, "Failed to initialize database"
-
     # Get the schema name
     schema = get_news_data_schema()
     print(f"Using database schema: {schema}")
-
-    # Clear and repopulate database for clean testing
-    with get_session() as session:
-        session.execute(text(f"TRUNCATE TABLE {schema}.raw_articles"))
-        print("✓ Cleared test database for clean testing")
+    print("✓ Database already cleaned by clean_test_db fixture")
 
     # Run the test data pipeline to populate with fixtures
     print("Running test data pipeline...")

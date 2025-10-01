@@ -11,11 +11,10 @@ from the HTML fixtures, not just storing raw HTML.
 import subprocess
 from sqlalchemy import text
 
+from database.database import get_session
 from config.environment import get_news_data_schema
-from database import get_session, initialize_database
 
-
-def test_content_extraction_quality():
+def test_content_extraction_quality(clean_test_db):
     """Test that articles have required content extracted from static fixtures.
 
     Based on fixtures: 16 articles total, all should have content extracted.
@@ -23,18 +22,10 @@ def test_content_extraction_quality():
 
     print("\n=== Stage 3: Testing Content Extraction ===")
 
-    # Initialize database connection
-    success = initialize_database()
-    assert success, "Failed to initialize database"
-
     # Get the schema name
     schema = get_news_data_schema()
     print(f"Using database schema: {schema}")
-
-    # Clear and repopulate database for clean testing
-    with get_session() as session:
-        session.execute(text(f"TRUNCATE TABLE {schema}.raw_articles"))
-        print("✓ Cleared test database for clean testing")
+    print("✓ Database already cleaned by clean_test_db fixture")
 
     # Run the test data pipeline to populate with fixtures
     print("Running test data pipeline...")

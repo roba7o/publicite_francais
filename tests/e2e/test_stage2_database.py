@@ -11,11 +11,11 @@ Note: ENVIRONMENT=test is automatically set by tests/conftest.py
 
 from sqlalchemy import text
 
+from database.database import get_session
 from config.environment import get_news_data_schema
-from database import get_session, initialize_database
 
 
-def test_articles_exist_in_database():
+def test_articles_exist_in_database(clean_test_db):
     """Test that pipeline stores exact number of articles from static fixtures.
 
     Based on fixtures: 4 sites × 4 files each = 16 total articles expected.
@@ -24,18 +24,10 @@ def test_articles_exist_in_database():
 
     print("\n=== Stage 2: Testing Database Storage ===")
 
-    # Initialize database connection
-    success = initialize_database()
-    assert success, "Failed to initialize database"
-
     # Get the schema name
     schema = get_news_data_schema()
     print(f"Using database schema: {schema}")
-
-    # Clear test database for deterministic testing
-    with get_session() as session:
-        session.execute(text(f"TRUNCATE TABLE {schema}.raw_articles"))
-        print("✓ Cleared test database for clean testing")
+    print("✓ Database already cleaned by clean_test_db fixture")
 
     # Run the test data pipeline to populate with fixtures
     import subprocess
@@ -59,7 +51,7 @@ def test_articles_exist_in_database():
         "ladepeche.fr": EXPECTED_PER_SITE
     }
 
-    # Connect and count articles
+    # Connect and count articles using application's database layer
     with get_session() as session:
         total_count = session.execute(
             text(f"SELECT COUNT(*) FROM {schema}.raw_articles")

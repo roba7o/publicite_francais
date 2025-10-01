@@ -1,93 +1,19 @@
 """
-Simple integration tests using test PostgreSQL container.
+Integration tests for database operations using application's database layer.
+
+These tests use the application's own database functions and connection
+management for proper integration testing.
 """
 
-import time
-from unittest.mock import patch
-
 import pytest
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
 
-from database.database import store_articles_batch, store_raw_article
+from database.database import store_articles_batch, store_raw_article, get_session
 from database.models import RawArticle
 from config.environment import get_news_data_schema
 
-# Test database configuration
-TEST_DB_CONFIG = {
-    "user": "news_user",
-    "password": "test_password",
-    "host": "localhost",
-    "port": "5433",
-    "database": "french_news_test",
-}
 
-
-@pytest.fixture(scope="session")
-def test_db():
-    """Set up test database with migrations."""
-    # Wait for test database to be ready
-    engine = create_engine(
-        f"postgresql://{TEST_DB_CONFIG['user']}:{TEST_DB_CONFIG['password']}@{TEST_DB_CONFIG['host']}:{TEST_DB_CONFIG['port']}/{TEST_DB_CONFIG['database']}"
-    )
-
-    # Wait for database to be ready
-    for _ in range(30):  # 30 second timeout
-        try:
-            with engine.connect() as conn:
-                conn.execute(text("SELECT 1"))
-            break
-        except Exception:
-            time.sleep(1)
-    else:
-        raise RuntimeError("Test database not ready after 30 seconds")
-
-    # Point database functions to test database
-    with patch("database.database.DATABASE_CONFIG", TEST_DB_CONFIG):
-        # Run migrations on test database
-        import sys
-        from pathlib import Path
-
-        db_path = Path(__file__).parent.parent.parent / "database"
-        sys.path.insert(0, str(db_path))
-
-        from migrations.run_migrations import run_all_migrations  # type: ignore
-
-        try:
-            run_all_migrations()
-        except SystemExit:
-            pass  # Migration runner exits on completion
-
-        yield engine
-
-
-@pytest.fixture
-def clean_db(test_db):
-    """Clean database before each test."""
-    with test_db.connect() as conn:
-        # Clean all tables
-        schema = get_news_data_schema()
-        conn.execute(text(f"TRUNCATE TABLE {schema}.raw_articles CASCADE"))
-        conn.execute(text("DELETE FROM migration_history"))
-        conn.commit()
-
-    # Re-run migrations for clean state
-    import sys
-    from pathlib import Path
-
-    db_path = Path(__file__).parent.parent.parent / "database"
-    sys.path.insert(0, str(db_path))
-
-    from migrations.run_migrations import run_all_migrations  # type: ignore
-
-    try:
-        run_all_migrations()
-    except SystemExit:
-        pass
-
-    return test_db  # Return the engine for use in tests
-
-
-def test_store_single_article(clean_db):
+def test_store_single_article(clean_test_db):
     """Test storing a single article."""
     article = RawArticle(
         url="https://slate.fr/test-article",
@@ -95,14 +21,15 @@ def test_store_single_article(clean_db):
         site="slate.fr",
     )
 
-    # Store using actual function
+    # Store using application's database function
     result = store_raw_article(article)
     assert result is True
 
-    # Verify in database
-    with clean_db.connect() as conn:
-        schema = get_news_data_schema()
-        row = conn.execute(
+    # Verify in database using application's database layer
+    schema = get_news_data_schema()
+
+    with get_session() as session:
+        row = session.execute(
             text(f"""
             SELECT url, site, extracted_text, title, extraction_status
             FROM {schema}.raw_articles
@@ -119,7 +46,7 @@ def test_store_single_article(clean_db):
         assert row[4] == article.extraction_status
 
 
-def test_store_batch_articles(clean_db):
+def test_store_batch_articles(clean_test_db):
     """Test storing multiple articles in batch."""
     articles = [
         RawArticle(
@@ -130,22 +57,23 @@ def test_store_batch_articles(clean_db):
         for i in range(3)
     ]
 
-    # Store using actual function
+    # Store using application's database function
     successful, failed = store_articles_batch(articles)
     assert successful == 3
     assert failed == 0
 
-    # Verify all in database
-    with clean_db.connect() as conn:
-        schema = get_news_data_schema()
-        count = conn.execute(
+    # Verify all in database using application's database layer
+    schema = get_news_data_schema()
+
+    with get_session() as session:
+        count = session.execute(
             text(f"SELECT COUNT(*) FROM {schema}.raw_articles")
         ).fetchone()[0]
         assert count == 3
 
         # Check each article
         for article in articles:
-            row = conn.execute(
+            row = session.execute(
                 text(f"""
                 SELECT url, site, raw_html
                 FROM {schema}.raw_articles
@@ -160,7 +88,7 @@ def test_store_batch_articles(clean_db):
             assert row[2] == article.raw_html
 
 
-def test_duplicate_urls_allowed(clean_db):
+def test_duplicate_urls_allowed(clean_test_db):
     """Test that duplicate URLs are stored with different UUIDs."""
     article1 = RawArticle(
         url="https://lemonde.fr/same-story",
@@ -173,14 +101,15 @@ def test_duplicate_urls_allowed(clean_db):
         site="lemonde.fr",
     )
 
-    # Store both
+    # Store both using application's database function
     assert store_raw_article(article1) is True
     assert store_raw_article(article2) is True
 
-    # Verify both stored with different UUIDs
-    with clean_db.connect() as conn:
-        schema = get_news_data_schema()
-        rows = conn.execute(
+    # Verify both stored with different UUIDs using application's database layer
+    schema = get_news_data_schema()
+
+    with get_session() as session:
+        rows = session.execute(
             text(f"""
             SELECT id, url, raw_html
             FROM {schema}.raw_articles

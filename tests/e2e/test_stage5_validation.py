@@ -13,11 +13,12 @@ import subprocess
 from datetime import datetime, timedelta
 from sqlalchemy import text
 
+from database.database import get_session
 from config.environment import get_news_data_schema
-from database import get_session, initialize_database
 
 
-def test_data_quality_and_integrity():
+
+def test_data_quality_and_integrity(clean_test_db):
     """Test comprehensive data quality and integrity of extracted articles.
 
     Validates:
@@ -30,18 +31,10 @@ def test_data_quality_and_integrity():
 
     print("\n=== Stage 5: Testing Data Quality and Integrity ===")
 
-    # Initialize database connection
-    success = initialize_database()
-    assert success, "Failed to initialize database"
-
     # Get the schema name
     schema = get_news_data_schema()
     print(f"Using database schema: {schema}")
-
-    # Clear and repopulate database for clean testing
-    with get_session() as session:
-        session.execute(text(f"TRUNCATE TABLE {schema}.raw_articles"))
-        print("✓ Cleared test database for clean testing")
+    print("✓ Database already cleaned by clean_test_db fixture")
 
     # Run the test data pipeline to populate with fixtures
     print("Running test data pipeline...")

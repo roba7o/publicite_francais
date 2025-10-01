@@ -36,7 +36,42 @@ def setup_test_environment():
     )
 
 
-# Original fixtures below
+@pytest.fixture(scope="session")
+def test_database():
+    """
+    Set up test database for all tests using application's database layer.
+
+    Uses the application's own database initialization and connection management.
+    """
+    from database.database import initialize_database
+
+    # Initialize database using application's own function
+    success = initialize_database()
+    assert success, "Failed to initialize test database"
+
+    # Tests will use get_session() from the application
+    yield "initialized"
+
+
+@pytest.fixture
+def clean_test_db(test_database):
+    """
+    Clean test database using application's database layer.
+
+    This ensures test isolation by clearing all data using the same
+    database functions that the application uses.
+    """
+    from database.database import clear_test_database
+
+    # Clear database using application's own function
+    success = clear_test_database()
+    assert success, "Failed to clear test database"
+
+    # Tests can now use get_session() and other database functions normally
+    yield
+
+
+# Component testing fixtures
 @pytest.fixture
 def factory():
     """ComponentFactory instance for testing."""
