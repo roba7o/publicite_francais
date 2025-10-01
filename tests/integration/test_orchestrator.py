@@ -46,9 +46,11 @@ class TestArticleOrchestrator:
         assert orchestrator.logger is not None
         assert orchestrator.component_factory is not None
 
-    @patch("core.orchestrator.TEST_MODE", True)
-    def test_process_site_test_mode(self, orchestrator, mock_site_config, sample_raw_article):
-        """Test processing site in TEST_MODE."""
+    @patch("core.orchestrator.ENVIRONMENT", "test")
+    def test_process_site_test_mode(
+        self, orchestrator, mock_site_config, sample_raw_article
+    ):
+        """Test processing site in test environment."""
         mock_collector = MagicMock()
         mock_validator = MagicMock()
 
@@ -58,21 +60,36 @@ class TestArticleOrchestrator:
         ]
         mock_validator.validate_and_extract.return_value = sample_raw_article
 
-        with patch.object(orchestrator.component_factory, 'create_collector', return_value=mock_collector), \
-             patch.object(orchestrator.component_factory, 'create_validator', return_value=mock_validator), \
-             patch("database.store_articles_batch", return_value=(1, 0)) as mock_store:
-
+        with (
+            patch.object(
+                orchestrator.component_factory,
+                "create_collector",
+                return_value=mock_collector,
+            ),
+            patch.object(
+                orchestrator.component_factory,
+                "create_validator",
+                return_value=mock_validator,
+            ),
+            patch("database.store_articles_batch", return_value=(1, 0)) as mock_store,
+        ):
             processed, attempted = orchestrator.process_site(mock_site_config)
 
             assert processed == 1
             assert attempted == 1
 
             # Verify component creation was called
-            orchestrator.component_factory.create_collector.assert_called_once_with(mock_site_config)
-            orchestrator.component_factory.create_validator.assert_called_once_with(mock_site_config)
+            orchestrator.component_factory.create_collector.assert_called_once_with(
+                mock_site_config
+            )
+            orchestrator.component_factory.create_validator.assert_called_once_with(
+                mock_site_config
+            )
 
             # Verify test sources were fetched
-            mock_validator.get_test_sources_from_directory.assert_called_once_with("test-site.fr")
+            mock_validator.get_test_sources_from_directory.assert_called_once_with(
+                "test-site.fr"
+            )
 
             # Verify validation was called
             mock_validator.validate_and_extract.assert_called_once()
@@ -80,23 +97,36 @@ class TestArticleOrchestrator:
             # Verify storage was called
             mock_store.assert_called_once()
 
-    @patch("core.orchestrator.TEST_MODE", False)
-    def test_process_site_live_mode(self, orchestrator, mock_site_config, sample_raw_article):
+    @patch("core.orchestrator.ENVIRONMENT", "development")
+    def test_process_site_live_mode(
+        self, orchestrator, mock_site_config, sample_raw_article
+    ):
         """Test processing site in live mode."""
         mock_collector = MagicMock()
         mock_validator = MagicMock()
 
         # Mock collector methods
-        mock_collector.get_article_urls.return_value = ["https://test-site.fr/article-1"]
+        mock_collector.get_article_urls.return_value = [
+            "https://test-site.fr/article-1"
+        ]
 
         # Mock validator methods
         mock_validator.get_soup_from_url.return_value = "<html><h1>Test</h1></html>"
         mock_validator.validate_and_extract.return_value = sample_raw_article
 
-        with patch.object(orchestrator.component_factory, 'create_collector', return_value=mock_collector), \
-             patch.object(orchestrator.component_factory, 'create_validator', return_value=mock_validator), \
-             patch("database.store_articles_batch", return_value=(1, 0)) as mock_store:
-
+        with (
+            patch.object(
+                orchestrator.component_factory,
+                "create_collector",
+                return_value=mock_collector,
+            ),
+            patch.object(
+                orchestrator.component_factory,
+                "create_validator",
+                return_value=mock_validator,
+            ),
+            patch("database.store_articles_batch", return_value=(1, 0)) as mock_store,
+        ):
             processed, attempted = orchestrator.process_site(mock_site_config)
 
             assert processed == 1
@@ -125,7 +155,11 @@ class TestArticleOrchestrator:
 
     def test_process_site_component_failure(self, orchestrator, mock_site_config):
         """Test handling component creation failure."""
-        with patch.object(orchestrator.component_factory, 'create_collector', side_effect=Exception("Component error")):
+        with patch.object(
+            orchestrator.component_factory,
+            "create_collector",
+            side_effect=Exception("Component error"),
+        ):
             processed, attempted = orchestrator.process_site(mock_site_config)
 
             assert processed == 0
@@ -139,10 +173,19 @@ class TestArticleOrchestrator:
         # Mock empty URL list
         mock_collector.get_article_urls.return_value = []
 
-        with patch.object(orchestrator.component_factory, 'create_collector', return_value=mock_collector), \
-             patch.object(orchestrator.component_factory, 'create_validator', return_value=mock_validator), \
-             patch("core.orchestrator.TEST_MODE", False):
-
+        with (
+            patch.object(
+                orchestrator.component_factory,
+                "create_collector",
+                return_value=mock_collector,
+            ),
+            patch.object(
+                orchestrator.component_factory,
+                "create_validator",
+                return_value=mock_validator,
+            ),
+            patch("core.orchestrator.ENVIRONMENT", "development"),
+        ):
             processed, attempted = orchestrator.process_site(mock_site_config)
 
             assert processed == 0
@@ -156,11 +199,16 @@ class TestArticleOrchestrator:
             {"site": "site3.fr", "enabled": False},  # This should be skipped
         ]
 
-        with patch.object(orchestrator, 'process_site') as mock_process:
+        with patch.object(orchestrator, "process_site") as mock_process:
             # Mock returns: (processed, attempted)
-            mock_process.side_effect = [(2, 3), (1, 2)]  # Only 2 calls for enabled sites
+            mock_process.side_effect = [
+                (2, 3),
+                (1, 2),
+            ]  # Only 2 calls for enabled sites
 
-            total_processed, total_attempted = orchestrator.process_all_sites(site_configs)
+            total_processed, total_attempted = orchestrator.process_all_sites(
+                site_configs
+            )
 
             assert total_processed == 3  # 2 + 1
             assert total_attempted == 5  # 3 + 2
@@ -173,7 +221,7 @@ class TestArticleOrchestrator:
         assert total_processed == 0
         assert total_attempted == 0
 
-    @patch("core.orchestrator.TEST_MODE", True)
+    @patch("core.orchestrator.ENVIRONMENT", "test")
     def test_process_site_no_test_sources(self, orchestrator, mock_site_config):
         """Test handling when no test sources are found."""
         mock_collector = MagicMock()
@@ -182,15 +230,24 @@ class TestArticleOrchestrator:
         # Mock empty test sources
         mock_validator.get_test_sources_from_directory.return_value = []
 
-        with patch.object(orchestrator.component_factory, 'create_collector', return_value=mock_collector), \
-             patch.object(orchestrator.component_factory, 'create_validator', return_value=mock_validator):
-
+        with (
+            patch.object(
+                orchestrator.component_factory,
+                "create_collector",
+                return_value=mock_collector,
+            ),
+            patch.object(
+                orchestrator.component_factory,
+                "create_validator",
+                return_value=mock_validator,
+            ),
+        ):
             processed, attempted = orchestrator.process_site(mock_site_config)
 
             assert processed == 0
             assert attempted == 0
 
-    @patch("core.orchestrator.TEST_MODE", True)
+    @patch("core.orchestrator.ENVIRONMENT", "test")
     def test_process_site_validation_failure(self, orchestrator, mock_site_config):
         """Test handling when validation fails."""
         mock_collector = MagicMock()
@@ -202,9 +259,18 @@ class TestArticleOrchestrator:
         ]
         mock_validator.validate_and_extract.return_value = None  # Validation failure
 
-        with patch.object(orchestrator.component_factory, 'create_collector', return_value=mock_collector), \
-             patch.object(orchestrator.component_factory, 'create_validator', return_value=mock_validator):
-
+        with (
+            patch.object(
+                orchestrator.component_factory,
+                "create_collector",
+                return_value=mock_collector,
+            ),
+            patch.object(
+                orchestrator.component_factory,
+                "create_validator",
+                return_value=mock_validator,
+            ),
+        ):
             processed, attempted = orchestrator.process_site(mock_site_config)
 
             assert processed == 0

@@ -25,15 +25,20 @@ MAIN_MODULE := main
 .DEFAULT_GOAL := help
 
 # Declare phony targets to avoid conflicts with files/directories
-.PHONY: run run-test-data lint format fix clean db-start db-stop db-clean db-migrate db-migrate-dry db-rebuild db-restart version-check
+.PHONY: run run-test-data test lint format fix clean db-start db-stop db-clean db-migrate db-migrate-dry db-rebuild db-restart version-check
 
 # ==================== CORE COMMANDS (Daily Usage) ====================
 
 run:  ## Run scraper locally (live mode)
-	TEST_MODE=false PYTHONPATH=$(SRC) $(PYTHON) -m $(MAIN_MODULE)
+	ENVIRONMENT=development PYTHONPATH=$(SRC) $(PYTHON) -m $(MAIN_MODULE)
 
 run-test-data:  ## Run scraper with test data (offline mode)
 	@./scripts/run-test-data.sh
+
+test:  ## Run all tests (unit + integration + performance)
+	@echo "\033[34m◆ Running test suite...\033[0m"
+	PYTHONPATH=$(SRC):. $(PYTEST) tests/ -v
+	@echo "\033[32m✓ Test suite complete!\033[0m"
 
 help:  ## Show available commands
 	@echo ""

@@ -94,9 +94,9 @@ def test_title_validation_without_h1(validator, soup_without_h1, monkeypatch):
 
 
 def test_url_fetch_in_test_mode(validator, monkeypatch):
-    """Test that URL fetching returns None when in TEST_MODE."""
+    """Test that URL fetching returns None when ENVIRONMENT=test."""
     monkeypatch.setattr(
-        "core.components.soup_validators.base_soup_validator.TEST_MODE", True
+        "core.components.soup_validators.base_soup_validator.ENVIRONMENT", "test"
     )
     warning_calls = []
     monkeypatch.setattr(
@@ -112,7 +112,7 @@ def test_url_fetch_in_test_mode(validator, monkeypatch):
 def test_url_fetch_successful(validator, monkeypatch):
     """Test successful URL fetching and parsing."""
     monkeypatch.setattr(
-        "core.components.soup_validators.base_soup_validator.TEST_MODE", False
+        "core.components.soup_validators.base_soup_validator.ENVIRONMENT", "development"
     )
 
     html = "<html><body><h1>Test</h1></body></html>" + "x" * 100  # Long enough content

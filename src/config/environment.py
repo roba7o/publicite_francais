@@ -27,8 +27,16 @@ def get_int(key: str, default: int) -> int:
 
 # Core settings
 DEBUG = get_bool("DEBUG", True)
-TEST_MODE = get_bool("TEST_MODE", False)
-PRODUCTION = get_bool("PRODUCTION", False)
+
+# Environment configuration
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development")  # development/test/production
+
+# Validate environment
+VALID_ENVIRONMENTS = {"development", "test", "production"}
+if ENVIRONMENT not in VALID_ENVIRONMENTS:
+    raise ValueError(
+        f"Invalid ENVIRONMENT: {ENVIRONMENT}. Must be one of: {VALID_ENVIRONMENTS}"
+    )
 
 # Database configuration
 DATABASE_CONFIG = {
@@ -44,8 +52,14 @@ CONCURRENT_FETCHERS = get_int("CONCURRENT_FETCHERS", 3)
 FETCH_TIMEOUT = get_int("FETCH_TIMEOUT", 30)
 
 
+# Schema configuration by environment
+SCHEMAS = {
+    "development": os.getenv("NEWS_DATA_DEV_SCHEMA", "news_data_dev"),
+    "test": os.getenv("NEWS_DATA_TEST_SCHEMA", "news_data_test"),
+    "production": os.getenv("NEWS_DATA_PROD_SCHEMA", "news_data"),
+}
+
+
 def get_news_data_schema() -> str:
-    """Get the news data schema name based on TEST_MODE."""
-    if TEST_MODE:
-        return os.getenv("NEWS_DATA_TEST_SCHEMA", "news_data_test")
-    return os.getenv("NEWS_DATA_DEV_SCHEMA", "news_data_dev")
+    """Get the news data schema name based on ENVIRONMENT."""
+    return SCHEMAS[ENVIRONMENT]

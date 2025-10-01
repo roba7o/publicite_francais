@@ -10,6 +10,7 @@ from sqlalchemy import create_engine, text
 
 from database.database import store_articles_batch, store_raw_article
 from database.models import RawArticle
+from config.environment import get_news_data_schema
 
 # Test database configuration
 TEST_DB_CONFIG = {
@@ -64,7 +65,8 @@ def clean_db(test_db):
     """Clean database before each test."""
     with test_db.connect() as conn:
         # Clean all tables
-        conn.execute(text("TRUNCATE TABLE news_data_dev.raw_articles CASCADE"))
+        schema = get_news_data_schema()
+        conn.execute(text(f"TRUNCATE TABLE {schema}.raw_articles CASCADE"))
         conn.execute(text("DELETE FROM migration_history"))
         conn.commit()
 
@@ -99,10 +101,11 @@ def test_store_single_article(clean_db):
 
     # Verify in database
     with clean_db.connect() as conn:
+        schema = get_news_data_schema()
         row = conn.execute(
-            text("""
+            text(f"""
             SELECT url, site, extracted_text, title, extraction_status
-            FROM news_data_dev.raw_articles
+            FROM {schema}.raw_articles
             WHERE id = :id
         """),
             {"id": article.id},
@@ -134,17 +137,18 @@ def test_store_batch_articles(clean_db):
 
     # Verify all in database
     with clean_db.connect() as conn:
+        schema = get_news_data_schema()
         count = conn.execute(
-            text("SELECT COUNT(*) FROM news_data_dev.raw_articles")
+            text(f"SELECT COUNT(*) FROM {schema}.raw_articles")
         ).fetchone()[0]
         assert count == 3
 
         # Check each article
         for article in articles:
             row = conn.execute(
-                text("""
+                text(f"""
                 SELECT url, site, raw_html
-                FROM news_data_dev.raw_articles
+                FROM {schema}.raw_articles
                 WHERE id = :id
             """),
                 {"id": article.id},
@@ -175,10 +179,11 @@ def test_duplicate_urls_allowed(clean_db):
 
     # Verify both stored with different UUIDs
     with clean_db.connect() as conn:
+        schema = get_news_data_schema()
         rows = conn.execute(
-            text("""
+            text(f"""
             SELECT id, url, raw_html
-            FROM news_data_dev.raw_articles
+            FROM {schema}.raw_articles
             WHERE url = :url
             ORDER BY scraped_at
         """),

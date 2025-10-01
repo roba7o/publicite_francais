@@ -24,7 +24,7 @@ from sqlalchemy.orm import (
 from sqlalchemy.pool import QueuePool  # for optimized connection pooling
 from sqlalchemy.sql import column, table  # for dynamic table references
 
-from config.environment import DATABASE_CONFIG, DEBUG, TEST_MODE, get_news_data_schema
+from config.environment import DATABASE_CONFIG, DEBUG, ENVIRONMENT, get_news_data_schema
 from database.models import RawArticle
 from utils.structured_logger import get_logger
 
@@ -57,7 +57,7 @@ def initialize_database(echo: bool | None = None) -> bool:
             echo = DEBUG
 
         # Determine pool parameters based on environment
-        is_test = TEST_MODE
+        is_test = ENVIRONMENT == "test"
         pool_size = 5 if is_test else 10
         max_overflow = 10 if is_test else 20
 

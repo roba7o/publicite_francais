@@ -20,7 +20,7 @@ def test_pipeline_runs_without_errors():
         ["make", "run-test-data"],
         capture_output=True,
         text=True,
-        timeout=60  # 1 minute timeout
+        timeout=60,  # 1 minute timeout
     )
 
     # Print basic info
@@ -32,7 +32,7 @@ def test_pipeline_runs_without_errors():
 
     # Show last bit of output to confirm completion
     if result.stdout:
-        lines = result.stdout.strip().split('\n')
+        lines = result.stdout.strip().split("\n")
         print(f"Last output line: {lines[-1] if lines else 'No output'}")
 
     # The test: did it complete without error?

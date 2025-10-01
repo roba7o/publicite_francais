@@ -1,6 +1,6 @@
 import sys
 
-from config.environment import TEST_MODE
+from config.environment import ENVIRONMENT
 from config.settings import MIN_SUCCESS_RATE_THRESHOLD
 from config.site_configs import get_site_configs
 from core.orchestrator import ArticleOrchestrator
@@ -18,7 +18,7 @@ def main() -> int | None:
     logger = get_logger(__name__)
 
     try:
-        mode = "TEST" if TEST_MODE else "LIVE"
+        mode = ENVIRONMENT.upper()
 
         visual_header("French News Collection", f"Database pipeline in {mode} mode")
 

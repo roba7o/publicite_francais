@@ -1,3 +1,11 @@
+"""
+Test configuration and fixtures for pytest.
+
+Includes both original test fixtures and automatic ENVIRONMENT=test setup.
+"""
+
+import os
+import sys
 from unittest import mock
 
 import pytest
@@ -5,7 +13,30 @@ from tests.fixtures.helpers import DummyClass
 
 from core.component_factory import ComponentFactory
 
+# Set ENVIRONMENT=test immediately when conftest.py is imported
+os.environ["ENVIRONMENT"] = "test"
 
+# Clear any cached environment modules
+modules_to_clear = [mod for mod in sys.modules.keys() if mod.startswith("config")]
+for mod in modules_to_clear:
+    del sys.modules[mod]
+
+
+@pytest.fixture(autouse=True, scope="session")
+def setup_test_environment():
+    """
+    Ensure ENVIRONMENT=test for all tests.
+
+    This is set at import time above, but this fixture ensures
+    it stays set throughout the test session.
+    """
+    # Verify ENVIRONMENT is set to test
+    assert os.environ.get("ENVIRONMENT") == "test", (
+        "ENVIRONMENT should be set to 'test'"
+    )
+
+
+# Original fixtures below
 @pytest.fixture
 def factory():
     """ComponentFactory instance for testing."""
