@@ -1,149 +1,141 @@
 """
-Unit Tests for URL Collectors.
+Essential unit tests for BaseUrlCollector.
 
-Tests each URL collector component in isolation to ensure they can be
-imported, instantiated, and have the expected interface. These tests
-focus on component structure rather than live web scraping.
+Tests core behavior without overcomplexity.
 """
 
+from unittest.mock import Mock
 
-class TestUrlCollectorImports:
-    """Test that all URL collector classes can be imported and instantiated."""
+import pytest
+import requests
 
-    def test_all_url_collectors_importable(self):
-        """Test that all configured URL collectors can be imported."""
-        from config.site_configs import SCRAPER_CONFIGS
-        from core.component_factory import ComponentFactory
-
-        for config in SCRAPER_CONFIGS:
-            if config.get("enabled", True):
-                url_collector_class = ComponentFactory.import_class(
-                    config["url_collector_class"]
-                )
-                assert url_collector_class is not None, (
-                    f"Should import {config['url_collector_class']}"
-                )
-
-                # Verify it can be instantiated with debug=True
-                collector = url_collector_class(debug=True)
-                assert collector is not None
-                assert hasattr(collector, "get_article_urls")
+from core.components.url_collectors.base_url_collector import BaseUrlCollector
 
 
-class TestUrlCollectorInterface:
-    """Test that URL collectors have consistent interface."""
+class MockUrlCollector(BaseUrlCollector):
+    """Concrete implementation for testing abstract base class."""
 
-    def test_all_collectors_have_required_methods(self):
-        """Test that all collectors implement the required interface."""
-        from core.components.url_collectors.france_info_url_collector import (
-            FranceInfoUrlCollector,
-        )
-        from core.components.url_collectors.ladepeche_fr_url_collector import (
-            LadepecheFrUrlCollector,
-        )
-        from core.components.url_collectors.slate_fr_url_collector import (
-            SlateFrUrlCollector,
-        )
-        from core.components.url_collectors.tf1_info_url_collector import (
-            TF1InfoUrlCollector,
-        )
-
-        collectors = [
-            SlateFrUrlCollector(debug=True),
-            FranceInfoUrlCollector(debug=True),
-            TF1InfoUrlCollector(debug=True),
-            LadepecheFrUrlCollector(debug=True),
-        ]
-
-        for collector in collectors:
-            # All collectors should have get_article_urls method
-            assert hasattr(collector, "get_article_urls")
-            assert callable(collector.get_article_urls)
-
-    def test_collectors_debug_mode(self):
-        """Test that collectors can be instantiated with debug mode."""
-        from core.components.url_collectors.slate_fr_url_collector import (
-            SlateFrUrlCollector,
-        )
-
-        # Test with debug=True
-        collector_debug = SlateFrUrlCollector(debug=True)
-        assert collector_debug is not None
-
-        # Test with debug=False
-        collector_no_debug = SlateFrUrlCollector(debug=False)
-        assert collector_no_debug is not None
+    def get_article_urls(self):
+        return ["https://test.com/article1", "https://test.com/article2"]
 
 
-class TestUrlCollectorConfiguration:
-    """Test URL collectors work with your site configuration structure."""
-
-    def test_collectors_work_with_component_factory(self, sample_site_config):
-        """Test that collectors can be created via component factory."""
-        from core.component_factory import ComponentFactory
-
-        factory = ComponentFactory()
-
-        # Test that factory can create collector from config
-        collector = factory.create_collector(sample_site_config)
-        assert collector is not None
-        assert hasattr(collector, "get_article_urls")
-
-    def test_collectors_match_site_configs(self):
-        """Test that all collectors referenced in site_configs can be imported."""
-        from config.site_configs import SCRAPER_CONFIGS
-        from core.component_factory import ComponentFactory
-
-        for config in SCRAPER_CONFIGS:
-            if config.get("enabled", True):
-                # Test that the URL collector class can be imported
-                url_collector_class = ComponentFactory.import_class(
-                    config["url_collector_class"]
-                )
-                assert url_collector_class is not None
-
-                # Test that it can be instantiated with the config kwargs
-                kwargs = config.get("url_collector_kwargs", {})
-                collector = url_collector_class(**kwargs)
-                assert collector is not None
-                assert hasattr(collector, "get_article_urls")
+@pytest.fixture
+def collector():
+    """Create a URL collector instance for testing."""
+    return MockUrlCollector()
 
 
-class TestUrlCollectorErrorHandling:
-    """Test URL collector error handling and edge cases."""
+def test_initialization(collector):
+    """Test collector can be created with basic parameters."""
+    assert collector.base_url == ""
+    assert hasattr(collector, "logger")
+    assert hasattr(collector, "debug")
 
-    def test_collector_with_invalid_kwargs(self):
-        """Test collectors handle invalid kwargs gracefully."""
-        from core.components.url_collectors.slate_fr_url_collector import (
-            SlateFrUrlCollector,
-        )
 
-        # Test with unexpected kwargs - should not crash
-        try:
-            collector = SlateFrUrlCollector(debug=True, invalid_param=True)
-            assert collector is not None
-        except TypeError:
-            # It's acceptable if collectors reject unknown kwargs
-            pass
+@pytest.mark.parametrize("debug_value", [True, False])
+def test_initialization_with_debug(debug_value):
+    """Test collector can be created with debug parameter."""
+    collector = MockUrlCollector(debug=debug_value)
+    assert collector.debug is debug_value
 
-    def test_get_article_urls_returns_list(self):
-        """Test that get_article_urls returns a list (even if empty in test mode)."""
-        from core.components.url_collectors.slate_fr_url_collector import (
-            SlateFrUrlCollector,
-        )
 
-        collector = SlateFrUrlCollector(debug=True)
+def test_make_request_successful(collector, monkeypatch):
+    """Test successful HTTP request."""
+    mock_response = Mock()
+    mock_response.raise_for_status.return_value = None
 
-        # In test mode, this might return empty list or mock data
-        # The important thing is that it returns a list and doesn't crash
-        try:
-            urls = collector.get_article_urls()
-            assert isinstance(urls, list)
-        except Exception as e:
-            # In isolated unit test, network calls might fail - that's OK
-            # We're testing the interface, not live functionality
-            assert (
-                "requests" in str(e).lower()
-                or "network" in str(e).lower()
-                or "connection" in str(e).lower()
-            )
+    monkeypatch.setattr(collector, "make_request", lambda url, timeout: mock_response)
+
+    result = collector._make_request("https://test.com")
+
+    assert result is mock_response
+
+
+def test_make_request_handles_exception(collector, monkeypatch):
+    """Test HTTP request handles exceptions."""
+    error_calls = []
+
+    def mock_make_request(*args, **kwargs):
+        raise requests.exceptions.RequestException("Network error")
+
+    def mock_error(*args, **kwargs):
+        error_calls.append(1)
+
+    monkeypatch.setattr(collector, "make_request", mock_make_request)
+    monkeypatch.setattr(collector.logger, "error", mock_error)
+
+    with pytest.raises(requests.exceptions.RequestException):
+        collector._make_request("https://test.com")
+
+    assert len(error_calls) == 1
+
+
+def test_log_results_in_debug_mode(collector, monkeypatch):
+    """Test that results are logged when debug is enabled."""
+    collector.debug = True
+    info_calls = []
+    debug_calls = []
+
+    monkeypatch.setattr(
+        collector.logger, "info", lambda *args: info_calls.append(args[0])
+    )
+    monkeypatch.setattr(
+        collector.logger, "debug", lambda *args: debug_calls.append(args[0])
+    )
+
+    urls = ["https://test.com/1", "https://test.com/2"]
+    collector._log_results(urls)
+
+    assert len(info_calls) == 1
+    assert "Found 2 article URLs" in info_calls[0]
+    assert len(debug_calls) == 2
+
+
+def test_log_results_not_in_debug_mode(collector, monkeypatch):
+    """Test that results are not logged when debug is disabled."""
+    collector.debug = False
+    info_calls = []
+
+    monkeypatch.setattr(collector.logger, "info", lambda *args: info_calls.append(1))
+
+    urls = ["https://test.com/1", "https://test.com/2"]
+    collector._log_results(urls)
+
+    assert len(info_calls) == 0
+
+
+@pytest.mark.parametrize(
+    "urls,expected",
+    [
+        # Test deduplication
+        (
+            [
+                "https://test.com/1",
+                "https://test.com/2",
+                "https://test.com/1",
+                "https://test.com/3",
+                "https://test.com/2",
+            ],
+            ["https://test.com/1", "https://test.com/2", "https://test.com/3"],
+        ),
+        # Test order preservation
+        (
+            ["https://b.com", "https://a.com", "https://c.com", "https://a.com"],
+            ["https://b.com", "https://a.com", "https://c.com"],
+        ),
+        # Test empty list
+        ([], []),
+        # Test no duplicates
+        (["https://a.com", "https://b.com"], ["https://a.com", "https://b.com"]),
+    ],
+)
+def test_deduplicate_urls(collector, urls, expected):
+    """Test URL deduplication removes duplicates while preserving order."""
+    result = collector._deduplicate_urls(urls)
+    assert result == expected
+
+
+def test_abstract_class_cannot_be_instantiated():
+    """Test that abstract base class cannot be instantiated directly."""
+    with pytest.raises(TypeError):
+        BaseUrlCollector()  # type: ignore

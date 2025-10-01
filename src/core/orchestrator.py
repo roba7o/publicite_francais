@@ -1,6 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from config.environment import CONCURRENT_FETCHERS, DEBUG, FETCH_TIMEOUT, TEST_MODE
+from config.environment import CONCURRENT_FETCHERS, DEBUG, FETCH_TIMEOUT, ENVIRONMENT
 from core.component_factory import ComponentFactory
 from utils.structured_logger import get_logger, visual_summary
 
@@ -25,7 +25,7 @@ class ArticleOrchestrator:
             return 0, 0
 
         # Get content based on mode
-        if TEST_MODE:
+        if ENVIRONMENT == "test":
             sites = soup_validator.get_test_sources_from_directory(config["site"])
         else:
             urls = url_collector.get_article_urls()

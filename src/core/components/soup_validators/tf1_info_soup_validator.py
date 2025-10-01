@@ -39,9 +39,9 @@ class Tf1InfoSoupValidator(BaseSoupValidator):
         TF1Info has sophisticated anti-bot protection that returns truncated
         content. Use the same bypass technique as the URL collector.
         """
-        from config.environment import TEST_MODE
+        from config.environment import ENVIRONMENT
 
-        if TEST_MODE:
+        if ENVIRONMENT == "test":
             self.logger.warning("URL fetch attempted in offline mode")
             return None
 

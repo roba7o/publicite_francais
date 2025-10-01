@@ -17,5 +17,22 @@ services:
       timeout: 5s
       retries: 5
 
+  postgres-test:
+    image: postgres:17-alpine
+    container_name: french_news_test_db
+    environment:
+      POSTGRES_DB: french_news_test
+      POSTGRES_USER: news_user
+      POSTGRES_PASSWORD: test_password
+    ports:
+      - "5433:5432"
+    tmpfs:
+      - /var/lib/postgresql/data  # In-memory for speed
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U news_user -d french_news_test"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
 volumes:
   postgres_data:

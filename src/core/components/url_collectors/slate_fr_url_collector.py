@@ -25,7 +25,7 @@ class SlateFrUrlCollector(BaseUrlCollector):
                         url = urljoin(self.base_url, url)
                     urls.append(url)
 
-            urls = list(set(urls))
+            urls = self._deduplicate_urls(urls)
             self._log_results(urls)
             return urls
 

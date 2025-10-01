@@ -24,7 +24,7 @@ from sqlalchemy.orm import (
 from sqlalchemy.pool import QueuePool  # for optimized connection pooling
 from sqlalchemy.sql import column, table  # for dynamic table references
 
-from config.environment import DATABASE_CONFIG, DEBUG, TEST_MODE, get_news_data_schema
+from config.environment import DATABASE_CONFIG, DEBUG, ENVIRONMENT, get_news_data_schema
 from database.models import RawArticle
 from utils.structured_logger import get_logger
 
@@ -57,7 +57,7 @@ def initialize_database(echo: bool | None = None) -> bool:
             echo = DEBUG
 
         # Determine pool parameters based on environment
-        is_test = TEST_MODE
+        is_test = ENVIRONMENT == "test"
         pool_size = 5 if is_test else 10
         max_overflow = 10 if is_test else 20
 
@@ -380,3 +380,40 @@ def _fallback_individual_inserts(articles: list[RawArticle]) -> tuple[int, int]:
         f"Fallback complete: {successful_count} successful, {failed_count} failed"
     )
     return successful_count, failed_count
+
+
+def clear_test_database() -> bool:
+    """
+    Clear all data from test database using application's database layer.
+
+    This function provides a safe way to clean the test database for testing
+    isolation. Only works in test environment for safety.
+
+    Returns:
+        True if cleared successfully, False on error
+
+    Raises:
+        ValueError: If called outside test environment
+    """
+    if ENVIRONMENT != "test":
+        raise ValueError(
+            f"clear_test_database can only be called in test environment, "
+            f"but ENVIRONMENT is '{ENVIRONMENT}'"
+        )
+
+    try:
+        schema = get_news_data_schema()
+
+        with get_session() as session:
+            # Clear all tables in the test schema
+            session.execute(text(f"TRUNCATE TABLE {schema}.raw_articles CASCADE"))
+            session.commit()
+
+        if DEBUG:
+            logger.info(f"Successfully cleared test database schema: {schema}")
+
+        return True
+
+    except Exception as e:
+        logger.error(f"Failed to clear test database: {e}")
+        return False

@@ -1,309 +1,126 @@
-#!/usr/bin/env python3
 """
-Database connection test script for French news scraper.
+Integration tests for database operations using application's database layer.
 
-This script tests the database connection infrastructure without modifying
-any existing scraper logic. It validates that the app can connect to the
-PostgreSQL container and perform basic operations.
-
-Usage:
-    python test_database_connection.py
-
-Requirements:
-    - PostgreSQL container running (docker compose up -d postgres)
-    - Dependencies installed (pip install -e .)
+These tests use the application's own database functions and connection
+management for proper integration testing.
 """
 
-import sys
-from pathlib import Path
-
+import pytest
 from sqlalchemy import text
 
-# Add src directory to Python path for imports
-src_path = Path(__file__).parent / "src"
-sys.path.insert(0, str(src_path))
-
-# Import after path modification
-from database.database import (  # noqa: E402
-    get_session,
-    initialize_database,
-)
-from utils.structured_logger import get_logger  # noqa: E402
+from database.database import store_articles_batch, store_raw_article, get_session
+from database.models import RawArticle
+from config.environment import get_news_data_schema
 
 
-def test_basic_connection():
-    """Test basic database connectivity."""
-    print("\033[34m■ Testing basic database connection...\033[0m")
+def test_store_single_article(clean_test_db):
+    """Test storing a single article."""
+    article = RawArticle(
+        url="https://slate.fr/test-article",
+        raw_html="<html><h1>Breaking News</h1><p>Important story</p></html>",
+        site="slate.fr",
+    )
 
-    # Test database initialization
-    if not initialize_database():
-        print("\033[31m× Failed to initialize database\033[0m")
-        raise AssertionError("Database initialization failed")
+    # Store using application's database function
+    result = store_raw_article(article)
+    assert result is True
 
-    # Test connection
-    try:
-        with get_session() as session:
-            result = session.execute(text("SELECT 1")).scalar()
-            assert result == 1
-        print("\033[32m✓ Database connection successful!\033[0m")
-    except Exception as e:
-        print(f"\033[31m× Database connection failed: {e}\033[0m")
-        raise AssertionError(f"Database connection failed: {e}") from e
+    # Verify in database using application's database layer
+    schema = get_news_data_schema()
 
+    with get_session() as session:
+        row = session.execute(
+            text(f"""
+            SELECT url, site, extracted_text, title, extraction_status
+            FROM {schema}.raw_articles
+            WHERE id = :id
+        """),
+            {"id": article.id},
+        ).fetchone()
 
-def test_raw_connection():
-    """Test database manager compatibility."""
-    print("\n\033[35m■ Testing database manager compatibility...\033[0m")
-
-    try:
-        # Direct session usage
-
-        # Test that we can get sessions from the manager
-        with get_session() as session:
-            # Test basic query using SQLAlchemy
-            result = session.execute(
-                text("SELECT current_database(), current_user, version()")
-            ).fetchone()
-
-            if result:
-                print(f"\033[32m✓ Connected to database: {result[0]}\033[0m")
-                print(f"\033[32m✓ Connected as user: {result[1]}\033[0m")
-                print(f"\033[32m✓ PostgreSQL version: {result[2].split(',')[0]}\033[0m")
-            else:
-                print("\033[31m✗ No result from database query\033[0m")
-
-        print("\033[32m✓ Database manager compatibility confirmed\033[0m")
-
-    except Exception as e:
-        print(f"\033[31m× Database manager test failed: {e}\033[0m")
-        raise AssertionError(f"Database manager test failed: {e}") from e
+        assert row is not None
+        assert row[0] == article.url
+        assert row[1] == article.site
+        assert row[2] == article.extracted_text  # Trafilatura extraction
+        assert row[3] == article.title
+        assert row[4] == article.extraction_status
 
 
-def test_sqlalchemy_connection():
-    """Test SQLAlchemy connection."""
-    print("\n\033[36m■ Testing SQLAlchemy connection...\033[0m")
-
-    try:
-        # Direct session usage
-
-        with get_session() as session:
-            from sqlalchemy import text
-
-            # Test schema query
-            result = session.execute(
-                text("""
-                SELECT table_name
-                FROM information_schema.tables
-                WHERE table_schema = 'news_data'
-                ORDER BY table_name
-            """)
-            )
-
-            tables = [row[0] for row in result]
-            print(f"\033[32m✓ Found {len(tables)} tables in news_data schema:\033[0m")
-            for table in tables:
-                print(f"   - {table}")
-
-    except Exception as e:
-        print(f"\033[31m× SQLAlchemy connection failed: {e}\033[0m")
-        raise AssertionError(f"SQLAlchemy connection failed: {e}") from e
-
-
-def test_news_sources_data():
-    """Test querying news sources data (with schema fallback)."""
-    print("\n\033[34m■ Testing news sources data...\033[0m")
-
-    try:
-        # Direct session usage
-
-        with get_session() as session:
-            from sqlalchemy import text
-
-            # Try different schema variations based on environment
-            schema_attempts = [
-                "news_data_test.news_sources",  # Test environment
-                "news_data_dev.news_sources",  # Dev environment
-                "news_data.news_sources",  # Legacy
-                "public.news_sources",  # Fallback
-            ]
-
-            sources = []
-            schema_used = None
-
-            for schema_table in schema_attempts:
-                try:
-                    result = session.execute(
-                        text(f"""
-                        SELECT name, base_url, enabled
-                        FROM {schema_table}
-                        ORDER BY name
-                    """)
-                    )
-                    sources = list(result)
-                    schema_used = schema_table
-                    break
-                except Exception:
-                    continue
-
-            if schema_used:
-                print(
-                    f"\033[32m✓ Found {len(sources)} news sources in {schema_used}:\033[0m"
-                )
-
-                for name, base_url, enabled in sources[:3]:  # Show first 3
-                    status = (
-                        "\033[32m● enabled\033[0m"
-                        if enabled
-                        else "\033[31m● disabled\033[0m"
-                    )
-                    print(f"   - {name}: {base_url} ({status})")
-                if len(sources) > 3:
-                    print(f"   ... and {len(sources) - 3} more")
-            else:
-                print(
-                    "\033[33m⚠ No news_sources table found in any schema - DB may need setup\033[0m"
-                )
-                # Don't fail the test - this is expected in fresh environments
-
-    except Exception as e:
-        print(f"\033[31m× News sources query failed: {e}\033[0m")
-        # Don't assert false here - allow graceful degradation
-        print(
-            "\033[33m⚠ This is expected if database schema hasn't been set up yet\033[0m"
+def test_store_batch_articles(clean_test_db):
+    """Test storing multiple articles in batch."""
+    articles = [
+        RawArticle(
+            url=f"https://franceinfo.fr/article-{i}",
+            raw_html=f"<html><h1>News {i}</h1><p>Content {i}</p></html>",
+            site="franceinfo.fr",
         )
-
-
-def test_health_check():
-    """Test basic database health check."""
-    print("\n\033[33m◆ Running database health check...\033[0m")
-
-    try:
-        # Simple health check - test basic connectivity and operations
-        with get_session() as session:
-            # Test 1: Basic query
-            result = session.execute(text("SELECT 1")).scalar()
-            assert result == 1
-            print("\033[32m✓ Basic query: OK\033[0m")
-
-            # Test 2: Check current settings
-            db_name = session.execute(text("SELECT current_database()")).scalar()
-            user_name = session.execute(text("SELECT current_user")).scalar()
-            print(f"\033[32m✓ Connected to: {db_name} as {user_name}\033[0m")
-
-            # Test 3: Check available schemas
-            schemas = session.execute(
-                text("""
-                SELECT schema_name
-                FROM information_schema.schemata
-                WHERE schema_name NOT LIKE 'pg_%'
-                AND schema_name != 'information_schema'
-                ORDER BY schema_name
-            """)
-            ).fetchall()
-
-            schema_names = [row[0] for row in schemas]
-            print(f"\033[32m✓ Available schemas: {', '.join(schema_names)}\033[0m")
-
-            # Test 4: Check if we have our expected schemas
-            expected_schemas = [
-                "news_data_test",
-                "news_data_dev",
-                "news_data",
-            ]
-            found_schemas = [s for s in expected_schemas if s in schema_names]
-
-            if found_schemas:
-                print(
-                    f"\033[32m✓ Found project schemas: {', '.join(found_schemas)}\033[0m"
-                )
-            else:
-                print(
-                    "\033[33m⚠ No project schemas found - DB may need initialization\033[0m"
-                )
-
-        print("\033[32m✓ Database health check passed\033[0m")
-
-    except Exception as e:
-        print(f"\033[31m× Health check failed: {e}\033[0m")
-        raise AssertionError(f"Health check failed: {e}") from e
-
-
-def main():
-    """Run all database connection tests."""
-    logger = get_logger("DatabaseConnectionTest")
-
-    print("\033[36m▲ French News Scraper - Database Connection Test\033[0m")
-    print("\033[36m" + "=" * 50 + "\033[0m")
-
-    logger.info("Starting database connection tests")
-
-    # Check if PostgreSQL container is running
-    print("\033[33m◆ Prerequisites:\033[0m")
-    print("   - PostgreSQL container should be running")
-    print("   - Run: docker compose up -d postgres")
-    print("   - Dependencies installed: pip install -e .")
-    print()
-
-    test_results = []
-
-    # Run all tests
-    tests = [
-        ("Basic Connection", test_basic_connection),
-        ("Raw psycopg2", test_raw_connection),
-        ("SQLAlchemy", test_sqlalchemy_connection),
-        ("News Sources Data", test_news_sources_data),
-        ("Health Check", test_health_check),
+        for i in range(3)
     ]
 
-    for test_name, test_func in tests:
-        print(f"\n{'=' * 20} {test_name} {'=' * 20}")
-        result = test_func()
-        test_results.append((test_name, result))
+    # Store using application's database function
+    successful, failed = store_articles_batch(articles)
+    assert successful == 3
+    assert failed == 0
 
-    # Summary
-    # ASCII art for completion
-    print("""
-\033[32m╭─────────────────────────────────────────────────╮
-│                 TEST SUMMARY                  │
-╰─────────────────────────────────────────────────╯\033[0m""")
+    # Verify all in database using application's database layer
+    schema = get_news_data_schema()
 
-    passed = 0
-    for test_name, result in test_results:
-        status = "\033[32m✓ PASS\033[0m" if result else "\033[31m× FAIL\033[0m"
-        print(f"   {status} - {test_name}")
-        if result:
-            passed += 1
+    with get_session() as session:
+        count = session.execute(
+            text(f"SELECT COUNT(*) FROM {schema}.raw_articles")
+        ).fetchone()[0]
+        assert count == 3
 
-    print(f"\n\033[33m◆ Overall: {passed}/{len(test_results)} tests passed\033[0m")
+        # Check each article
+        for article in articles:
+            row = session.execute(
+                text(f"""
+                SELECT url, site, raw_html
+                FROM {schema}.raw_articles
+                WHERE id = :id
+            """),
+                {"id": article.id},
+            ).fetchone()
 
-    if passed == len(test_results):
-        print("\n\033[32m✓ All tests passed! Database infrastructure is ready.\033[0m")
-        print("\033[35m◆ Database storage system is working correctly.\033[0m")
-        print("\033[34m▲ Database is ready for your future refactor steps.\033[0m")
-        logger.info(
-            "Database connection tests completed successfully",
-            extra={
-                "tests_passed": passed,
-                "total_tests": len(test_results),
-                "success_rate": f"{passed / len(test_results) * 100:.1f}%",
-            },
-        )
-        return 0
-    else:
-        print(
-            "\033[31m× Some tests failed. Check your PostgreSQL container and configuration.\033[0m"
-        )
-        print("\033[35m◆ Try: docker compose up -d postgres\033[0m")
-        logger.error(
-            "Database connection tests failed",
-            extra={
-                "tests_passed": passed,
-                "total_tests": len(test_results),
-                "failed_tests": [name for name, result in test_results if not result],
-            },
-        )
-        return 1
+            assert row is not None
+            assert row[0] == article.url
+            assert row[1] == article.site
+            assert row[2] == article.raw_html
 
 
-if __name__ == "__main__":
-    sys.exit(main())
+def test_duplicate_urls_allowed(clean_test_db):
+    """Test that duplicate URLs are stored with different UUIDs."""
+    article1 = RawArticle(
+        url="https://lemonde.fr/same-story",
+        raw_html="<html><h1>First Version</h1></html>",
+        site="lemonde.fr",
+    )
+    article2 = RawArticle(
+        url="https://lemonde.fr/same-story",  # Same URL
+        raw_html="<html><h1>Updated Version</h1></html>",
+        site="lemonde.fr",
+    )
+
+    # Store both using application's database function
+    assert store_raw_article(article1) is True
+    assert store_raw_article(article2) is True
+
+    # Verify both stored with different UUIDs using application's database layer
+    schema = get_news_data_schema()
+
+    with get_session() as session:
+        rows = session.execute(
+            text(f"""
+            SELECT id, url, raw_html
+            FROM {schema}.raw_articles
+            WHERE url = :url
+            ORDER BY scraped_at
+        """),
+            {"url": "https://lemonde.fr/same-story"},
+        ).fetchall()
+
+        assert len(rows) == 2
+        assert rows[0][0] != rows[1][0]  # Different UUIDs
+        assert rows[0][1] == rows[1][1]  # Same URL
+        assert "First Version" in rows[0][2]
+        assert "Updated Version" in rows[1][2]

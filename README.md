@@ -18,7 +18,7 @@ A Python-based web scraping application that extracts French news articles and s
 - **tldextract** - URL domain extraction
 
 ### Development & Testing
-- **pytest** - Testing framework -> CURRENTLY REFACTORING
+- **pytest** - Testing framework
 - **Ruff** - Modern Python linter and formatter (replaces Black + flake8)
 - **Docker Compose** - Container orchestration
 - **python-dotenv** - Environment variable management
@@ -67,8 +67,3 @@ make fix
 - TF1 Info
 
 ## TODO
-
-*Scrape traditional anki decks for top 6000 words and conjugations -> use to enrich static database*
-*django/flask application (tempted to learn flask) for spaced repitition logic*
-*use chatgpt API to generate flashcards for hot words from scraper*
-*ALL FUTURE ENHANCEMENTS ARE LISTED IN ISSUES ON PROJECT*

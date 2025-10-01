@@ -25,54 +25,61 @@ MAIN_MODULE := main
 .DEFAULT_GOAL := help
 
 # Declare phony targets to avoid conflicts with files/directories
-.PHONY: run run-test-data test test-unit test-integration test-performance help test-essential lint format fix clean db-start db-stop db-clean db-migrate db-migrate-dry db-rebuild db-restart version-check
+.PHONY: run run-test-data test test-unit test-integration test-e2e test-quick lint format fix clean db-start db-start-test db-stop db-clean db-migrate db-migrate-dry db-rebuild db-restart version-check
 
 # ==================== CORE COMMANDS (Daily Usage) ====================
 
 run:  ## Run scraper locally (live mode)
-	TEST_MODE=false PYTHONPATH=$(SRC) $(PYTHON) -m $(MAIN_MODULE)
+	ENVIRONMENT=development PYTHONPATH=$(SRC) $(PYTHON) -m $(MAIN_MODULE)
 
 run-test-data:  ## Run scraper with test data (offline mode)
 	@./scripts/run-test-data.sh
 
+test:  ## Run all tests (unit + integration + e2e)
+	@echo "\033[34m◆ Running complete test suite...\033[0m"
+	PYTHONPATH=$(SRC):. $(PYTEST) tests/ -v
+	@echo "\033[32m✓ Complete test suite passed!\033[0m"
 
-test:  ## Run all tests (unit + integration + performance)
-	@./scripts/run-tests.sh
+test-unit:  ## Run unit tests only (fast feedback)
+	@echo "\033[34m◆ Running unit tests...\033[0m"
+	PYTHONPATH=$(SRC):. $(PYTEST) tests/unit/ -v
+	@echo "\033[32m✓ Unit tests passed!\033[0m"
 
-test-unit:  ## Run unit tests only
-	@echo "\033[33m◆ Running unit tests...\033[0m"
-	@TEST_MODE=true PYTHONPATH=$(SRC) $(PYTEST) -v tests/unit/
-	@echo ""
-	@echo "\033[32m✓ Unit tests completed\033[0m"
+test-integration:  ## Run integration tests only
+	@echo "\033[34m◆ Running integration tests...\033[0m"
+	PYTHONPATH=$(SRC):. $(PYTEST) tests/integration/ -v
+	@echo "\033[32m✓ Integration tests passed!\033[0m"
 
-test-integration:  ## Run integration tests only (starts database automatically)
-	@echo "\033[33m◆ Ensuring database is running for integration tests...\033[0m"
-	@$(MAKE) db-start > /dev/null 2>&1
-	@echo "\033[33m◆ Running integration tests...\033[0m"
-	@TEST_MODE=true PYTHONPATH=$(SRC) $(PYTEST) -v tests/integration/
-	@echo ""
-	@echo "\033[32m✓ Integration tests completed\033[0m"
+test-e2e:  ## Run E2E pipeline tests (stages 1-5)
+	@echo "\033[34m◆ Running E2E pipeline tests...\033[0m"
+	PYTHONPATH=$(SRC):. $(PYTEST) tests/e2e/*.py -v
+	@echo "\033[32m✓ E2E pipeline tests passed!\033[0m"
 
-test-performance:  ## Run performance tests only (starts database automatically)
-	@echo "\033[33m◆ Ensuring database is running for performance tests...\033[0m"
-	@$(MAKE) db-start > /dev/null 2>&1
-	@echo "\033[33m◆ Running performance tests...\033[0m"
-	@TEST_MODE=true PYTHONPATH=$(SRC) $(PYTEST) -v tests/performance/ --tb=short
-	@echo ""
-	@echo "\033[32m✓ Performance tests completed\033[0m"
+test-quick:  ## Run unit + integration (skip E2E for speed)
+	@echo "\033[34m◆ Running quick test suite...\033[0m"
+	PYTHONPATH=$(SRC):. $(PYTEST) tests/unit/ tests/integration/ -v
+	@echo "\033[32m✓ Quick test suite passed!\033[0m"
 
 help:  ## Show available commands
 	@echo ""
 	@echo "\033[1m\033[36m========== CORE COMMANDS (Daily Usage) ==========\033[0m"
 	@echo "\033[36mrun              \033[0m Run scraper locally (live mode)"
 	@echo "\033[36mrun-test-data    \033[0m Run scraper with test data (offline mode)"
-	@echo "\033[36mtest             \033[0m Run all tests (unit + integration + performance)"
+	@echo ""
+	@echo "\033[33mTesting commands:\033[0m"
+	@echo "  \033[36mtest           \033[0m Run all tests (unit + integration + e2e)"
+	@echo "  \033[36mtest-unit      \033[0m Run unit tests only (fast feedback)"
+	@echo "  \033[36mtest-integration\033[0m Run integration tests only"
+	@echo "  \033[36mtest-e2e       \033[0m Run E2E pipeline tests (stages 1-5)"
+	@echo "  \033[36mtest-quick     \033[0m Run unit + integration (skip E2E)"
+	@echo ""
 	@echo "\033[36mhelp             \033[0m Show available commands"
 	@echo ""
 	@echo "\033[1m\033[33m========== UTILITY COMMANDS (Helpers & Maintenance) ==========\033[0m"
 	@echo ""
 	@echo "\033[33mDatabase utilities:\033[0m"
 	@echo "  \033[36mdb-start       \033[0m Start PostgreSQL database only"
+	@echo "  \033[36mdb-start-test  \033[0m Start both main and test databases"
 	@echo "  \033[36mdb-stop        \033[0m Stop all containers"
 	@echo "  \033[36mdb-clean       \033[0m Stop and remove all containers and volumes"
 	@echo "  \033[36mdb-migrate     \033[0m Run pending database migrations"
@@ -87,11 +94,6 @@ help:  ## Show available commands
 	@echo "  \033[36mfix             \033[0m Auto-format code and run all checks"
 	@echo "  \033[36mclean           \033[0m Remove __pycache__, .pyc files, and test artifacts"
 	@echo ""
-	@echo "\033[33mTesting utilities:\033[0m"
-	@echo "  \033[36mtest-unit       \033[0m Run unit tests only (fast, no database)"
-	@echo "  \033[36mtest-integration\033[0m Run integration tests only (requires database)"
-	@echo "  \033[36mtest-performance\033[0m Run performance tests only (with metrics)"
-	@echo "  \033[36mtest-essential  \033[0m Run essential working tests only"
 	@echo ""
 	@echo "\033[33mDevelopment utilities:\033[0m"
 	@echo "  \033[36mversion-check   \033[0m Compare local vs Docker versions for consistency"
@@ -107,6 +109,13 @@ db-start:  ## Start PostgreSQL database only
 	@echo "\033[33m⧗ Waiting for database to be ready...\033[0m"
 	@docker compose exec postgres sh -c 'until pg_isready -U news_user -d french_news; do sleep 1; done'
 	@echo "\033[32m✓ Database ready!\033[0m"
+
+db-start-test:  ## Start both main and test databases
+	@echo "\033[34m◆ Starting both databases...\033[0m"
+	docker compose up -d postgres postgres-test
+	@echo "\033[33m⧗ Waiting for databases to be ready...\033[0m"
+	@docker compose exec postgres sh -c 'until pg_isready -U news_user -d french_news; do sleep 1; done'
+	@echo "\033[32m✓ Both databases ready!\033[0m"
 
 db-stop:  ## Stop all containers
 	docker compose down
@@ -175,14 +184,6 @@ clean:  ## Remove __pycache__, .pyc files, and test artifacts
 	find . -name ".coverage*" -delete
 	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name "htmlcov" -exec rm -rf {} + 2>/dev/null || true
-
-# Development utilities
-test-essential:  ## Run essential working tests only
-	@echo "\033[33m◆ Running essential system tests...\033[0m"
-	@TEST_MODE=true PYTHONPATH=$(SRC) $(PYTEST) -v tests/unit/test_component_factory.py::TestConfiguration
-	@echo "\033[32m✓ Essential tests completed\033[0m"
-
-
 
 version-check:  ## Compare local vs Docker versions for consistency
 	@echo "\033[36m◆ Environment Version Comparison\033[0m"

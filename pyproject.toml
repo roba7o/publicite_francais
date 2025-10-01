@@ -60,15 +60,5 @@ ignore = [
 quote-style = "double"
 indent-style = "space"
 
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-pythonpath = ["src"]
-addopts = "-v --tb=short"
-markers = [
-    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-    "integration: marks tests as integration tests",
-    "e2e: marks tests as end-to-end tests",
-    "performance: marks tests as performance tests",
-]
 
 
