@@ -52,7 +52,7 @@ test-integration:  ## Run integration tests only
 
 test-e2e:  ## Run E2E pipeline tests (stages 1-5)
 	@echo "\033[34m◆ Running E2E pipeline tests...\033[0m"
-	PYTHONPATH=$(SRC):. $(PYTEST) tests/test_stage*.py -v
+	PYTHONPATH=$(SRC):. $(PYTEST) tests/e2e/*.py -v
 	@echo "\033[32m✓ E2E pipeline tests passed!\033[0m"
 
 test-quick:  ## Run unit + integration (skip E2E for speed)
