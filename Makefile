@@ -25,7 +25,7 @@ MAIN_MODULE := main
 .DEFAULT_GOAL := help
 
 # Declare phony targets to avoid conflicts with files/directories
-.PHONY: run run-test-data test test-unit test-integration test-performance help test-essential lint format fix clean db-start db-stop db-clean db-migrate db-migrate-dry db-rebuild db-restart version-check
+.PHONY: run run-test-data test test-unit test-integration test-e2e help test-essential lint format fix clean db-start db-stop db-clean db-migrate db-migrate-dry db-rebuild db-restart version-check
 
 # ==================== CORE COMMANDS (Daily Usage) ====================
 
@@ -36,12 +36,17 @@ run-test-data:  ## Run scraper with test data (offline mode)
 	@./scripts/run-test-data.sh
 
 
-test:  ## Run all tests (unit + integration + performance)
-	@./scripts/run-tests.sh
+test:  ## Run all tests (unit + integration + e2e)
+	@echo "\033[33m◆ Ensuring database is running for tests...\033[0m"
+	@$(MAKE) db-start > /dev/null 2>&1
+	@echo "\033[33m◆ Running complete test suite...\033[0m"
+	@ENVIRONMENT=test PYTHONPATH=$(SRC) $(PYTEST) -v
+	@echo ""
+	@echo "\033[32m✓ All tests completed successfully\033[0m"
 
 test-unit:  ## Run unit tests only
 	@echo "\033[33m◆ Running unit tests...\033[0m"
-	@TEST_MODE=true PYTHONPATH=$(SRC) $(PYTEST) -v tests/unit/
+	@ENVIRONMENT=test PYTHONPATH=$(SRC) $(PYTEST) -v tests/unit/
 	@echo ""
 	@echo "\033[32m✓ Unit tests completed\033[0m"
 
@@ -49,24 +54,24 @@ test-integration:  ## Run integration tests only (starts database automatically)
 	@echo "\033[33m◆ Ensuring database is running for integration tests...\033[0m"
 	@$(MAKE) db-start > /dev/null 2>&1
 	@echo "\033[33m◆ Running integration tests...\033[0m"
-	@TEST_MODE=true PYTHONPATH=$(SRC) $(PYTEST) -v tests/integration/
+	@ENVIRONMENT=test PYTHONPATH=$(SRC) $(PYTEST) -v tests/integration/
 	@echo ""
 	@echo "\033[32m✓ Integration tests completed\033[0m"
 
-test-performance:  ## Run performance tests only (starts database automatically)
-	@echo "\033[33m◆ Ensuring database is running for performance tests...\033[0m"
+test-e2e:  ## Run e2e tests only (starts database automatically)
+	@echo "\033[33m◆ Ensuring database is running for e2e tests...\033[0m"
 	@$(MAKE) db-start > /dev/null 2>&1
-	@echo "\033[33m◆ Running performance tests...\033[0m"
-	@TEST_MODE=true PYTHONPATH=$(SRC) $(PYTEST) -v tests/performance/ --tb=short
+	@echo "\033[33m◆ Running e2e tests...\033[0m"
+	@ENVIRONMENT=test PYTHONPATH=$(SRC) $(PYTEST) -v tests/e2e/
 	@echo ""
-	@echo "\033[32m✓ Performance tests completed\033[0m"
+	@echo "\033[32m✓ E2E tests completed\033[0m"
 
 help:  ## Show available commands
 	@echo ""
 	@echo "\033[1m\033[36m========== CORE COMMANDS (Daily Usage) ==========\033[0m"
 	@echo "\033[36mrun              \033[0m Run scraper locally (live mode)"
 	@echo "\033[36mrun-test-data    \033[0m Run scraper with test data (offline mode)"
-	@echo "\033[36mtest             \033[0m Run all tests (unit + integration + performance)"
+	@echo "\033[36mtest             \033[0m Run all tests (unit + integration + e2e)"
 	@echo "\033[36mhelp             \033[0m Show available commands"
 	@echo ""
 	@echo "\033[1m\033[33m========== UTILITY COMMANDS (Helpers & Maintenance) ==========\033[0m"
@@ -90,7 +95,7 @@ help:  ## Show available commands
 	@echo "\033[33mTesting utilities:\033[0m"
 	@echo "  \033[36mtest-unit       \033[0m Run unit tests only (fast, no database)"
 	@echo "  \033[36mtest-integration\033[0m Run integration tests only (requires database)"
-	@echo "  \033[36mtest-performance\033[0m Run performance tests only (with metrics)"
+	@echo "  \033[36mtest-e2e       \033[0m Run e2e tests only (requires database)"
 	@echo "  \033[36mtest-essential  \033[0m Run essential working tests only"
 	@echo ""
 	@echo "\033[33mDevelopment utilities:\033[0m"
@@ -112,10 +117,6 @@ db-stop:  ## Stop all containers
 	docker compose down
 
 db-clean:  ## Stop and remove all containers and volumes (DESTRUCTIVE!)
-	@if [ "$(PRODUCTION)" = "true" ]; then \
-		echo "\033[31m✗ BLOCKED: db-clean disabled in production mode\033[0m"; \
-		exit 1; \
-	fi
 	@echo "\033[31m⚠ WARNING: This will destroy ALL data and containers!\033[0m"
 	@read -p "Are you sure? (y/N): " confirm && [ "$$confirm" = "y" ] || exit 1
 	@echo "\033[33m◆ Stopping and removing containers...\033[0m"
@@ -132,19 +133,11 @@ db-migrate-dry:  ## Show what migrations would run (dry run)
 	@./scripts/check-migrations.sh
 
 db-rebuild:  ## Drop all tables and rebuild from scratch (DESTRUCTIVE!)
-	@if [ "$(PRODUCTION)" = "true" ]; then \
-		echo "\033[31m✗ BLOCKED: db-rebuild disabled in production mode\033[0m"; \
-		exit 1; \
-	fi
 	@echo "\033[31m⚠ WARNING: This will destroy ALL data and rebuild from scratch!\033[0m"
 	@read -p "Are you sure? (y/N): " confirm && [ "$$confirm" = "y" ] || exit 1
 	@./scripts/rebuild-db.sh
 
 db-restart:  ## Clean database and apply all migrations (DESTRUCTIVE!)
-	@if [ "$(PRODUCTION)" = "true" ]; then \
-		echo "\033[31m✗ BLOCKED: db-restart disabled in production mode\033[0m"; \
-		exit 1; \
-	fi
 	@echo "\033[31m⚠ WARNING: This will destroy ALL data and restart fresh!\033[0m"
 	@read -p "Are you sure? (y/N): " confirm && [ "$$confirm" = "y" ] || exit 1
 	@echo "\033[34m◆ Restarting database from scratch...\033[0m"

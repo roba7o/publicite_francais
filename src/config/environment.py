@@ -27,11 +27,12 @@ def get_int(key: str, default: int) -> int:
 
 # Core settings
 DEBUG = get_bool("DEBUG", True)
-TEST_MODE = get_bool("TEST_MODE", False)
+TEST_MODE = get_bool("TEST_MODE", False)  # Backwards compatibility
+ENVIRONMENT = os.getenv("ENVIRONMENT", "dev").lower()
 
 # Database configuration - clean separation by environment
 from config.database_config import DatabaseConfig
-DATABASE_CONFIG = DatabaseConfig.get_config(test_mode=TEST_MODE)
+DATABASE_CONFIG = DatabaseConfig.get_config(test_mode=(ENVIRONMENT == "test" or TEST_MODE))
 
 # Processing settings
 CONCURRENT_FETCHERS = get_int("CONCURRENT_FETCHERS", 3)

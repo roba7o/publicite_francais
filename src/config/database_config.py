@@ -31,5 +31,10 @@ class DatabaseConfig:
     @classmethod
     def get_config(cls, test_mode: bool = False) -> Dict[str, Any]:
         """Get database configuration for the specified environment."""
-        env = "test" if test_mode else "dev"
+        # Support both ENVIRONMENT and TEST_MODE for backwards compatibility
+        environment = os.getenv("ENVIRONMENT", "").lower()
+        if environment == "test" or test_mode:
+            env = "test"
+        else:
+            env = "dev"
         return cls.CONFIGS[env].copy()
