@@ -7,7 +7,6 @@ as part of the integration test suite.
 
 from sqlalchemy import text
 
-from config.environment import get_news_data_schema
 from database.database import (
     get_session,
     initialize_database,
@@ -45,18 +44,19 @@ class TestDatabaseConnectivity:
             assert result[2] is not None, "Database version should not be None"
 
     def test_environment_schema_access(self):
-        """Test that environment-specific schema is accessible."""
-        schema = get_news_data_schema()
-        assert schema is not None, "Schema name should be available"
-        assert isinstance(schema, str), "Schema name should be a string"
+        """Test that database configuration is accessible."""
+        from config.environment import DATABASE_CONFIG
+
+        assert DATABASE_CONFIG is not None, "Database config should be available"
+        assert isinstance(DATABASE_CONFIG, dict), "Database config should be a dict"
 
         # Test that we can query the schema
         with get_session() as session:
             result = session.execute(
-                text(f"""
+                text("""
                 SELECT table_name
                 FROM information_schema.tables
-                WHERE table_schema = '{schema.split(".")[0]}'
+                WHERE table_schema = 'public'
                 ORDER BY table_name
                 """)
             ).fetchall()
@@ -83,11 +83,11 @@ class TestDatabaseOperations:
         assert success, "Article should be stored successfully"
 
         # Verify it was stored by querying the database
-        schema = get_news_data_schema()
+        
         with get_session() as session:
             result = session.execute(
                 text(
-                    f"SELECT url, site, raw_html, content_length FROM {schema}.raw_articles WHERE url = :url"
+                    "SELECT url, site, raw_html, content_length FROM raw_articles WHERE url = :url"
                 ),
                 {"url": "https://test.example.com/article-1"},
             ).fetchone()
@@ -122,10 +122,10 @@ class TestDatabaseOperations:
         assert success2, "Second article should also be stored successfully"
 
         # In ELT approach, duplicates are allowed (for historical tracking)
-        schema = get_news_data_schema()
+        
         with get_session() as session:
             count = session.execute(
-                text(f"SELECT COUNT(*) FROM {schema}.raw_articles WHERE url = :url"),
+                text("SELECT COUNT(*) FROM raw_articles WHERE url = :url"),
                 {"url": "https://test.example.com/duplicate-test"},
             ).scalar()
 
@@ -152,11 +152,11 @@ class TestDatabaseOperations:
         # Note: attempted count may vary based on implementation (batch vs fallback)
 
         # Verify all were inserted by counting
-        schema = get_news_data_schema()
+        
         with get_session() as session:
             count = session.execute(
                 text(
-                    f"SELECT COUNT(*) FROM {schema}.raw_articles WHERE url LIKE :pattern"
+                    "SELECT COUNT(*) FROM raw_articles WHERE url LIKE :pattern"
                 ),
                 {"pattern": "https://test.example.com/bulk-test-%"},
             ).scalar()
@@ -169,15 +169,15 @@ class TestSchemaOperations:
 
     def test_table_exists(self):
         """Test that required tables exist in the schema."""
-        schema = get_news_data_schema()
+        
 
         with get_session() as session:
             # Check if raw_articles table exists
             result = session.execute(
-                text(f"""
+                text("""
                 SELECT COUNT(*)
                 FROM information_schema.tables
-                WHERE table_schema = '{schema.split(".")[0]}'
+                WHERE table_schema = 'public'
                 AND table_name = 'raw_articles'
                 """)
             ).scalar()
@@ -186,15 +186,15 @@ class TestSchemaOperations:
 
     def test_table_structure(self):
         """Test that raw_articles table has expected columns."""
-        schema = get_news_data_schema()
+        
 
         with get_session() as session:
             # Get table columns
             result = session.execute(
-                text(f"""
+                text("""
                 SELECT column_name, data_type, is_nullable
                 FROM information_schema.columns
-                WHERE table_schema = '{schema.split(".")[0]}'
+                WHERE table_schema = 'public'
                 AND table_name = 'raw_articles'
                 ORDER BY column_name
                 """)
@@ -222,11 +222,11 @@ class TestSchemaOperations:
 
     def test_database_permissions(self, clean_test_database):
         """Test that we have necessary database permissions."""
-        schema = get_news_data_schema()
+        
 
         with get_session() as session:
             # Test SELECT permission
-            session.execute(text(f"SELECT 1 FROM {schema}.raw_articles LIMIT 1"))
+            session.execute(text("SELECT 1 FROM raw_articles LIMIT 1"))
 
         # Test INSERT permission using the database function
         test_article = RawArticle(
@@ -242,7 +242,7 @@ class TestSchemaOperations:
             # Test UPDATE permission
             session.execute(
                 text(
-                    f"UPDATE {schema}.raw_articles SET site = :new_site WHERE url = :url"
+                    "UPDATE raw_articles SET site = :new_site WHERE url = :url"
                 ),
                 {
                     "new_site": "permission-updated.test.com",
@@ -253,7 +253,7 @@ class TestSchemaOperations:
 
             # Test DELETE permission
             session.execute(
-                text(f"DELETE FROM {schema}.raw_articles WHERE url = :url"),
+                text("DELETE FROM raw_articles WHERE url = :url"),
                 {"url": "https://permission.test.com/test"},
             )
             session.commit()

@@ -125,7 +125,7 @@ db-clean:  ## Stop and remove all containers and volumes (DESTRUCTIVE!)
 db-migrate:  ## Run pending database migrations
 	@echo "\033[34m◆ Running database migrations...\033[0m"
 	@$(MAKE) db-start > /dev/null 2>&1
-	@PYTHONPATH=$(SRC) $(PYTHON) database/migrations/run_migrations.py
+	@PYTHONPATH=$(SRC) $(PYTHON) -c "from database.migration_runner import MigrationRunner; runner = MigrationRunner(); results = runner.run_all_migrations(); print('✓ Migrations completed:', results)"
 	@echo "\033[32m✓ Migrations complete!\033[0m"
 
 db-migrate-dry:  ## Show what migrations would run (dry run)

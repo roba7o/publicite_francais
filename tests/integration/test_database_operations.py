@@ -89,18 +89,18 @@ def test_sqlalchemy_connection():
         with get_session() as session:
             from sqlalchemy import text
 
-            # Test schema query
+            # Test public schema query (schema-free approach)
             result = session.execute(
                 text("""
                 SELECT table_name
                 FROM information_schema.tables
-                WHERE table_schema = 'news_data'
+                WHERE table_schema = 'public'
                 ORDER BY table_name
             """)
             )
 
             tables = [row[0] for row in result]
-            print(f"\033[32m✓ Found {len(tables)} tables in news_data schema:\033[0m")
+            print(f"\033[32m✓ Found {len(tables)} tables in public schema:\033[0m")
             for table in tables:
                 print(f"   - {table}")
 
@@ -110,7 +110,7 @@ def test_sqlalchemy_connection():
 
 
 def test_news_sources_data():
-    """Test querying news sources data (with schema fallback)."""
+    """Test querying news sources data (schema-free approach)."""
     print("\n\033[34m■ Testing news sources data...\033[0m")
 
     try:
@@ -119,35 +119,19 @@ def test_news_sources_data():
         with get_session() as session:
             from sqlalchemy import text
 
-            # Try different schema variations based on environment
-            schema_attempts = [
-                "news_data_test.news_sources",  # Test environment
-                "news_data_dev.news_sources",  # Dev environment
-                "news_data.news_sources",  # Legacy
-                "public.news_sources",  # Fallback
-            ]
+            # Try to find news_sources table in current database
+            try:
+                result = session.execute(
+                    text("""
+                    SELECT name, base_url, enabled
+                    FROM news_sources
+                    ORDER BY name
+                """)
+                )
+                sources = list(result)
 
-            sources = []
-            schema_used = None
-
-            for schema_table in schema_attempts:
-                try:
-                    result = session.execute(
-                        text(f"""
-                        SELECT name, base_url, enabled
-                        FROM {schema_table}
-                        ORDER BY name
-                    """)
-                    )
-                    sources = list(result)
-                    schema_used = schema_table
-                    break
-                except Exception:
-                    continue
-
-            if schema_used:
                 print(
-                    f"\033[32m✓ Found {len(sources)} news sources in {schema_used}:\033[0m"
+                    f"\033[32m✓ Found {len(sources)} news sources:\033[0m"
                 )
 
                 for name, base_url, enabled in sources[:3]:  # Show first 3
@@ -159,9 +143,10 @@ def test_news_sources_data():
                     print(f"   - {name}: {base_url} ({status})")
                 if len(sources) > 3:
                     print(f"   ... and {len(sources) - 3} more")
-            else:
+
+            except Exception:
                 print(
-                    "\033[33m⚠ No news_sources table found in any schema - DB may need setup\033[0m"
+                    "\033[33m⚠ No news_sources table found - DB may need setup\033[0m"
                 )
                 # Don't fail the test - this is expected in fresh environments
 
@@ -169,7 +154,7 @@ def test_news_sources_data():
         print(f"\033[31m× News sources query failed: {e}\033[0m")
         # Don't assert false here - allow graceful degradation
         print(
-            "\033[33m⚠ This is expected if database schema hasn't been set up yet\033[0m"
+            "\033[33m⚠ This is expected if database tables haven't been set up yet\033[0m"
         )
 
 
@@ -204,21 +189,31 @@ def test_health_check():
             schema_names = [row[0] for row in schemas]
             print(f"\033[32m✓ Available schemas: {', '.join(schema_names)}\033[0m")
 
-            # Test 4: Check if we have our expected schemas
-            expected_schemas = [
-                "news_data_test",
-                "news_data_dev",
-                "news_data",
-            ]
-            found_schemas = [s for s in expected_schemas if s in schema_names]
-
-            if found_schemas:
+            # Test 4: Check for public schema (schema-free approach)
+            if 'public' in schema_names:
                 print(
-                    f"\033[32m✓ Found project schemas: {', '.join(found_schemas)}\033[0m"
+                    "\033[32m✓ Using public schema (schema-free approach)\033[0m"
                 )
+
+                # Check for our tables in public schema
+                tables = session.execute(
+                    text("""
+                    SELECT table_name
+                    FROM information_schema.tables
+                    WHERE table_schema = 'public'
+                    AND table_name IN ('raw_articles', 'word_events', 'stop_words')
+                    ORDER BY table_name
+                """)
+                ).fetchall()
+
+                table_names = [row[0] for row in tables]
+                if table_names:
+                    print(f"\033[32m✓ Found project tables: {', '.join(table_names)}\033[0m")
+                else:
+                    print("\033[33m⚠ No project tables found - DB may need migration\033[0m")
             else:
                 print(
-                    "\033[33m⚠ No project schemas found - DB may need initialization\033[0m"
+                    "\033[33m⚠ Public schema not found - DB configuration issue\033[0m"
                 )
 
         print("\033[32m✓ Database health check passed\033[0m")

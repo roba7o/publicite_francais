@@ -13,10 +13,11 @@ class TestBasicDatabaseConnectivity:
         """Test database connectivity without actual database operations."""
         # Database is always enabled (no CSV fallback)
         # This test verifies database configuration can be imported
-        from config.environment import get_news_data_schema
 
-        schema = get_news_data_schema()
-        assert isinstance(schema, str)
+        from config.environment import DATABASE_CONFIG
+
+        assert isinstance(DATABASE_CONFIG, dict)
+        assert "database" in DATABASE_CONFIG
 
     def test_database_models_import(self):
         """Test that database models can be imported."""

@@ -95,13 +95,15 @@ class TestConfiguration:
 
     def test_environment_configuration(self):
         """Test that environment configuration can be loaded."""
-        from config.environment import TEST_MODE, get_news_data_schema
+        from config.environment import TEST_MODE
 
         test_mode = TEST_MODE
         assert isinstance(test_mode, bool)
 
-        schema = get_news_data_schema()
-        assert isinstance(schema, str)
+        from config.environment import DATABASE_CONFIG
+
+        assert isinstance(DATABASE_CONFIG, dict)
+        assert "database" in DATABASE_CONFIG
 
 
 class TestUtilities:

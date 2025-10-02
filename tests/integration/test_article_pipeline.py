@@ -7,7 +7,6 @@ using your existing 16 HTML test files for deterministic, repeatable results.
 
 from sqlalchemy import text
 
-from config.environment import get_news_data_schema
 from config.site_configs import SCRAPER_CONFIGS
 from core.orchestrator import ArticleOrchestrator
 from database.database import get_session
@@ -104,9 +103,9 @@ class TestDeterministicPipeline:
 
         # Verify database storage
         with get_session() as session:
-            schema = get_news_data_schema()
+            
             db_count = session.execute(
-                text(f"SELECT COUNT(*) FROM {schema}.raw_articles")
+                text("SELECT COUNT(*) FROM raw_articles")
             ).scalar()
 
             assert db_count == total_processed, (
@@ -123,11 +122,11 @@ class TestDeterministicPipeline:
 
         # Check source distribution
         with get_session() as session:
-            schema = get_news_data_schema()
+            
             source_counts = session.execute(
-                text(f"""
+                text("""
                 SELECT site, COUNT(*) as article_count
-                FROM {schema}.raw_articles
+                FROM raw_articles
                 GROUP BY site
                 ORDER BY site
                 """)
@@ -172,9 +171,9 @@ class TestDeterministicPipeline:
 
         # Get first run count
         with get_session() as session:
-            schema = get_news_data_schema()
+            
             first_count = session.execute(
-                text(f"SELECT COUNT(*) FROM {schema}.raw_articles")
+                text("SELECT COUNT(*) FROM raw_articles")
             ).scalar()
 
         # Run pipeline second time
@@ -187,7 +186,7 @@ class TestDeterministicPipeline:
         # Get second run count
         with get_session() as session:
             second_count = session.execute(
-                text(f"SELECT COUNT(*) FROM {schema}.raw_articles")
+                text("SELECT COUNT(*) FROM raw_articles")
             ).scalar()
 
         # ELT approach allows duplicates for historical tracking

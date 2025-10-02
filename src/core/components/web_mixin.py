@@ -9,7 +9,6 @@ This mixin extends the HTTPSessionMixin to provide:
 Used by URL collectors and soup validators for improved performance and robustness.
 """
 
-from urllib.parse import urlparse
 
 import requests
 import tldextract

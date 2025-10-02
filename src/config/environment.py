@@ -28,24 +28,25 @@ def get_int(key: str, default: int) -> int:
 # Core settings
 DEBUG = get_bool("DEBUG", True)
 TEST_MODE = get_bool("TEST_MODE", False)
-PRODUCTION = get_bool("PRODUCTION", False)
 
-# Database configuration
-DATABASE_CONFIG = {
-    "host": os.getenv("POSTGRES_HOST", "localhost"),
-    "port": get_int("POSTGRES_PORT", 5432),
-    "database": os.getenv("POSTGRES_DB", "french_news"),
-    "user": os.getenv("POSTGRES_USER", "news_user"),
-    "password": os.getenv("POSTGRES_PASSWORD", ""),
-}
+# Database configuration - switches between dev and test databases
+if TEST_MODE:
+    DATABASE_CONFIG = {
+        "host": os.getenv("POSTGRES_HOST", "localhost"),
+        "port": get_int("POSTGRES_PORT_TEST", 5433),
+        "database": os.getenv("POSTGRES_DB_TEST", "french_news_test_db"),
+        "user": os.getenv("POSTGRES_USER", "news_user"),
+        "password": os.getenv("POSTGRES_PASSWORD", ""),
+    }
+else:
+    DATABASE_CONFIG = {
+        "host": os.getenv("POSTGRES_HOST", "localhost"),
+        "port": get_int("POSTGRES_PORT", 5432),
+        "database": os.getenv("POSTGRES_DB", "french_news_db"),
+        "user": os.getenv("POSTGRES_USER", "news_user"),
+        "password": os.getenv("POSTGRES_PASSWORD", ""),
+    }
 
 # Processing settings
 CONCURRENT_FETCHERS = get_int("CONCURRENT_FETCHERS", 3)
 FETCH_TIMEOUT = get_int("FETCH_TIMEOUT", 30)
-
-
-def get_news_data_schema() -> str:
-    """Get the news data schema name based on TEST_MODE."""
-    if TEST_MODE:
-        return os.getenv("NEWS_DATA_TEST_SCHEMA", "news_data_test")
-    return os.getenv("NEWS_DATA_DEV_SCHEMA", "news_data_dev")

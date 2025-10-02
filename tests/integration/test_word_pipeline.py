@@ -53,27 +53,24 @@ class TestWordPipeline:
     def test_stop_words_table_exists(self):
         """Test that stop words table exists and is populated."""
         from database import initialize_database, get_session
-        from config.environment import get_news_data_schema
         from sqlalchemy import text
 
         # Initialize database
         assert initialize_database()
 
-        schema_name = get_news_data_schema()
-
         with get_session() as session:
-            # Check stop words table exists and has data
-            result = session.execute(text(f"""
-                SELECT COUNT(*) FROM {schema_name}.stop_words
+            # Check stop words table exists and has data (schema-free approach)
+            result = session.execute(text("""
+                SELECT COUNT(*) FROM stop_words
                 WHERE language = 'fr'
             """))
             count = result.scalar()
             assert count > 0
 
             # Test specific stop word lookup
-            result = session.execute(text(f"""
+            result = session.execute(text("""
                 SELECT EXISTS(
-                    SELECT 1 FROM {schema_name}.stop_words
+                    SELECT 1 FROM stop_words
                     WHERE word = 'le' AND language = 'fr'
                 )
             """))

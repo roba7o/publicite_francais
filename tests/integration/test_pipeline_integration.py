@@ -10,7 +10,6 @@ import os
 
 import pytest
 
-from config.environment import get_news_data_schema
 from config.site_configs import SCRAPER_CONFIGS
 from core.orchestrator import ArticleOrchestrator
 
@@ -19,22 +18,24 @@ class TestScrapeUploadPipeline:
     """Test that SCRAPE → UPLOAD RAW SOUP pipeline produces consistent, expected results from test HTML files."""
 
     @pytest.fixture(autouse=True)
-    def setup_database(self):
-        """Ensure we're using the test database environment."""
-        os.environ["DATABASE_ENV"] = "test"
-        os.environ["TEST_MODE"] = "true"
+    def setup_clean_database(self):
+        """Ensure clean database state for each test."""
+        from database.database import initialize_database, get_session
+        from sqlalchemy import text
 
-        # No longer needed - using direct imports
-
-        # Initialize database for tests
-        from database.database import initialize_database
-
+        # Initialize database
         initialize_database()
 
-    def _get_test_schema(self) -> str:
-        """Get current schema name dynamically for tests."""
-        # Should be test schema since we set DATABASE_ENV=test in setup_database
-        return get_news_data_schema()
+        # Clean the test tables before each test
+        with get_session() as session:
+            session.execute(text("TRUNCATE raw_articles CASCADE;"))
+            session.commit()
+
+    def _get_database_name(self) -> str:
+        """Get current database name dynamically for tests."""
+        # Schema-free approach - just return simple database name
+        from config.environment import DATABASE_CONFIG
+        return DATABASE_CONFIG.get("database", "french_news_test_db")
 
     def test_html_file_counts(self):
         """Test that we have the expected number of HTML test files."""
@@ -73,17 +74,6 @@ class TestScrapeUploadPipeline:
 
     def test_database_article_extraction(self):
         """Test that articles are extracted and stored in database."""
-        # Clear articles table for clean test
-        from database.database import get_session
-
-        # Direct session usage
-        with get_session() as session:
-            from sqlalchemy import text
-
-            session.execute(
-                text(f"TRUNCATE {self._get_test_schema()}.raw_articles CASCADE;")
-            )
-            session.commit()
 
         # Run the database processor on all test files
         processed_count = 0
@@ -107,9 +97,12 @@ class TestScrapeUploadPipeline:
         )
 
         # Check that raw articles are actually in the database (ELT approach)
+        from database.database import get_session
+        from sqlalchemy import text
+
         with get_session() as session:
             raw_article_count = session.execute(
-                text(f"SELECT COUNT(*) FROM {self._get_test_schema()}.raw_articles")
+                text("SELECT COUNT(*) FROM raw_articles")
             ).scalar()
             assert raw_article_count == processed_count, (
                 f"Database has {raw_article_count} raw articles but processor reported {processed_count}"
@@ -117,18 +110,22 @@ class TestScrapeUploadPipeline:
 
     def test_source_distribution(self):
         """Test that articles are distributed correctly across sources."""
-        from database.database import get_session
+        # Run the extraction to populate data
+        processor = ArticleOrchestrator()
+        for config in SCRAPER_CONFIGS:
+            if config["enabled"]:
+                processor.process_site(config)
 
-        # Direct session usage
+        from database.database import get_session
 
         with get_session() as session:
             from sqlalchemy import text
 
             # Count raw articles per source (ELT approach)
             source_counts = session.execute(
-                text(f"""
+                text("""
                 SELECT site, COUNT(*) as article_count
-                FROM {self._get_test_schema()}.raw_articles
+                FROM raw_articles
                 GROUP BY site
                 ORDER BY site
             """)

@@ -24,7 +24,7 @@ from sqlalchemy.orm import (
 from sqlalchemy.pool import QueuePool  # for optimized connection pooling
 from sqlalchemy.sql import column, table  # for dynamic table references
 
-from config.environment import DATABASE_CONFIG, DEBUG, TEST_MODE, get_news_data_schema
+from config.environment import DATABASE_CONFIG, DEBUG, TEST_MODE
 from database.models import RawArticle
 from utils.structured_logger import get_logger
 
@@ -56,10 +56,9 @@ def initialize_database(echo: bool | None = None) -> bool:
         if echo is None:
             echo = DEBUG
 
-        # Determine pool parameters based on environment
-        is_test = TEST_MODE
-        pool_size = 5 if is_test else 10
-        max_overflow = 10 if is_test else 20
+        # Connection pool parameters optimized for environment
+        pool_size = 5 if TEST_MODE else 10
+        max_overflow = 10 if TEST_MODE else 20
 
         # Create engine with optimized connection pooling
         _engine = create_engine(
@@ -183,13 +182,8 @@ def store_raw_article(raw_article: RawArticle) -> bool:
     Returns:
         True if stored successfully, False on error
     """
-    schema_name = get_news_data_schema()
-
     try:
         with get_session() as session:
-            # Ensure schema exists (simple, idempotent check)
-            session.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema_name}"))
-
             # Use table() for cleaner insert
             raw_articles_table = table(
                 "raw_articles",
@@ -208,7 +202,6 @@ def store_raw_article(raw_article: RawArticle) -> bool:
                 column("summary"),
                 column("keywords"),
                 column("extraction_status"),
-                schema=schema_name,
             )
 
             stmt = raw_articles_table.insert().values(
@@ -264,8 +257,6 @@ def store_articles_batch(
     if not articles:
         return 0, 0
 
-    schema_name = get_news_data_schema()
-
     # Memory management: estimate size and chunk if needed for this batch
     estimated_size_mb = (
         sum(len(article.raw_html or "") for article in articles) / 1024 / 1024
@@ -295,9 +286,6 @@ def store_articles_batch(
 
     try:
         with get_session() as session:
-            # Ensure schema exists (simple, idempotent check)
-            session.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema_name}"))
-
             # Use SQLAlchemy's optimized bulk insert
             # Convert articles to dictionaries for bulk_insert_mappings
             article_dicts = [article.to_dict() for article in articles]
@@ -320,7 +308,6 @@ def store_articles_batch(
                 column("summary"),
                 column("keywords"),
                 column("extraction_status"),
-                schema=schema_name,
             )
 
             # Execute bulk insert
@@ -399,13 +386,8 @@ def store_word_events(word_events: list[dict]) -> bool:
     if not word_events:
         return True
 
-    schema_name = get_news_data_schema()
-
     try:
         with get_session() as session:
-            # Ensure schema exists
-            session.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema_name}"))
-
             # Use table() for bulk insert
             word_events_table = table(
                 "word_events",
@@ -413,7 +395,6 @@ def store_word_events(word_events: list[dict]) -> bool:
                 column("article_id"),
                 column("position_in_article"),
                 column("scraped_at"),
-                schema=schema_name,
             )
 
             # Execute bulk insert

@@ -186,16 +186,14 @@ def clean_test_database():
     """
     from sqlalchemy import text
 
-    from config.environment import get_news_data_schema
     from database.database import get_session, initialize_database
 
     # Initialize database
     initialize_database()
 
-    # Clean the test tables
+    # Clean the test tables (schema-free approach)
     with get_session() as session:
-        schema = get_news_data_schema()
-        session.execute(text(f"TRUNCATE {schema}.raw_articles CASCADE;"))
+        session.execute(text("TRUNCATE raw_articles CASCADE;"))
         session.commit()
 
     yield
@@ -257,7 +255,6 @@ def setup_test_environment(monkeypatch):
     # Force test mode for tests
     monkeypatch.setenv("TEST_MODE", "True")
     monkeypatch.setenv("DEBUG", "True")
-    monkeypatch.setenv("DATABASE_ENV", "test")
 
     # No longer needed - using direct imports
 
