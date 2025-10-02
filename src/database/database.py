@@ -174,7 +174,7 @@ def store_raw_article(raw_article: RawArticle) -> bool:
 
     Each article gets a unique UUID, allowing duplicate URLs to be stored
     as separate entries. This follows pure ELT approach where all scraped
-    data is preserved and deduplication is handled downstream by dbt.
+    data is preserved and deduplication is handled downstream.
 
     Args:
         raw_article: Raw scraped data with auto-generated UUID
@@ -312,7 +312,7 @@ def store_articles_batch(
 
             # Execute bulk insert
             """
-            SQL: INSERT INTO schema.raw_articles (columns...) VALUES (...), (...), ...
+            SQL: INSERT INTO raw_articles (columns...) VALUES (...), (...), ...
             """
             session.execute(raw_articles_table.insert(), article_dicts)
 

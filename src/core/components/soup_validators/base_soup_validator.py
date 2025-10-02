@@ -27,7 +27,7 @@ class BaseSoupValidator(WebMixin, ABC):
     Abstract base soup validator for pure ELT raw data collection.
 
     Each child soup validator handles domain-specific HTML structure but stores
-    only raw HTML content. All text processing happens downstream in dbt.
+    only raw HTML content. All text processing happens downstream.
 
     Contract:
     - Child classes MUST implement: validate_and_extract(soup, url) -> RawArticle | None
@@ -141,7 +141,7 @@ class BaseSoupValidator(WebMixin, ABC):
         Implementation Notes:
         - Store the ENTIRE HTML content in raw_html field
         - Set source to the domain name (e.g., "slate.fr")
-        - Let dbt handle all text processing downstream
+        - Let downstream processing handle all text processing
         - No title/content extraction here - pure raw storage
         """
         pass

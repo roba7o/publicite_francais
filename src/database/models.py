@@ -4,7 +4,7 @@ Data models for the article scraper system using ELT approach.
 ELT = Extract, Load, Transform
 - Extract: Scrape raw HTML
 - Load: Store raw data in database
-- Transform: Process with dbt
+- Transform: Process downstream
 """
 
 from dataclasses import dataclass, field
@@ -25,7 +25,7 @@ class RawArticle:
     Raw scraped data - no processing, just collection.
 
     This follows the ELT pattern where Python only collects raw data
-    and dbt handles all content processing and extraction.
+    and downstream processing handles all content extraction.
     """
 
     # Required fields
@@ -115,7 +115,7 @@ class RawArticle:
             # Remove punctuation and split into words
             words = re.findall(r'\b[a-záàâäéèêëíìîïóòôöúùûüÿç]+\b', text)
 
-            # Create word events for ALL words (no filtering - dbt will handle this)
+            # Create word events for ALL words (no filtering - downstream processing will handle this)
             word_events = []
             for position, word in enumerate(words):
                 # Only filter out very short words (< 2 characters)

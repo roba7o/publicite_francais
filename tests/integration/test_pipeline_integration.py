@@ -17,25 +17,7 @@ from core.orchestrator import ArticleOrchestrator
 class TestScrapeUploadPipeline:
     """Test that SCRAPE → UPLOAD RAW SOUP pipeline produces consistent, expected results from test HTML files."""
 
-    @pytest.fixture(autouse=True)
-    def setup_clean_database(self):
-        """Ensure clean database state for each test."""
-        from database.database import initialize_database, get_session
-        from sqlalchemy import text
 
-        # Initialize database
-        initialize_database()
-
-        # Clean the test tables before each test
-        with get_session() as session:
-            session.execute(text("TRUNCATE raw_articles CASCADE;"))
-            session.commit()
-
-    def _get_database_name(self) -> str:
-        """Get current database name dynamically for tests."""
-        # Schema-free approach - just return simple database name
-        from config.environment import DATABASE_CONFIG
-        return DATABASE_CONFIG.get("database", "french_news_test_db")
 
     def test_html_file_counts(self):
         """Test that we have the expected number of HTML test files."""
@@ -72,7 +54,7 @@ class TestScrapeUploadPipeline:
         )
         assert total_files == 16, f"Expected 16 total HTML files, got {total_files}"
 
-    def test_database_article_extraction(self):
+    def test_database_article_extraction(self, clean_test_database):
         """Test that articles are extracted and stored in database."""
 
         # Run the database processor on all test files
@@ -108,7 +90,7 @@ class TestScrapeUploadPipeline:
                 f"Database has {raw_article_count} raw articles but processor reported {processed_count}"
             )
 
-    def test_source_distribution(self):
+    def test_source_distribution(self, clean_test_database):
         """Test that articles are distributed correctly across sources."""
         # Run the extraction to populate data
         processor = ArticleOrchestrator()

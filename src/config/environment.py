@@ -29,23 +29,9 @@ def get_int(key: str, default: int) -> int:
 DEBUG = get_bool("DEBUG", True)
 TEST_MODE = get_bool("TEST_MODE", False)
 
-# Database configuration - switches between dev and test databases
-if TEST_MODE:
-    DATABASE_CONFIG = {
-        "host": os.getenv("POSTGRES_HOST", "localhost"),
-        "port": get_int("POSTGRES_PORT_TEST", 5433),
-        "database": os.getenv("POSTGRES_DB_TEST", "french_news_test_db"),
-        "user": os.getenv("POSTGRES_USER", "news_user"),
-        "password": os.getenv("POSTGRES_PASSWORD", ""),
-    }
-else:
-    DATABASE_CONFIG = {
-        "host": os.getenv("POSTGRES_HOST", "localhost"),
-        "port": get_int("POSTGRES_PORT", 5432),
-        "database": os.getenv("POSTGRES_DB", "french_news_db"),
-        "user": os.getenv("POSTGRES_USER", "news_user"),
-        "password": os.getenv("POSTGRES_PASSWORD", ""),
-    }
+# Database configuration - clean separation by environment
+from config.database_config import DatabaseConfig
+DATABASE_CONFIG = DatabaseConfig.get_config(test_mode=TEST_MODE)
 
 # Processing settings
 CONCURRENT_FETCHERS = get_int("CONCURRENT_FETCHERS", 3)
