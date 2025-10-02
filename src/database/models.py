@@ -103,6 +103,8 @@ class RawArticle:
 
     def _extract_french_words(self) -> None:
         """Extract French words from extracted text and create word events."""
+        from utils.structured_logger import get_logger
+
         if not self.extracted_text:
             self.word_events = []
             return
@@ -127,8 +129,10 @@ class RawArticle:
 
             self.word_events = word_events
 
-        except Exception:
-            # Don't break the pipeline on word extraction failures
+        except Exception as e:
+            # Log the error but don't break the pipeline on word extraction failures
+            logger = get_logger(__name__)
+            logger.warning(f"Word extraction failed for article {self.id}: {type(e).__name__}: {str(e)}")
             self.word_events = []
 
     def to_dict(self):
