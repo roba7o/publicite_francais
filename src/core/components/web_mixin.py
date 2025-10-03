@@ -9,7 +9,6 @@ This mixin extends the HTTPSessionMixin to provide:
 Used by URL collectors and soup validators for improved performance and robustness.
 """
 
-
 import requests
 import tldextract
 from bs4 import BeautifulSoup
@@ -128,7 +127,6 @@ class WebMixin:
         else:
             return session.request(method, url, timeout=timeout, **kwargs)
 
-
     def _extract_domain_parts(self, url: str) -> ExtractResult | None:
         """Extract domain components with error handling."""
         try:
@@ -156,5 +154,3 @@ class WebMixin:
         expected_registered = self._build_registered_domain(expected_extracted)
 
         return url_registered == expected_registered
-
-

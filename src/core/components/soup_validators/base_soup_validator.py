@@ -17,7 +17,7 @@ from pathlib import Path
 import requests
 from bs4 import BeautifulSoup
 
-from config.environment import DEBUG, TEST_MODE
+from config.environment import DEBUG, ENVIRONMENT
 from core.components.web_mixin import WebMixin
 from database.models import RawArticle
 
@@ -54,7 +54,7 @@ class BaseSoupValidator(WebMixin, ABC):
 
     def get_soup_from_url(self, url: str, max_retries: int = 3) -> BeautifulSoup | None:
         """Fetch and parse HTML from URL with retry logic."""
-        if TEST_MODE:
+        if ENVIRONMENT == "test":
             self.logger.warning("URL fetch attempted in offline mode")
             return None
 

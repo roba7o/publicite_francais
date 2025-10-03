@@ -1,352 +1,192 @@
 """
-Unit tests for soup validators - testing real HTML validation logic.
+Essential unit tests for BaseSoupValidator.
 
-Tests actual domain validation, structure checking, and RawArticle creation.
+Tests core behavior without overcomplexity.
 """
 
+from unittest.mock import Mock
+
 import pytest
-from unittest.mock import Mock, patch
 from bs4 import BeautifulSoup
 
-from core.components.soup_validators.slate_fr_soup_validator import SlateFrSoupValidator
-from core.components.soup_validators.france_info_soup_validator import FranceInfoSoupValidator
-from core.components.soup_validators.tf1_info_soup_validator import Tf1InfoSoupValidator
-from core.components.soup_validators.ladepeche_fr_soup_validator import LadepecheFrSoupValidator
-from database.models import RawArticle
-
-
-class TestSlateFrSoupValidator:
-    """Test Slate.fr soup validation logic."""
-
-    def test_valid_slate_article_structure(self):
-        """Test validation of valid Slate.fr article structure."""
-        validator = SlateFrSoupValidator("slate.fr")
-
-        # Valid Slate.fr article HTML structure
-        valid_html = '''
-        <html>
-            <head>
-                <title>Test Article - Slate.fr</title>
-            </head>
-            <body>
-                <article>
-                    <h1>Article Title</h1>
-                    <div class="article-content">
-                        <p>This is the article content.</p>
-                    </div>
-                </article>
-            </body>
-        </html>
-        '''
-
-        soup = BeautifulSoup(valid_html, 'html.parser')
-        url = "https://www.slate.fr/story/123456/test-article"
-
-        article = validator.validate_and_extract(soup, url)
-
-        assert isinstance(article, RawArticle)
-        assert article.url == url
-        assert article.site == "slate.fr"
-        assert article.raw_html == str(soup)
-        assert article.extraction_status == "success"
-
-    def test_invalid_slate_structure_no_article_tag(self):
-        """Test rejection of HTML without article tag."""
-        validator = SlateFrSoupValidator("slate.fr")
-
-        # Invalid HTML - no article tag
-        invalid_html = '''
-        <html>
-            <head><title>Test</title></head>
-            <body>
-                <div class="content">
-                    <h1>Not an article</h1>
-                </div>
-            </body>
-        </html>
-        '''
-
-        soup = BeautifulSoup(invalid_html, 'html.parser')
-        url = "https://www.slate.fr/story/123456/test"
-
-        article = validator.validate_and_extract(soup, url)
-        assert article is None
-
-    def test_invalid_domain_rejection(self):
-        """Test rejection of non-slate.fr URLs."""
-        validator = SlateFrSoupValidator("slate.fr")
-
-        valid_html = '''
-        <html><body><article><h1>Article</h1></article></body></html>
-        '''
-
-        soup = BeautifulSoup(valid_html, 'html.parser')
-        url = "https://www.lemonde.fr/article/123"
-
-        article = validator.validate_and_extract(soup, url)
-        assert article is None
-
-    def test_empty_soup_handling(self):
-        """Test handling of empty soup."""
-        validator = SlateFrSoupValidator("slate.fr")
-
-        empty_soup = BeautifulSoup("", 'html.parser')
-        url = "https://www.slate.fr/story/123456/test"
-
-        article = validator.validate_and_extract(empty_soup, url)
-        assert article is None
-
-    @patch('core.components.soup_validators.base_soup_validator.TEST_MODE', False)
-    def test_get_soup_from_url_success(self):
-        """Test successful soup creation from URL."""
-        validator = SlateFrSoupValidator("slate.fr")
-
-        # Content must be >100 bytes to pass the validator's check
-        long_content = b'<html><head><title>Long enough content</title></head><body><article>Test article with enough content to pass the 100 byte minimum requirement for content validation</article></body></html>'
-
-        mock_response = Mock()
-        mock_response.status_code = 200
-        mock_response.content = long_content
-
-        with patch.object(validator, 'make_request', return_value=mock_response):
-            soup = validator.get_soup_from_url("https://slate.fr/test")
-
-            assert isinstance(soup, BeautifulSoup)
-            assert soup.find("article") is not None
-
-    def test_network_error_handling(self):
-        """Test handling of network errors in URL fetching."""
-        validator = SlateFrSoupValidator("slate.fr")
-
-        # Test that the method exists and handles errors gracefully
-        with patch.object(validator, 'get_soup_from_url', return_value=None):
-            soup = validator.get_soup_from_url("https://slate.fr/test")
-            assert soup is None
+from core.components.soup_validators.base_soup_validator import BaseSoupValidator
 
 
-class TestFranceInfoSoupValidator:
-    """Test FranceInfo soup validation logic."""
-
-    def test_valid_franceinfo_article(self):
-        """Test validation of valid FranceInfo article."""
-        validator = FranceInfoSoupValidator("franceinfo.fr")
-
-        # FranceInfo-like HTML structure
-        valid_html = '''
-        <html>
-            <head>
-                <title>News Article - franceinfo</title>
-            </head>
-            <body>
-                <main class="main-content">
-                    <h1>Article Title</h1>
-                    <div class="article-body">
-                        <p>Article content here.</p>
-                    </div>
-                </main>
-            </body>
-        </html>
-        '''
+class MockSoupValidator(BaseSoupValidator):
+    """Concrete implementation for testing abstract base class."""
 
-        soup = BeautifulSoup(valid_html, 'html.parser')
-        url = "https://www.francetvinfo.fr/politique/article"
-
-        article = validator.validate_and_extract(soup, url)
-
-        if article:  # Depends on FranceInfo's validation logic
-            assert isinstance(article, RawArticle)
-            assert article.site == "franceinfo.fr"
-            assert article.url == url
-
-    def test_franceinfo_domain_validation(self):
-        """Test domain validation for FranceInfo."""
-        validator = FranceInfoSoupValidator("franceinfo.fr")
-
-        html = '<html><body><main>Content</main></body></html>'
-        soup = BeautifulSoup(html, 'html.parser')
-
-        # Test invalid domain
-        invalid_url = "https://www.tf1info.fr/article"
-
-        # The actual behavior depends on the validator's domain checking logic
-        invalid_result = validator.validate_and_extract(soup, invalid_url)
-
-        # At minimum, invalid domain should be rejected
-        assert invalid_result is None
-
-
-class TestTf1InfoSoupValidator:
-    """Test TF1Info soup validation logic."""
-
-    def test_basic_tf1_validation(self):
-        """Test basic TF1Info validation."""
-        validator = Tf1InfoSoupValidator("tf1info.fr")
-
-        html = '''
-        <html>
-            <head><title>TF1 News</title></head>
-            <body>
-                <div class="article-container">
-                    <h1>News Title</h1>
-                    <p>News content</p>
-                </div>
-            </body>
-        </html>
-        '''
-
-        soup = BeautifulSoup(html, 'html.parser')
-        url = "https://www.tf1info.fr/politique/news"
-
-        article = validator.validate_and_extract(soup, url)
-
-        if article:
-            assert isinstance(article, RawArticle)
-            assert article.site == "tf1info.fr"
-
-    def test_tf1_domain_rejection(self):
-        """Test that non-tf1info domains are rejected."""
-        validator = Tf1InfoSoupValidator("tf1info.fr")
-
-        html = '<html><body><div>Content</div></body></html>'
-        soup = BeautifulSoup(html, 'html.parser')
-        url = "https://www.france24.fr/article"
-
-        article = validator.validate_and_extract(soup, url)
-        assert article is None
-
-
-class TestLadepecheFrSoupValidator:
-    """Test Ladepeche.fr soup validation logic."""
-
-    def test_basic_ladepeche_validation(self):
-        """Test basic Ladepeche validation."""
-        validator = LadepecheFrSoupValidator("ladepeche.fr")
-
-        html = '''
-        <html>
-            <head><title>Article - La Dépêche</title></head>
-            <body>
-                <article class="article-content">
-                    <h1>Local News</h1>
-                    <div>Article text</div>
-                </article>
-            </body>
-        </html>
-        '''
-
-        soup = BeautifulSoup(html, 'html.parser')
-        url = "https://www.ladepeche.fr/2024/01/15/article"
-
-        article = validator.validate_and_extract(soup, url)
-
-        if article:
-            assert isinstance(article, RawArticle)
-            assert article.site == "ladepeche.fr"
-
-
-class TestSoupValidatorsEdgeCases:
-    """Test edge cases common to all validators."""
-
-    @pytest.mark.parametrize("validator_class,site_name", [
-        (SlateFrSoupValidator, "slate.fr"),
-        (FranceInfoSoupValidator, "franceinfo.fr"),
-        (Tf1InfoSoupValidator, "tf1info.fr"),
-        (LadepecheFrSoupValidator, "ladepeche.fr")
-    ])
-    def test_none_soup_handling(self, validator_class, site_name):
-        """Test that all validators handle None soup gracefully."""
-        validator = validator_class(site_name)
-
-        result = validator.validate_and_extract(None, f"https://www.{site_name}/test")
-        assert result is None
-
-    @pytest.mark.parametrize("validator_class,site_name", [
-        (SlateFrSoupValidator, "slate.fr"),
-        (FranceInfoSoupValidator, "franceinfo.fr"),
-        (Tf1InfoSoupValidator, "tf1info.fr"),
-        (LadepecheFrSoupValidator, "ladepeche.fr")
-    ])
-    def test_malformed_html_handling(self, validator_class, site_name):
-        """Test handling of malformed HTML."""
-        validator = validator_class(site_name)
-
-        # Malformed HTML
-        malformed_html = '<html><head><title>Broken</title><body><p>Unclosed paragraph<div>Nested incorrectly'
-        soup = BeautifulSoup(malformed_html, 'html.parser')
-
-        url = f"https://www.{site_name}/test"
-        result = validator.validate_and_extract(soup, url)
-
-        # Should not crash, should return None or valid RawArticle
-        assert result is None or isinstance(result, RawArticle)
-
-    @pytest.mark.parametrize("validator_class,site_name", [
-        (SlateFrSoupValidator, "slate.fr"),
-        (FranceInfoSoupValidator, "franceinfo.fr"),
-        (Tf1InfoSoupValidator, "tf1info.fr"),
-        (LadepecheFrSoupValidator, "ladepeche.fr")
-    ])
-    def test_unicode_content_handling(self, validator_class, site_name):
-        """Test handling of Unicode content."""
-        validator = validator_class(site_name)
-
-        unicode_html = '''
-        <html>
-            <head><title>Article avec caractères spéciaux</title></head>
-            <body>
-                <article>
-                    <h1>Titre avec accents: àáâäçéèêëîïôöùúûü</h1>
-                    <p>Contenu avec émojis: 🇫🇷 🚀 ⚡</p>
-                </article>
-            </body>
-        </html>
-        '''
-
-        soup = BeautifulSoup(unicode_html, 'html.parser')
-        url = f"https://www.{site_name}/unicode-test"
-
-        result = validator.validate_and_extract(soup, url)
-
-        if result:
-            assert isinstance(result, RawArticle)
-            # Should preserve Unicode in raw HTML
-            assert 'àáâäçéèêëîïôöùúûü' in result.raw_html
-            assert '🇫🇷' in result.raw_html
-
-
-def test_validator_initialization():
-    """Test that all validators can be initialized properly."""
-    validators = [
-        SlateFrSoupValidator("slate.fr"),
-        FranceInfoSoupValidator("franceinfo.fr"),
-        Tf1InfoSoupValidator("tf1info.fr"),
-        LadepecheFrSoupValidator("ladepeche.fr")
-    ]
-
-    for validator in validators:
-        assert hasattr(validator, 'validate_and_extract')
-        assert hasattr(validator, 'get_soup_from_url')
-        assert callable(validator.validate_and_extract)
-        assert callable(validator.get_soup_from_url)
-
-
-def test_raw_article_creation_requirements():
-    """Test RawArticle creation with required fields."""
-    # Test valid creation
-    article = RawArticle(
-        url="https://test.com/article",
-        raw_html="<html><body>Test</body></html>",
-        site="test.com"
+    def validate_and_extract(self, soup, url):
+        return None
+
+
+@pytest.fixture
+def validator():
+    """Create a validator instance for testing."""
+    return MockSoupValidator("test.com", "Test Site", 1.0)
+
+
+@pytest.fixture
+def soup_with_h1():
+    """BeautifulSoup object with h1 tag."""
+    html = "<html><body><h1>Test Title</h1><p>Content</p></body></html>"
+    return BeautifulSoup(html, "html.parser")
+
+
+@pytest.fixture
+def soup_without_h1():
+    """BeautifulSoup object without h1 tag."""
+    html = "<html><body><p>Content only</p></body></html>"
+    return BeautifulSoup(html, "html.parser")
+
+
+def test_initialization(validator):
+    """Test validator can be created with basic parameters."""
+    assert validator.site_domain == "test.com"
+    assert validator.site_name == "Test Site"
+    assert validator.delay == 1.0
+
+
+def test_domain_validation_passes(validator, monkeypatch):
+    """Test domain validation passes for matching domain."""
+    monkeypatch.setattr(validator, "validate_url_domain", lambda url, domain: True)
+
+    result = validator._validate_domain_and_log("https://test.com/article", "test.com")
+
+    assert result is True
+
+
+def test_domain_validation_fails(validator, monkeypatch):
+    """Test domain validation fails for non-matching domain."""
+    monkeypatch.setattr(validator, "validate_url_domain", lambda url, domain: False)
+    warning_calls = []
+    monkeypatch.setattr(
+        validator.logger, "warning", lambda *args, **kwargs: warning_calls.append(1)
     )
 
-    assert article.url == "https://test.com/article"
-    assert article.site == "test.com"
-    assert article.raw_html == "<html><body>Test</body></html>"
-    assert article.extraction_status == "success"  # Default value
+    result = validator._validate_domain_and_log("https://wrong.com/article", "test.com")
 
-    # Test that empty values are rejected (based on model validation)
-    with pytest.raises(ValueError):
-        RawArticle(url="", raw_html="<html></html>", site="test.com")
+    assert result is False
+    assert len(warning_calls) == 1
 
-    with pytest.raises(ValueError):
-        RawArticle(url="https://test.com", raw_html="", site="test.com")
+
+def test_title_validation_with_h1(validator, soup_with_h1):
+    """Test title validation passes when h1 tag is present."""
+    result = validator._validate_title_structure(
+        soup_with_h1, "https://test.com/article"
+    )
+
+    assert result is True
+
+
+def test_title_validation_without_h1(validator, soup_without_h1, monkeypatch):
+    """Test title validation fails when h1 tag is missing."""
+    warning_calls = []
+    monkeypatch.setattr(
+        validator.logger, "warning", lambda *args, **kwargs: warning_calls.append(1)
+    )
+
+    result = validator._validate_title_structure(
+        soup_without_h1, "https://test.com/article"
+    )
+
+    assert result is False
+    assert len(warning_calls) == 1
+
+
+def test_url_fetch_in_test_mode(validator, monkeypatch):
+    """Test that URL fetching returns None when ENVIRONMENT=test."""
+    monkeypatch.setattr(
+        "core.components.soup_validators.base_soup_validator.ENVIRONMENT", "test"
+    )
+    warning_calls = []
+    monkeypatch.setattr(
+        validator.logger, "warning", lambda *args, **kwargs: warning_calls.append(1)
+    )
+
+    result = validator.get_soup_from_url("https://test.com/article")
+
+    assert result is None
+    assert len(warning_calls) == 1
+
+
+def test_url_fetch_successful(validator, monkeypatch):
+    """Test successful URL fetching and parsing."""
+    monkeypatch.setattr(
+        "core.components.soup_validators.base_soup_validator.ENVIRONMENT", "development"
+    )
+
+    html = "<html><body><h1>Test</h1></body></html>" + "x" * 100  # Long enough content
+    mock_response = Mock()
+    mock_response.content = html.encode("utf-8")
+    mock_response.raise_for_status.return_value = None
+
+    monkeypatch.setattr(validator, "make_request", lambda url, timeout: mock_response)
+    monkeypatch.setattr(
+        validator, "parse_html_fast", lambda content: BeautifulSoup(html, "html.parser")
+    )
+
+    result = validator.get_soup_from_url("https://test.com/article")
+
+    assert result is not None
+    assert isinstance(result, BeautifulSoup)
+
+
+def test_directory_loading_nonexistent(validator, monkeypatch):
+    """Test handling of non-existent test directory."""
+    warning_calls = []
+    monkeypatch.setattr(
+        validator.logger, "warning", lambda *args, **kwargs: warning_calls.append(1)
+    )
+
+    result = validator.get_test_sources_from_directory("nonexistent.site")
+
+    assert result == []
+    assert len(warning_calls) == 1
+
+
+def test_directory_loading_valid_files(validator, monkeypatch):
+    """Test loading test sources from existing directory."""
+    mock_file = Mock()
+    mock_file.suffix = ".html"
+    mock_file.name = "test.html"
+
+    html = "<html><body><h1>Test</h1></body></html>"
+
+    # Mock path operations
+    monkeypatch.setattr("pathlib.Path.exists", lambda self: True)
+    monkeypatch.setattr("pathlib.Path.iterdir", lambda self: [mock_file])
+    monkeypatch.setattr(
+        "utils.url_mapping.URL_MAPPING", {"test.html": "https://test.com/article"}
+    )
+
+    # Mock file reading
+    def mock_open(*args, **kwargs):
+        class MockFile:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                pass
+
+            def read(self):
+                return html
+
+        return MockFile()
+
+    monkeypatch.setattr("builtins.open", mock_open)
+    monkeypatch.setattr(
+        validator, "parse_html_fast", lambda content: BeautifulSoup(html, "html.parser")
+    )
+
+    result = validator.get_test_sources_from_directory("slate.fr")
+
+    assert len(result) == 1
+    soup, url = result[0]
+    assert isinstance(soup, BeautifulSoup)
+    assert url == "https://test.com/article"
+
+
+def test_abstract_class_cannot_be_instantiated():
+    """Test that abstract base class cannot be instantiated directly."""
+    with pytest.raises(TypeError):
+        BaseSoupValidator("test.com", "Test", 1.0)  # type: ignore

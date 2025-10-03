@@ -106,10 +106,10 @@ class BaseUrlCollector(WebMixin, ABC):
     def _deduplicate_urls(self, urls: list[str]) -> list[str]:
         """
         Remove duplicate URLs while preserving order.
-        
+
         Args:
             urls: List of URLs that may contain duplicates
-            
+
         Returns:
             List with duplicates removed, order preserved
         """
