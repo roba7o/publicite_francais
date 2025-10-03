@@ -8,6 +8,8 @@ import os
 
 from dotenv import load_dotenv
 
+from config.database_config import DatabaseConfig
+
 # Load environment variables from .env file
 load_dotenv()
 
@@ -27,39 +29,12 @@ def get_int(key: str, default: int) -> int:
 
 # Core settings
 DEBUG = get_bool("DEBUG", True)
+TEST_MODE = get_bool("TEST_MODE", False)  # Backwards compatibility
+ENVIRONMENT = os.getenv("ENVIRONMENT", "dev").lower()
 
-# Environment configuration
-ENVIRONMENT = os.getenv("ENVIRONMENT", "development")  # development/test/production
-
-# Validate environment
-VALID_ENVIRONMENTS = {"development", "test", "production"}
-if ENVIRONMENT not in VALID_ENVIRONMENTS:
-    raise ValueError(
-        f"Invalid ENVIRONMENT: {ENVIRONMENT}. Must be one of: {VALID_ENVIRONMENTS}"
-    )
-
-# Database configuration
-DATABASE_CONFIG = {
-    "host": os.getenv("POSTGRES_HOST", "localhost"),
-    "port": get_int("POSTGRES_PORT", 5432),
-    "database": os.getenv("POSTGRES_DB", "french_news"),
-    "user": os.getenv("POSTGRES_USER", "news_user"),
-    "password": os.getenv("POSTGRES_PASSWORD", ""),
-}
+# Database configuration - clean separation by environment
+DATABASE_CONFIG = DatabaseConfig.get_config(test_mode=(ENVIRONMENT == "test" or TEST_MODE))
 
 # Processing settings
 CONCURRENT_FETCHERS = get_int("CONCURRENT_FETCHERS", 3)
 FETCH_TIMEOUT = get_int("FETCH_TIMEOUT", 30)
-
-
-# Schema configuration by environment
-SCHEMAS = {
-    "development": os.getenv("NEWS_DATA_DEV_SCHEMA", "news_data_dev"),
-    "test": os.getenv("NEWS_DATA_TEST_SCHEMA", "news_data_test"),
-    "production": os.getenv("NEWS_DATA_PROD_SCHEMA", "news_data"),
-}
-
-
-def get_news_data_schema() -> str:
-    """Get the news data schema name based on ENVIRONMENT."""
-    return SCHEMAS[ENVIRONMENT]

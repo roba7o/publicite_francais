@@ -2,7 +2,7 @@
 Pure ELT Ladepeche.fr parser for raw HTML storage.
 
 Handles Ladepeche.fr domain-specific HTML structure identification
-but stores only raw HTML. All content extraction happens in dbt.
+but stores only raw HTML. All content extraction happens downstream.
 """
 
 from bs4 import BeautifulSoup, Tag
@@ -16,7 +16,7 @@ class LadepecheFrSoupValidator(BaseSoupValidator):
     Pure ELT parser for Ladepeche.fr articles.
     Responsibility: Identify valid Ladepeche.fr articles and store raw HTML.
     Domain logic: Understands Ladepeche.fr HTML structure for validation.
-    No text processing - that's handled by dbt downstream.
+    No text processing - that's handled by downstream processing.
     """
 
     def __init__(self, site_name: str, debug: bool = False) -> None:
@@ -37,7 +37,7 @@ class LadepecheFrSoupValidator(BaseSoupValidator):
         Domain-specific logic:
         - Checks for article content area (various patterns for Ladepeche.fr)
         - Validates basic article structure exists
-        - Stores complete HTML for dbt processing
+        - Stores complete HTML for downstream processing
 
         Args:
             soup: BeautifulSoup object of Ladepeche.fr article page
@@ -68,7 +68,7 @@ class LadepecheFrSoupValidator(BaseSoupValidator):
             if not self._validate_title_structure(soup, url):
                 return None
 
-            # Store raw HTML - let dbt handle all content extraction
+            # Store raw HTML - let downstream processing handle all content extraction
             return RawArticle(
                 url=url,
                 raw_html=str(soup),  # Complete HTML including all metadata

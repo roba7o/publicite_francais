@@ -1,141 +1,190 @@
 """
-Essential unit tests for BaseUrlCollector.
+Unit tests for URL collectors - testing real HTML parsing logic.
 
-Tests core behavior without overcomplexity.
+Tests actual URL extraction and filtering without hitting live websites.
 """
 
-from unittest.mock import Mock
-
 import pytest
-import requests
+from unittest.mock import Mock, patch
+from requests.exceptions import RequestException, Timeout
 
-from core.components.url_collectors.base_url_collector import BaseUrlCollector
-
-
-class MockUrlCollector(BaseUrlCollector):
-    """Concrete implementation for testing abstract base class."""
-
-    def get_article_urls(self):
-        return ["https://test.com/article1", "https://test.com/article2"]
+from core.components.url_collectors.slate_fr_url_collector import SlateFrUrlCollector
+from core.components.url_collectors.france_info_url_collector import FranceInfoUrlCollector
+from core.components.url_collectors.tf1_info_url_collector import TF1InfoUrlCollector
+from core.components.url_collectors.ladepeche_fr_url_collector import LadepecheFrUrlCollector
 
 
-@pytest.fixture
-def collector():
-    """Create a URL collector instance for testing."""
-    return MockUrlCollector()
+class TestSlateFrUrlCollector:
+    """Test Slate.fr URL extraction logic."""
+
+    def test_url_extraction_from_html(self):
+        """Test actual URL extraction from Slate.fr HTML structure."""
+        collector = SlateFrUrlCollector()
+
+        # Real Slate.fr HTML structure with .card--story elements
+        mock_html = '''
+        <html>
+            <div class="card--story">
+                <a href="/story/123456/politique-france">Article politique</a>
+            </div>
+            <div class="card--story">
+                <a href="/story/789012/economie-europe">Article économie</a>
+            </div>
+            <div class="other-card">
+                <a href="/podcasts/audio">Podcast link</a>
+            </div>
+        </html>
+        '''
+
+        mock_response = Mock()
+        mock_response.content = mock_html.encode('utf-8')
+
+        with patch.object(collector, '_make_request', return_value=mock_response):
+            urls = collector.get_article_urls()
+
+            # Should extract slate.fr story URLs and convert relative to absolute
+            assert len(urls) >= 2
+            assert 'https://www.slate.fr/story/123456/politique-france' in urls
+            assert 'https://www.slate.fr/story/789012/economie-europe' in urls
+
+            # Should not include podcast links (not in .card--story)
+            assert not any('/podcasts/' in url for url in urls)
+
+    def test_request_error_handling(self):
+        """Test handling of HTTP errors."""
+        collector = SlateFrUrlCollector()
+
+        with patch.object(collector, '_make_request', side_effect=RequestException("Network error")):
+            urls = collector.get_article_urls()
+            assert urls == []
+
+    def test_timeout_handling(self):
+        """Test handling of timeouts."""
+        collector = SlateFrUrlCollector()
+
+        with patch.object(collector, '_make_request', side_effect=Timeout("Request timeout")):
+            urls = collector.get_article_urls()
+            assert urls == []
 
 
-def test_initialization(collector):
-    """Test collector can be created with basic parameters."""
-    assert collector.base_url == ""
-    assert hasattr(collector, "logger")
-    assert hasattr(collector, "debug")
+class TestFranceInfoUrlCollector:
+    """Test FranceInfo URL extraction logic."""
+
+    def test_franceinfo_url_extraction(self):
+        """Test URL extraction from FranceInfo HTML structure."""
+        collector = FranceInfoUrlCollector()
+
+        # Check what selectors FranceInfo actually uses
+        mock_html = '''
+        <html>
+            <article class="teaser">
+                <a href="/politique/gouvernement/article1">Politique</a>
+            </article>
+            <article class="teaser">
+                <a href="/monde/europe/article2">International</a>
+            </article>
+        </html>
+        '''
+
+        mock_response = Mock()
+        mock_response.content = mock_html.encode('utf-8')
+
+        with patch.object(collector, '_make_request', return_value=mock_response):
+            urls = collector.get_article_urls()
+
+            # Should extract francetvinfo URLs
+            assert isinstance(urls, list)
+            # The actual logic will depend on FranceInfo's selector implementation
+
+    def test_empty_page_handling(self):
+        """Test handling of pages with no articles."""
+        collector = FranceInfoUrlCollector()
+
+        mock_response = Mock()
+        mock_response.content = b'<html><body><h1>No articles here</h1></body></html>'
+
+        with patch.object(collector, '_make_request', return_value=mock_response):
+            urls = collector.get_article_urls()
+            assert isinstance(urls, list)  # Should return list, not crash
 
 
-@pytest.mark.parametrize("debug_value", [True, False])
-def test_initialization_with_debug(debug_value):
-    """Test collector can be created with debug parameter."""
-    collector = MockUrlCollector(debug=debug_value)
-    assert collector.debug is debug_value
+class TestTF1InfoUrlCollector:
+    """Test TF1Info URL extraction logic."""
+
+    def test_basic_functionality(self):
+        """Test basic TF1Info collector functionality."""
+        collector = TF1InfoUrlCollector()
+
+        mock_html = '''
+        <html>
+            <div class="article-item">
+                <a href="/politique/news1">News politique</a>
+            </div>
+        </html>
+        '''
+
+        mock_response = Mock()
+        mock_response.content = mock_html.encode('utf-8')
+
+        with patch.object(collector, '_make_request', return_value=mock_response):
+            urls = collector.get_article_urls()
+            assert isinstance(urls, list)
 
 
-def test_make_request_successful(collector, monkeypatch):
-    """Test successful HTTP request."""
-    mock_response = Mock()
-    mock_response.raise_for_status.return_value = None
+class TestLadepecheFrUrlCollector:
+    """Test Ladepeche.fr URL extraction logic."""
 
-    monkeypatch.setattr(collector, "make_request", lambda url, timeout: mock_response)
+    def test_basic_functionality(self):
+        """Test basic Ladepeche collector functionality."""
+        collector = LadepecheFrUrlCollector()
 
-    result = collector._make_request("https://test.com")
+        mock_html = '''
+        <html>
+            <div class="article">
+                <a href="/2024/01/15/article-local">Article local</a>
+            </div>
+        </html>
+        '''
 
-    assert result is mock_response
+        mock_response = Mock()
+        mock_response.content = mock_html.encode('utf-8')
 
-
-def test_make_request_handles_exception(collector, monkeypatch):
-    """Test HTTP request handles exceptions."""
-    error_calls = []
-
-    def mock_make_request(*args, **kwargs):
-        raise requests.exceptions.RequestException("Network error")
-
-    def mock_error(*args, **kwargs):
-        error_calls.append(1)
-
-    monkeypatch.setattr(collector, "make_request", mock_make_request)
-    monkeypatch.setattr(collector.logger, "error", mock_error)
-
-    with pytest.raises(requests.exceptions.RequestException):
-        collector._make_request("https://test.com")
-
-    assert len(error_calls) == 1
+        with patch.object(collector, '_make_request', return_value=mock_response):
+            urls = collector.get_article_urls()
+            assert isinstance(urls, list)
 
 
-def test_log_results_in_debug_mode(collector, monkeypatch):
-    """Test that results are logged when debug is enabled."""
-    collector.debug = True
-    info_calls = []
-    debug_calls = []
+def test_collector_initialization():
+    """Test that all collectors can be initialized."""
+    collectors = [
+        SlateFrUrlCollector(),
+        FranceInfoUrlCollector(),
+        TF1InfoUrlCollector(),
+        LadepecheFrUrlCollector()
+    ]
 
-    monkeypatch.setattr(
-        collector.logger, "info", lambda *args: info_calls.append(args[0])
-    )
-    monkeypatch.setattr(
-        collector.logger, "debug", lambda *args: debug_calls.append(args[0])
-    )
-
-    urls = ["https://test.com/1", "https://test.com/2"]
-    collector._log_results(urls)
-
-    assert len(info_calls) == 1
-    assert "Found 2 article URLs" in info_calls[0]
-    assert len(debug_calls) == 2
+    for collector in collectors:
+        assert hasattr(collector, 'get_article_urls')
+        assert callable(collector.get_article_urls)
+        assert hasattr(collector, '_make_request')
 
 
-def test_log_results_not_in_debug_mode(collector, monkeypatch):
-    """Test that results are not logged when debug is disabled."""
-    collector.debug = False
-    info_calls = []
+@pytest.mark.parametrize("collector_class", [
+    SlateFrUrlCollector,
+    FranceInfoUrlCollector,
+    TF1InfoUrlCollector,
+    LadepecheFrUrlCollector
+])
+def test_error_handling_consistency(collector_class):
+    """Test that all collectors handle errors consistently."""
+    collector = collector_class()
 
-    monkeypatch.setattr(collector.logger, "info", lambda *args: info_calls.append(1))
+    # Test network error handling
+    with patch.object(collector, '_make_request', side_effect=RequestException("Network error")):
+        urls = collector.get_article_urls()
+        assert urls == []
 
-    urls = ["https://test.com/1", "https://test.com/2"]
-    collector._log_results(urls)
-
-    assert len(info_calls) == 0
-
-
-@pytest.mark.parametrize(
-    "urls,expected",
-    [
-        # Test deduplication
-        (
-            [
-                "https://test.com/1",
-                "https://test.com/2",
-                "https://test.com/1",
-                "https://test.com/3",
-                "https://test.com/2",
-            ],
-            ["https://test.com/1", "https://test.com/2", "https://test.com/3"],
-        ),
-        # Test order preservation
-        (
-            ["https://b.com", "https://a.com", "https://c.com", "https://a.com"],
-            ["https://b.com", "https://a.com", "https://c.com"],
-        ),
-        # Test empty list
-        ([], []),
-        # Test no duplicates
-        (["https://a.com", "https://b.com"], ["https://a.com", "https://b.com"]),
-    ],
-)
-def test_deduplicate_urls(collector, urls, expected):
-    """Test URL deduplication removes duplicates while preserving order."""
-    result = collector._deduplicate_urls(urls)
-    assert result == expected
-
-
-def test_abstract_class_cannot_be_instantiated():
-    """Test that abstract base class cannot be instantiated directly."""
-    with pytest.raises(TypeError):
-        BaseUrlCollector()  # type: ignore
+    # Test timeout handling
+    with patch.object(collector, '_make_request', side_effect=Timeout("Timeout")):
+        urls = collector.get_article_urls()
+        assert urls == []

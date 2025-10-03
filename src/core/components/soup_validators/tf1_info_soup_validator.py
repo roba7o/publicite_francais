@@ -2,7 +2,7 @@
 Pure ELT TF1 Info parser for raw HTML storage.
 
 Handles TF1 Info domain-specific HTML structure identification
-but stores only raw HTML. All content extraction happens in dbt.
+but stores only raw HTML. All content extraction happens downstream.
 """
 
 import time
@@ -19,7 +19,7 @@ class Tf1InfoSoupValidator(BaseSoupValidator):
     Pure ELT parser for TF1 Info articles.
     Responsibility: Identify valid TF1 Info articles and store raw HTML.
     Domain logic: Understands TF1 Info HTML structure for validation.
-    No text processing - that's handled by dbt downstream.
+    No text processing - that's handled by downstream processing.
     """
 
     def __init__(self, site_name: str, debug: bool = False) -> None:
@@ -98,7 +98,7 @@ class Tf1InfoSoupValidator(BaseSoupValidator):
         - Checks for content div with article-body, content-body, or main-content classes
         - Falls back to article tag (TF1 Info structure variations)
         - Validates basic article structure exists
-        - Stores complete HTML for dbt processing
+        - Stores complete HTML for downstream processing
 
         Args:
             soup: BeautifulSoup object of TF1 Info article page
@@ -130,7 +130,7 @@ class Tf1InfoSoupValidator(BaseSoupValidator):
                 )
                 return None
 
-            # Store raw HTML - let dbt handle all content extraction
+            # Store raw HTML - let downstream processing handle all content extraction
             return RawArticle(
                 url=url,
                 raw_html=str(soup),  # Complete HTML including all metadata

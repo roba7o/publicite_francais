@@ -4,12 +4,14 @@ Data models for the article scraper system using ELT approach.
 ELT = Extract, Load, Transform
 - Extract: Scrape raw HTML
 - Load: Store raw data in database
-- Transform: Process with dbt
+- Transform: Process downstream
 """
 
 from dataclasses import dataclass, field
 from datetime import datetime
 from uuid import uuid4
+
+import re
 
 import trafilatura
 
@@ -23,7 +25,7 @@ class RawArticle:
     Raw scraped data - no processing, just collection.
 
     This follows the ELT pattern where Python only collects raw data
-    and dbt handles all content processing and extraction.
+    and downstream processing handles all content extraction.
     """
 
     # Required fields
@@ -49,6 +51,9 @@ class RawArticle:
     keywords: list[str] | None = None
     extraction_status: str = "pending"
 
+    # Word extraction fields
+    word_events: list[dict] | None = None
+
     # Post-initialization processing -> assign default values and extract content
     def __post_init__(self) -> None:
         """Validate raw data and extract content using trafilatura."""
@@ -61,6 +66,9 @@ class RawArticle:
 
         # Extract content using trafilatura
         self._extract_content()
+
+        # Extract French words for event storage
+        self._extract_french_words()
 
     def _extract_content(self) -> None:
         """Extract content from raw HTML using trafilatura."""
@@ -93,6 +101,40 @@ class RawArticle:
             # Don't break the pipeline on extraction failures
             self.extraction_status = "failed"
 
+    def _extract_french_words(self) -> None:
+        """Extract French words from extracted text and create word events."""
+        from utils.structured_logger import get_logger
+
+        if not self.extracted_text:
+            self.word_events = []
+            return
+
+        try:
+            # Clean and tokenize text
+            text = self.extracted_text.lower()
+            # Remove punctuation and split into words
+            words = re.findall(r'\b[a-záàâäéèêëíìîïóòôöúùûüÿç]+\b', text)
+
+            # Create word events for ALL words (no filtering - downstream processing will handle this)
+            word_events = []
+            for position, word in enumerate(words):
+                # Only filter out very short words (< 2 characters)
+                if len(word) >= 2:
+                    word_events.append({
+                        'word': word,
+                        'position_in_article': position,
+                        'article_id': self.id,
+                        'scraped_at': self.scraped_at
+                    })
+
+            self.word_events = word_events
+
+        except Exception as e:
+            # Log the error but don't break the pipeline on word extraction failures
+            logger = get_logger(__name__)
+            logger.warning(f"Word extraction failed for article {self.id}: {type(e).__name__}: {str(e)}")
+            self.word_events = []
+
     def to_dict(self):
         """Convert to dictionary for database storage."""
         return {
@@ -111,4 +153,5 @@ class RawArticle:
             "summary": self.summary,
             "keywords": self.keywords,
             "extraction_status": self.extraction_status,
+            "word_events": self.word_events,
         }

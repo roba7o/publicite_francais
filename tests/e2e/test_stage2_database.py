@@ -12,7 +12,6 @@ Note: ENVIRONMENT=test is automatically set by tests/conftest.py
 from sqlalchemy import text
 
 from database.database import get_session
-from config.environment import get_news_data_schema
 
 
 def test_articles_exist_in_database(clean_test_db):
@@ -24,9 +23,6 @@ def test_articles_exist_in_database(clean_test_db):
 
     print("\n=== Stage 2: Testing Database Storage ===")
 
-    # Get the schema name
-    schema = get_news_data_schema()
-    print(f"Using database schema: {schema}")
     print("✓ Database already cleaned by clean_test_db fixture")
 
     # Run the test data pipeline to populate with fixtures
@@ -54,7 +50,7 @@ def test_articles_exist_in_database(clean_test_db):
     # Connect and count articles using application's database layer
     with get_session() as session:
         total_count = session.execute(
-            text(f"SELECT COUNT(*) FROM {schema}.raw_articles")
+            text("SELECT COUNT(*) FROM raw_articles")
         ).scalar()
 
         print(f"Articles found in database: {total_count}")
@@ -67,9 +63,7 @@ def test_articles_exist_in_database(clean_test_db):
 
         # Verify each site has exact expected count
         sites = session.execute(
-            text(
-                f"SELECT site, COUNT(*) FROM {schema}.raw_articles GROUP BY site ORDER BY site"
-            )
+            text("SELECT site, COUNT(*) FROM raw_articles GROUP BY site ORDER BY site")
         ).fetchall()
 
         print("Articles by site:")
@@ -93,4 +87,23 @@ def test_articles_exist_in_database(clean_test_db):
             f"Expected only: {list(EXPECTED_SITES.keys())}"
         )
 
-    print(f"✓ Database contains exactly {EXPECTED_TOTAL} articles from static fixtures")
+        # Test word events are also stored
+        word_events_count = session.execute(
+            text("SELECT COUNT(*) FROM word_events")
+        ).scalar()
+
+        print(f"Word events found in database: {word_events_count}")
+
+        # Should have word events from articles (no filtering at this level)
+        assert word_events_count > 0, (
+            f"Expected word events to be generated, but found {word_events_count}. "
+            f"Check word extraction in article processing."
+        )
+
+        # Word events should be substantially more than articles (many words per article)
+        assert word_events_count > EXPECTED_TOTAL * 10, (
+            f"Expected at least {EXPECTED_TOTAL * 10} word events (10+ words per article), "
+            f"but found {word_events_count}. Check word extraction logic."
+        )
+
+    print(f"✓ Database contains exactly {EXPECTED_TOTAL} articles and {word_events_count} word events from static fixtures")

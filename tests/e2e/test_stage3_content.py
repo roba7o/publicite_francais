@@ -12,7 +12,6 @@ import subprocess
 from sqlalchemy import text
 
 from database.database import get_session
-from config.environment import get_news_data_schema
 
 def test_content_extraction_quality(clean_test_db):
     """Test that articles have required content extracted from static fixtures.
@@ -22,9 +21,6 @@ def test_content_extraction_quality(clean_test_db):
 
     print("\n=== Stage 3: Testing Content Extraction ===")
 
-    # Get the schema name
-    schema = get_news_data_schema()
-    print(f"Using database schema: {schema}")
     print("✓ Database already cleaned by clean_test_db fixture")
 
     # Run the test data pipeline to populate with fixtures
@@ -45,7 +41,7 @@ def test_content_extraction_quality(clean_test_db):
     with get_session() as session:
         # Test 1: Basic content extraction metrics
         content_stats = session.execute(
-            text(f"""
+            text("""
                 SELECT
                     COUNT(*) as total_articles,
                     COUNT(CASE WHEN title IS NOT NULL AND LENGTH(TRIM(title)) > 0 THEN 1 END) as articles_with_titles,
@@ -53,13 +49,13 @@ def test_content_extraction_quality(clean_test_db):
                     COUNT(CASE WHEN extraction_status = 'success' THEN 1 END) as successful_extractions,
                     COUNT(CASE WHEN language = 'fr' THEN 1 END) as french_articles,
                     AVG(CASE WHEN extracted_text IS NOT NULL THEN LENGTH(extracted_text) ELSE 0 END) as avg_text_length
-                FROM {schema}.raw_articles
+                FROM raw_articles
             """)
         ).fetchone()
 
         total, titles, extracted_text_count, success, french, avg_length = content_stats
 
-        print(f"Content extraction results:")
+        print("Content extraction results:")
         print(f"  Total articles: {total}")
         print(f"  Articles with titles: {titles}")
         print(f"  Articles with extracted text: {extracted_text_count}")
@@ -92,7 +88,7 @@ def test_content_extraction_quality(clean_test_db):
         if french > 0:
             print(f"✓ Language detection working: {french} French articles detected")
         else:
-            print(f"⚠ Language detection not configured (all articles show language=NULL)")
+            print("⚠ Language detection not configured (all articles show language=NULL)")
             print("  This is acceptable for basic content extraction testing")
 
         # Articles should have substantial content (not just HTML fragments)
@@ -102,15 +98,15 @@ def test_content_extraction_quality(clean_test_db):
         )
 
         # Test 2: Per-site extraction quality
-        print(f"\nExtraction quality by site:")
+        print("\nExtraction quality by site:")
         site_stats = session.execute(
-            text(f"""
+            text("""
                 SELECT
                     site,
                     COUNT(*) as total,
                     COUNT(CASE WHEN extraction_status = 'success' THEN 1 END) as success_count,
                     AVG(CASE WHEN extracted_text IS NOT NULL THEN LENGTH(extracted_text) ELSE 0 END) as avg_length
-                FROM {schema}.raw_articles
+                FROM raw_articles
                 GROUP BY site
                 ORDER BY site
             """)

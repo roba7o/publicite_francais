@@ -9,8 +9,12 @@ import sys
 from unittest import mock
 
 import pytest
-from tests.fixtures.helpers import DummyClass
 
+# Add src to Python path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+sys.path.insert(0, os.path.dirname(__file__))
+
+from fixtures.helpers import DummyClass
 from core.component_factory import ComponentFactory
 
 # Set ENVIRONMENT=test immediately when conftest.py is imported
@@ -61,11 +65,13 @@ def clean_test_db(test_database):
     This ensures test isolation by clearing all data using the same
     database functions that the application uses.
     """
-    from database.database import clear_test_database
+    from sqlalchemy import text
+    from database.database import get_session
 
-    # Clear database using application's own function
-    success = clear_test_database()
-    assert success, "Failed to clear test database"
+    # Clean the test tables (schema-free approach)
+    with get_session() as session:
+        session.execute(text("TRUNCATE raw_articles CASCADE;"))
+        session.commit()
 
     # Tests can now use get_session() and other database functions normally
     yield
