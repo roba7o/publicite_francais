@@ -8,6 +8,8 @@ import os
 
 from dotenv import load_dotenv
 
+from config.database_config import DatabaseConfig
+
 # Load environment variables from .env file
 load_dotenv()
 
@@ -31,7 +33,6 @@ TEST_MODE = get_bool("TEST_MODE", False)  # Backwards compatibility
 ENVIRONMENT = os.getenv("ENVIRONMENT", "dev").lower()
 
 # Database configuration - clean separation by environment
-from config.database_config import DatabaseConfig
 DATABASE_CONFIG = DatabaseConfig.get_config(test_mode=(ENVIRONMENT == "test" or TEST_MODE))
 
 # Processing settings
