@@ -96,7 +96,7 @@ class TestSlateFrSoupValidator:
         article = validator.validate_and_extract(empty_soup, url)
         assert article is None
 
-    @patch('core.components.soup_validators.base_soup_validator.ENVIRONMENT', 'development')
+    @patch('core.components.soup_validators.base_soup_validator.TEST_MODE', False)
     def test_get_soup_from_url_success(self):
         """Test successful soup creation from URL."""
         validator = SlateFrSoupValidator("slate.fr")
