@@ -62,7 +62,7 @@ def test_fixture_processing(clean_test_db):
             text("SELECT site, COUNT(*) FROM raw_articles GROUP BY site ORDER BY site")
         ).fetchall()
 
-        print(f"Site distribution:")
+        print("Site distribution:")
         for site, count in site_counts:
             print(f"  {site}: {count} articles")
             assert count == 4, f"Site {site} should have exactly 4 articles, but has {count}"

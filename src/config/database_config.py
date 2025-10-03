@@ -5,7 +5,7 @@ Provides environment-specific database configurations without hardcoded if/else 
 """
 
 import os
-from typing import Dict, Any
+from typing import Any
 
 
 class DatabaseConfig:
@@ -29,7 +29,7 @@ class DatabaseConfig:
     }
 
     @classmethod
-    def get_config(cls, test_mode: bool = False) -> Dict[str, Any]:
+    def get_config(cls, test_mode: bool = False) -> dict[str, Any]:
         """Get database configuration for the specified environment."""
         # Support both ENVIRONMENT and TEST_MODE for backwards compatibility
         environment = os.getenv("ENVIRONMENT", "").lower()

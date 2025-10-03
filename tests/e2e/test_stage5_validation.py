@@ -75,4 +75,4 @@ def test_basic_data_quality(clean_test_db):
         print(f"  URL uniqueness: {len(unique_urls)}/{len(urls)} unique URLs")
         assert len(unique_urls) == len(urls), f"Found {len(urls) - len(unique_urls)} duplicate URLs"
 
-    print(f"✓ Basic data quality checks passed!")
+    print("✓ Basic data quality checks passed!")

@@ -55,7 +55,7 @@ def test_content_extraction_quality(clean_test_db):
 
         total, titles, extracted_text_count, success, french, avg_length = content_stats
 
-        print(f"Content extraction results:")
+        print("Content extraction results:")
         print(f"  Total articles: {total}")
         print(f"  Articles with titles: {titles}")
         print(f"  Articles with extracted text: {extracted_text_count}")
@@ -88,7 +88,7 @@ def test_content_extraction_quality(clean_test_db):
         if french > 0:
             print(f"✓ Language detection working: {french} French articles detected")
         else:
-            print(f"⚠ Language detection not configured (all articles show language=NULL)")
+            print("⚠ Language detection not configured (all articles show language=NULL)")
             print("  This is acceptable for basic content extraction testing")
 
         # Articles should have substantial content (not just HTML fragments)
@@ -98,7 +98,7 @@ def test_content_extraction_quality(clean_test_db):
         )
 
         # Test 2: Per-site extraction quality
-        print(f"\nExtraction quality by site:")
+        print("\nExtraction quality by site:")
         site_stats = session.execute(
             text("""
                 SELECT

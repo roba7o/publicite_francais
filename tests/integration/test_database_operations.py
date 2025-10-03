@@ -4,7 +4,6 @@ Simple integration tests for database operations.
 Basic tests for article storage and word events.
 """
 
-import pytest
 from sqlalchemy import text
 
 from database.database import store_raw_article, get_session, store_word_events

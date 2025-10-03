@@ -57,7 +57,7 @@ def test_word_events_processing(clean_test_db):
 
         total_events, unique_words, articles_with_words, avg_pos, max_pos = word_stats
 
-        print(f"Word events statistics:")
+        print("Word events statistics:")
         print(f"  Total word events: {total_events}")
         print(f"  Unique words: {unique_words}")
         print(f"  Articles with words: {articles_with_words}")
@@ -88,7 +88,7 @@ def test_word_events_processing(clean_test_db):
         )
 
         # Test 2: Foreign key relationships
-        print(f"\nForeign key relationship validation:")
+        print("\nForeign key relationship validation:")
         orphaned_words = session.execute(
             text("""
                 SELECT COUNT(*)
@@ -104,7 +104,7 @@ def test_word_events_processing(clean_test_db):
         )
 
         # Test 3: Position tracking validation
-        print(f"\nPosition tracking validation:")
+        print("\nPosition tracking validation:")
         position_stats = session.execute(
             text("""
                 SELECT
@@ -127,7 +127,7 @@ def test_word_events_processing(clean_test_db):
             assert max_pos >= min_pos, f"Article {article_id} has invalid position range: {min_pos}-{max_pos}"
 
         # Test 4: Word length validation (basic quality check)
-        print(f"\nWord quality validation:")
+        print("\nWord quality validation:")
         word_length_stats = session.execute(
             text("""
                 SELECT
@@ -153,7 +153,7 @@ def test_word_events_processing(clean_test_db):
         assert valid_percentage >= 95, f"Too many short words: {valid_percentage:.1f}% valid (expected ≥95%)"
 
         # Test 5: Sample word extraction verification
-        print(f"\nSample words verification:")
+        print("\nSample words verification:")
         sample_words = session.execute(
             text("""
                 SELECT word, COUNT(*) as frequency

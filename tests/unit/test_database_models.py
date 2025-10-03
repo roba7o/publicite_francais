@@ -4,7 +4,6 @@ Simple unit tests for database models.
 Tests basic model functionality.
 """
 
-import pytest
 from database.models import RawArticle
 
 
