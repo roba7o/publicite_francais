@@ -24,8 +24,8 @@ from sqlalchemy.orm import (
 from sqlalchemy.pool import QueuePool  # for optimized connection pooling
 from sqlalchemy.sql import column, table  # for dynamic table references
 
-from config.environment import DATABASE_CONFIG, DEBUG, ENVIRONMENT, get_news_data_schema
-from database.models import RawArticle
+from config.environment import DATABASE_CONFIG, DEBUG, ENVIRONMENT
+from database.models import RawArticle, WordFact
 from utils.structured_logger import get_logger
 
 logger = get_logger(__name__)
@@ -171,11 +171,7 @@ def get_session() -> Generator[Session, None, None]:
 
 def store_raw_article(raw_article: RawArticle) -> bool:
     """
-    Store raw article data with UUID-based uniqueness.
-
-    Each article gets a unique UUID, allowing duplicate URLs to be stored
-    as separate entries. This follows pure ELT approach where all scraped
-    data is preserved and deduplication is handled downstream by dbt.
+    Store raw article data in clean single schema.
 
     Args:
         raw_article: Raw scraped data with auto-generated UUID
@@ -183,14 +179,9 @@ def store_raw_article(raw_article: RawArticle) -> bool:
     Returns:
         True if stored successfully, False on error
     """
-    schema_name = get_news_data_schema()
-
     try:
         with get_session() as session:
-            # Ensure schema exists (simple, idempotent check)
-            session.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema_name}"))
-
-            # Use table() for cleaner insert
+            # Use table() for cleaner insert - public schema only
             raw_articles_table = table(
                 "raw_articles",
                 column("id"),
@@ -200,15 +191,6 @@ def store_raw_article(raw_article: RawArticle) -> bool:
                 column("scraped_at"),
                 column("response_status"),
                 column("content_length"),
-                column("extracted_text"),
-                column("title"),
-                column("author"),
-                column("date_published"),
-                column("language"),
-                column("summary"),
-                column("keywords"),
-                column("extraction_status"),
-                schema=schema_name,
             )
 
             stmt = raw_articles_table.insert().values(
@@ -219,14 +201,6 @@ def store_raw_article(raw_article: RawArticle) -> bool:
                 scraped_at=raw_article.scraped_at,
                 response_status=raw_article.response_status,
                 content_length=raw_article.content_length,
-                extracted_text=raw_article.extracted_text,
-                title=raw_article.title,
-                author=raw_article.author,
-                date_published=raw_article.date_published,
-                language=raw_article.language,
-                summary=raw_article.summary,
-                keywords=raw_article.keywords,
-                extraction_status=raw_article.extraction_status,
             )
 
             session.execute(stmt)
@@ -264,7 +238,7 @@ def store_articles_batch(
     if not articles:
         return 0, 0
 
-    schema_name = get_news_data_schema()
+    # Clean schema approach - use public schema only
 
     # Memory management: estimate size and chunk if needed for this batch
     estimated_size_mb = (
@@ -295,9 +269,6 @@ def store_articles_batch(
 
     try:
         with get_session() as session:
-            # Ensure schema exists (simple, idempotent check)
-            session.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema_name}"))
-
             # Use SQLAlchemy's optimized bulk insert
             # Convert articles to dictionaries for bulk_insert_mappings
             article_dicts = [article.to_dict() for article in articles]
@@ -312,15 +283,6 @@ def store_articles_batch(
                 column("scraped_at"),
                 column("response_status"),
                 column("content_length"),
-                column("extracted_text"),
-                column("title"),
-                column("author"),
-                column("date_published"),
-                column("language"),
-                column("summary"),
-                column("keywords"),
-                column("extraction_status"),
-                schema=schema_name,
             )
 
             # Execute bulk insert
@@ -402,7 +364,7 @@ def clear_test_database() -> bool:
         )
 
     try:
-        schema = get_news_data_schema()
+        # Clean schema approach - use public schema only
 
         with get_session() as session:
             # Clear all tables in the test schema
@@ -417,3 +379,100 @@ def clear_test_database() -> bool:
     except Exception as e:
         logger.error(f"Failed to clear test database: {e}")
         return False
+
+
+def store_word_fact(word_fact: WordFact) -> bool:
+    """
+    Store a single word fact.
+
+    Args:
+        word_fact: WordFact object to store
+
+    Returns:
+        True if stored successfully, False on error
+    """
+    try:
+        with get_session() as session:
+            word_facts_table = table(
+                "word_facts",
+                column("id"),
+                column("word"),
+                column("article_id"),
+                column("position_in_article"),
+                column("scraped_at"),
+            )
+
+            stmt = word_facts_table.insert().values(
+                id=word_fact.id,
+                word=word_fact.word,
+                article_id=word_fact.article_id,
+                position_in_article=word_fact.position_in_article,
+                scraped_at=word_fact.scraped_at,
+            )
+
+            session.execute(stmt)
+
+            if DEBUG:
+                logger.info(f"Word fact stored: {word_fact.word}")
+
+            return True
+
+    except Exception as e:
+        logger.error(f"Failed to store word fact: {e}")
+        return False
+
+
+def store_word_facts_batch(word_facts: list[WordFact], batch_size: int = 500) -> tuple[int, int]:
+    """
+    Store multiple word facts with batch processing.
+
+    Args:
+        word_facts: List of WordFact objects to store
+        batch_size: Number of word facts to process at once
+
+    Returns:
+        Tuple of (successful_count, failed_count)
+    """
+    if not word_facts:
+        return 0, 0
+
+    try:
+        with get_session() as session:
+            # Convert to dictionaries for bulk insert
+            word_fact_dicts = [wf.to_dict() for wf in word_facts]
+
+            # Process in batches to avoid memory issues
+            successful_count = 0
+            failed_count = 0
+
+            for i in range(0, len(word_fact_dicts), batch_size):
+                batch = word_fact_dicts[i:i + batch_size]
+
+                try:
+                    word_facts_table = table(
+                        "word_facts",
+                        column("id"),
+                        column("word"),
+                        column("article_id"),
+                        column("position_in_article"),
+                        column("scraped_at"),
+                    )
+
+                    session.execute(word_facts_table.insert(), batch)
+                    successful_count += len(batch)
+
+                    if DEBUG:
+                        logger.info(f"Stored batch of {len(batch)} word facts")
+
+                except Exception as e:
+                    logger.error(f"Failed to store word facts batch: {e}")
+                    failed_count += len(batch)
+
+            if DEBUG:
+                logger.info(f"Word facts batch complete: {successful_count} successful, {failed_count} failed")
+
+            return successful_count, failed_count
+
+    except Exception as e:
+        logger.error(f"Failed to store word facts batch: {e}")
+        return 0, len(word_facts)

@@ -2,6 +2,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from config.environment import CONCURRENT_FETCHERS, DEBUG, FETCH_TIMEOUT, ENVIRONMENT
 from core.component_factory import ComponentFactory
+from services.word_extractor import WordExtractor
 from utils.structured_logger import get_logger, visual_summary
 
 
@@ -11,6 +12,7 @@ class ArticleOrchestrator:
     def __init__(self):
         self.logger = get_logger(__name__)
         self.component_factory = ComponentFactory()
+        self.word_extractor = WordExtractor()
 
     def process_site(self, config: dict) -> tuple[int, int]:
         """Process a single site using components."""
@@ -74,16 +76,36 @@ class ArticleOrchestrator:
                 if raw_article:
                     articles_batch.append(raw_article)
 
-        # Store articles in batch for better performance
+        # Store articles and extract words
         if articles_batch:
-            from database import store_articles_batch
+            from database import store_articles_batch, store_word_facts_batch
 
+            # Step 1: Store articles in batch
             processed_count, failed_count = store_articles_batch(articles_batch)
 
             if DEBUG:
                 self.logger.info(
-                    f"Batch processing results: {processed_count} successful, {failed_count} failed"
+                    f"Articles stored: {processed_count} successful, {failed_count} failed"
                 )
+
+            # Step 2: Extract words from successfully stored articles and store them
+            if processed_count > 0:
+                all_word_facts = []
+
+                for article in articles_batch:
+                    word_facts = self.word_extractor.extract_words_from_article(article)
+                    all_word_facts.extend(word_facts)
+
+                # Store word facts in batch
+                if all_word_facts:
+                    words_stored, words_failed = store_word_facts_batch(all_word_facts)
+
+                    if DEBUG:
+                        self.logger.info(
+                            f"Words extracted and stored: {words_stored} successful, {words_failed} failed"
+                        )
+                else:
+                    self.logger.warning("No words extracted from any articles")
         else:
             processed_count = 0
 
