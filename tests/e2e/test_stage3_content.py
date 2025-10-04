@@ -12,7 +12,6 @@ import subprocess
 from sqlalchemy import text
 
 from database.database import get_session
-from config.environment import get_news_data_schema
 
 def test_content_extraction_quality(clean_test_db):
     """Test that articles have required content extracted from static fixtures.
@@ -22,9 +21,6 @@ def test_content_extraction_quality(clean_test_db):
 
     print("\n=== Stage 3: Testing Content Extraction ===")
 
-    # Get the schema name
-    schema = get_news_data_schema()
-    print(f"Using database schema: {schema}")
     print("✓ Database already cleaned by clean_test_db fixture")
 
     # Run the test data pipeline to populate with fixtures
@@ -53,7 +49,7 @@ def test_content_extraction_quality(clean_test_db):
                     COUNT(CASE WHEN extraction_status = 'success' THEN 1 END) as successful_extractions,
                     COUNT(CASE WHEN language = 'fr' THEN 1 END) as french_articles,
                     AVG(CASE WHEN extracted_text IS NOT NULL THEN LENGTH(extracted_text) ELSE 0 END) as avg_text_length
-                FROM {schema}.raw_articles
+                FROM raw_articles
             """)
         ).fetchone()
 
@@ -110,7 +106,7 @@ def test_content_extraction_quality(clean_test_db):
                     COUNT(*) as total,
                     COUNT(CASE WHEN extraction_status = 'success' THEN 1 END) as success_count,
                     AVG(CASE WHEN extracted_text IS NOT NULL THEN LENGTH(extracted_text) ELSE 0 END) as avg_length
-                FROM {schema}.raw_articles
+                FROM raw_articles
                 GROUP BY site
                 ORDER BY site
             """)

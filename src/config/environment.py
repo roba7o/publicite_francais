@@ -25,14 +25,13 @@ def get_int(key: str, default: int) -> int:
         return default
 
 
-# Core settings
-DEBUG = get_bool("DEBUG", True)
-
 # Environment configuration
-ENVIRONMENT = os.getenv("ENVIRONMENT", "development")  # development/test/production
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development").lower()
+VALID_ENVIRONMENTS = {"development", "test", "production"}
+IS_TEST = ENVIRONMENT == "test"
+DEBUG = ENVIRONMENT == "development"
 
 # Validate environment
-VALID_ENVIRONMENTS = {"development", "test", "production"}
 if ENVIRONMENT not in VALID_ENVIRONMENTS:
     raise ValueError(
         f"Invalid ENVIRONMENT: {ENVIRONMENT}. Must be one of: {VALID_ENVIRONMENTS}"
@@ -52,14 +51,5 @@ CONCURRENT_FETCHERS = get_int("CONCURRENT_FETCHERS", 3)
 FETCH_TIMEOUT = get_int("FETCH_TIMEOUT", 30)
 
 
-# Schema configuration by environment
-SCHEMAS = {
-    "development": os.getenv("NEWS_DATA_DEV_SCHEMA", "news_data_dev"),
-    "test": os.getenv("NEWS_DATA_TEST_SCHEMA", "news_data_test"),
-    "production": os.getenv("NEWS_DATA_PROD_SCHEMA", "news_data"),
-}
-
-
-def get_news_data_schema() -> str:
-    """Get the news data schema name based on ENVIRONMENT."""
-    return SCHEMAS[ENVIRONMENT]
+# Single schema approach - no environment-based schema switching
+# All environments use the public schema with separate databases

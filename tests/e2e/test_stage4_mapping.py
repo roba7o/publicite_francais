@@ -13,7 +13,6 @@ from pathlib import Path
 from sqlalchemy import text
 
 from database.database import get_session
-from config.environment import get_news_data_schema
 
 from utils.url_mapping import URL_MAPPING
 
@@ -29,9 +28,6 @@ def test_html_fixture_to_database_mapping(clean_test_db):
 
     print("\n=== Stage 4: Testing HTML Fixture to Database Mapping ===")
 
-    # Get the schema name
-    schema = get_news_data_schema()
-    print(f"Using database schema: {schema}")
     print("✓ Database already cleaned by clean_test_db fixture")
 
     # Run the test data pipeline to populate with fixtures
@@ -74,7 +70,7 @@ def test_html_fixture_to_database_mapping(clean_test_db):
         articles = session.execute(
             text(f"""
                 SELECT url, site, title, LENGTH(raw_html) as html_length, LENGTH(extracted_text) as text_length
-                FROM {schema}.raw_articles
+                FROM raw_articles
                 ORDER BY site, url
             """)
         ).fetchall()

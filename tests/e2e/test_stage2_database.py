@@ -12,7 +12,6 @@ Note: ENVIRONMENT=test is automatically set by tests/conftest.py
 from sqlalchemy import text
 
 from database.database import get_session
-from config.environment import get_news_data_schema
 
 
 def test_articles_exist_in_database(clean_test_db):
@@ -24,9 +23,6 @@ def test_articles_exist_in_database(clean_test_db):
 
     print("\n=== Stage 2: Testing Database Storage ===")
 
-    # Get the schema name
-    schema = get_news_data_schema()
-    print(f"Using database schema: {schema}")
     print("✓ Database already cleaned by clean_test_db fixture")
 
     # Run the test data pipeline to populate with fixtures
@@ -54,7 +50,7 @@ def test_articles_exist_in_database(clean_test_db):
     # Connect and count articles using application's database layer
     with get_session() as session:
         total_count = session.execute(
-            text(f"SELECT COUNT(*) FROM {schema}.raw_articles")
+            text("SELECT COUNT(*) FROM raw_articles")
         ).scalar()
 
         print(f"Articles found in database: {total_count}")
@@ -68,7 +64,7 @@ def test_articles_exist_in_database(clean_test_db):
         # Verify each site has exact expected count
         sites = session.execute(
             text(
-                f"SELECT site, COUNT(*) FROM {schema}.raw_articles GROUP BY site ORDER BY site"
+                "SELECT site, COUNT(*) FROM raw_articles GROUP BY site ORDER BY site"
             )
         ).fetchall()
 

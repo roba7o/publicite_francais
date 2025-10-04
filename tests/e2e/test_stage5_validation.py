@@ -14,7 +14,6 @@ from datetime import datetime, timedelta
 from sqlalchemy import text
 
 from database.database import get_session
-from config.environment import get_news_data_schema
 
 
 
@@ -31,9 +30,6 @@ def test_data_quality_and_integrity(clean_test_db):
 
     print("\n=== Stage 5: Testing Data Quality and Integrity ===")
 
-    # Get the schema name
-    schema = get_news_data_schema()
-    print(f"Using database schema: {schema}")
     print("✓ Database already cleaned by clean_test_db fixture")
 
     # Run the test data pipeline to populate with fixtures
@@ -55,7 +51,7 @@ def test_data_quality_and_integrity(clean_test_db):
                     id, url, site, title, extracted_text, raw_html,
                     scraped_at, content_length, extraction_status,
                     author, date_published, language, summary, keywords
-                FROM {schema}.raw_articles
+                FROM raw_articles
                 ORDER BY site, url
             """)
         ).fetchall()
