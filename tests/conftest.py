@@ -9,7 +9,7 @@ import sys
 from unittest import mock
 
 import pytest
-from tests.fixtures.helpers import DummyClass
+from fixtures.helpers import DummyClass
 
 from core.component_factory import ComponentFactory
 

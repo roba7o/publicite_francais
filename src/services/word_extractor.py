@@ -21,9 +21,9 @@ class WordExtractor:
 
     def __init__(self):
         """Initialize the word extractor."""
-        # Basic French word pattern (letters with accents, apostrophes, hyphens)
+        # Complete French word pattern (all French letters, accents, apostrophes, hyphens)
         self.french_word_pattern = re.compile(
-            r"\b[a-zA-ZàâäéèêëïîôöùûüÿñæœÀÂÄÉÈÊËÏÎÔÖÙÛÜŸÑÆŒ''-]+\b"
+            r"\b[a-zA-ZàâäçéèêëïîôöùûüÿñæœÀÂÄÇÉÈÊËÏÎÔÖÙÛÜŸÑÆŒ''-]+\b"
         )
 
         # Words to skip (too common/not useful for vocabulary)

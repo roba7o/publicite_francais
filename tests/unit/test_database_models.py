@@ -1,14 +1,16 @@
 """
 Essential unit tests for database models.
 
-Tests core behavior without overcomplexity.
+Tests core behavior for clean architecture:
+- RawArticle: Simple storage model (no processing)
+- WordFact: Individual vocabulary facts
 """
 
 from unittest.mock import patch
 
 import pytest
 
-from database.models import RawArticle
+from database.models import RawArticle, WordFact
 
 
 @pytest.fixture
@@ -90,98 +92,6 @@ def test_content_length_auto_calculation(sample_html):
     assert article.content_length == len(sample_html)
 
 
-@patch("trafilatura.extract")
-@patch("trafilatura.extract_metadata")
-def test_content_extraction_success(mock_extract_metadata, mock_extract, sample_html):
-    """Test successful content extraction with trafilatura."""
-    # Mock trafilatura responses
-    mock_extract.return_value = "Extracted article content"
-
-    mock_metadata = type(
-        "MockMetadata",
-        (),
-        {
-            "title": "Test Title",
-            "author": "Test Author",
-            "date": "2023-01-01",
-            "language": "en",
-            "categories": ["news", "tech"],
-        },
-    )()
-    mock_extract_metadata.return_value = mock_metadata
-
-    article = RawArticle(
-        url="https://test.com/article", raw_html=sample_html, site="test.com"
-    )
-
-    assert article.extracted_text == "Extracted article content"
-    assert article.title == "Test Title"
-    assert article.author == "Test Author"
-    assert article.date_published == "2023-01-01"
-    assert article.language == "en"
-    assert article.keywords == ["news", "tech"]
-    assert article.extraction_status == "success"
-
-
-@patch("trafilatura.extract")
-@patch("trafilatura.extract_metadata")
-def test_content_extraction_no_content(
-    mock_extract_metadata, mock_extract, sample_html
-):
-    """Test extraction when no content is found."""
-    mock_extract.return_value = None
-    mock_extract_metadata.return_value = None
-
-    article = RawArticle(
-        url="https://test.com/article", raw_html=sample_html, site="test.com"
-    )
-
-    assert article.extracted_text is None
-    assert article.extraction_status == "failed"
-
-
-@patch("trafilatura.extract")
-def test_content_extraction_exception(mock_extract, sample_html):
-    """Test extraction handles exceptions gracefully."""
-    mock_extract.side_effect = Exception("Trafilatura error")
-
-    article = RawArticle(
-        url="https://test.com/article", raw_html=sample_html, site="test.com"
-    )
-
-    assert article.extraction_status == "failed"
-
-
-@pytest.mark.parametrize(
-    "keyword_field,keywords",
-    [
-        ("categories", ["news", "politics"]),
-        ("tags", ["breaking", "urgent"]),
-    ],
-)
-@patch("trafilatura.extract")
-@patch("trafilatura.extract_metadata")
-def test_keywords_extraction(
-    mock_extract_metadata, mock_extract, keyword_field, keywords, sample_html
-):
-    """Test keywords extraction from categories or tags."""
-    mock_extract.return_value = "Content"
-
-    mock_metadata = type(
-        "MockMetadata",
-        (),
-        {"title": "Test", "author": None, "date": None, "language": None},
-    )()
-    setattr(mock_metadata, keyword_field, keywords)
-    mock_extract_metadata.return_value = mock_metadata
-
-    article = RawArticle(
-        url="https://test.com/article", raw_html=sample_html, site="test.com"
-    )
-
-    assert article.keywords == keywords
-
-
 def test_to_dict_conversion(sample_html):
     """Test conversion to dictionary for database storage."""
     article = RawArticle(
@@ -200,28 +110,74 @@ def test_to_dict_conversion(sample_html):
     assert result["response_status"] == 200
     assert "id" in result
     assert "scraped_at" in result
-    assert "extraction_status" in result
+    assert "content_length" in result
+    # Clean model - no extraction fields
+    assert "extracted_text" not in result
+    assert "extraction_status" not in result
 
 
-@pytest.mark.parametrize("extraction_status", ["pending", "success", "failed"])
-def test_extraction_status_values(extraction_status, sample_html, monkeypatch):
-    """Test different extraction status values."""
-    if extraction_status == "pending":
-        # Default value before extraction
-        article = RawArticle.__new__(RawArticle)
-        article.extraction_status = "pending"
-        assert article.extraction_status == "pending"
-    else:
-        # Mock trafilatura based on desired status
-        if extraction_status == "success":
-            monkeypatch.setattr("trafilatura.extract", lambda html: "Extracted content")
-        else:
-            monkeypatch.setattr("trafilatura.extract", lambda html: None)
+# === WordFact Model Tests ===
 
-        monkeypatch.setattr("trafilatura.extract_metadata", lambda html: None)
+def test_word_fact_creation():
+    """Test WordFact can be created with required fields."""
+    word_fact = WordFact(
+        word="économie",
+        article_id="test-article-id",
+        position_in_article=5,
+        scraped_at="2025-01-01T10:00:00"
+    )
 
-        article = RawArticle(
-            url="https://test.com/article", raw_html=sample_html, site="test.com"
+    assert word_fact.word == "économie"
+    assert word_fact.article_id == "test-article-id"
+    assert word_fact.position_in_article == 5
+    assert word_fact.scraped_at == "2025-01-01T10:00:00"
+    assert word_fact.id is not None
+
+
+def test_word_fact_validation():
+    """Test WordFact validation rules."""
+    # Missing word should fail
+    with pytest.raises(ValueError, match="word and article_id are required"):
+        WordFact(
+            word="",
+            article_id="test-id",
+            position_in_article=0,
+            scraped_at="2025-01-01T10:00:00"
         )
 
-        assert article.extraction_status == extraction_status
+    # Missing article_id should fail
+    with pytest.raises(ValueError, match="word and article_id are required"):
+        WordFact(
+            word="test",
+            article_id="",
+            position_in_article=0,
+            scraped_at="2025-01-01T10:00:00"
+        )
+
+    # Negative position should fail
+    with pytest.raises(ValueError, match="position_in_article must be >= 0"):
+        WordFact(
+            word="test",
+            article_id="test-id",
+            position_in_article=-1,
+            scraped_at="2025-01-01T10:00:00"
+        )
+
+
+def test_word_fact_to_dict():
+    """Test WordFact conversion to dictionary."""
+    word_fact = WordFact(
+        word="français",
+        article_id="article-123",
+        position_in_article=10,
+        scraped_at="2025-01-01T10:00:00"
+    )
+
+    result = word_fact.to_dict()
+
+    assert isinstance(result, dict)
+    assert result["word"] == "français"
+    assert result["article_id"] == "article-123"
+    assert result["position_in_article"] == 10
+    assert result["scraped_at"] == "2025-01-01T10:00:00"
+    assert "id" in result

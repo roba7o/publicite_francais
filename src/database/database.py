@@ -367,12 +367,13 @@ def clear_test_database() -> bool:
         # Clean schema approach - use public schema only
 
         with get_session() as session:
-            # Clear all tables in the test schema
-            session.execute(text(f"TRUNCATE TABLE {schema}.raw_articles CASCADE"))
+            # Clear all tables in public schema
+            session.execute(text("TRUNCATE TABLE word_facts CASCADE"))
+            session.execute(text("TRUNCATE TABLE raw_articles CASCADE"))
             session.commit()
 
         if DEBUG:
-            logger.info(f"Successfully cleared test database schema: {schema}")
+            logger.info("Successfully cleared test database")
 
         return True
 
