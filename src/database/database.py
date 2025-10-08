@@ -365,12 +365,13 @@ def clear_test_database() -> bool:
 
     try:
         # Clean schema approach - use public schema only
+        # Truncate parent table with CASCADE to automatically clear child tables
 
         with get_session() as session:
-            # Clear all tables in public schema
-            session.execute(text("TRUNCATE TABLE word_facts CASCADE"))
+            # Truncate parent table (raw_articles) with CASCADE
+            # This automatically truncates word_facts due to foreign key CASCADE
             session.execute(text("TRUNCATE TABLE raw_articles CASCADE"))
-            session.commit()
+            # Note: get_session() context manager handles commit automatically
 
         if DEBUG:
             logger.info("Successfully cleared test database")
