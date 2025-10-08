@@ -467,8 +467,27 @@ def store_word_facts_batch(
                     if DEBUG:
                         logger.info(f"Stored batch of {len(batch)} word facts")
 
+                except IntegrityError as e:
+                    # Integrity error (e.g., duplicate, foreign key violation)
+                    # Fall back to individual inserts to isolate the problematic record
+                    logger.warning(
+                        f"Batch integrity error, falling back to individual inserts: {e}"
+                    )
+
+                    for wf_dict in batch:
+                        try:
+                            session.execute(word_facts_table.insert(), [wf_dict])
+                            successful_count += 1
+                        except Exception as individual_error:
+                            if DEBUG:
+                                logger.warning(
+                                    f"Failed to store individual word fact: {individual_error}"
+                                )
+                            failed_count += 1
+
                 except Exception as e:
-                    logger.error(f"Failed to store word facts batch: {e}")
+                    # Unexpected error - log and skip entire batch
+                    logger.error(f"Unexpected error storing word facts batch: {e}")
                     failed_count += len(batch)
 
             if DEBUG:
