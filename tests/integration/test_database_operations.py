@@ -21,7 +21,7 @@ def test_store_single_article(clean_test_db):
 
     # Store using application's database function
     result = store_article(article)
-    assert result is True
+    assert result
 
     # Verify in database - single schema, no conditionals
     with get_session() as session:
@@ -92,10 +92,10 @@ def test_duplicate_urls_rejected(clean_test_db):
     )
 
     # Store first article - should succeed
-    assert store_article(article1) is True
+    assert store_article(article1)
 
     # Store second article with same URL - should fail due to UNIQUE constraint
-    assert store_article(article2) is False
+    assert not store_article(article2)
 
     # Verify only one article stored
     with get_session() as session:
