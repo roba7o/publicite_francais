@@ -81,8 +81,8 @@ def test_store_batch_articles(clean_test_db):
             assert row[2] == article.raw_html
 
 
-def test_duplicate_urls_allowed(clean_test_db):
-    """Test that duplicate URLs are stored with different UUIDs."""
+def test_duplicate_urls_rejected(clean_test_db):
+    """Test that duplicate URLs are rejected by UNIQUE constraint."""
     article1 = RawArticle(
         url="https://lemonde.fr/same-story",
         raw_html="<html><h1>First Version</h1></html>",
@@ -94,24 +94,22 @@ def test_duplicate_urls_allowed(clean_test_db):
         site="lemonde.fr",
     )
 
-    # Store both using application's database function
+    # Store first article - should succeed
     assert store_article(article1) is True
-    assert store_article(article2) is True
 
-    # Verify both stored with different UUIDs - single schema
+    # Store second article with same URL - should fail due to UNIQUE constraint
+    assert store_article(article2) is False
+
+    # Verify only one article stored
     with get_session() as session:
         rows = session.execute(
             text("""
             SELECT id, url, raw_html
             FROM raw_articles
             WHERE url = :url
-            ORDER BY scraped_at
         """),
             {"url": "https://lemonde.fr/same-story"},
         ).fetchall()
 
-        assert len(rows) == 2
-        assert rows[0][0] != rows[1][0]  # Different UUIDs
-        assert rows[0][1] == rows[1][1]  # Same URL
+        assert len(rows) == 1
         assert "First Version" in rows[0][2]
-        assert "Updated Version" in rows[1][2]

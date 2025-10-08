@@ -71,13 +71,13 @@ db-start-test:  ## Start test database (port 5433)
 db-init:  ## Initialize development database schema
 	@echo "\033[34m◆ Initializing development database...\033[0m"
 	@$(MAKE) db-start > /dev/null 2>&1
-	PGHOST=localhost PGPORT=5432 PGDATABASE=$(POSTGRES_DB) PGUSER=$(POSTGRES_USER) PGPASSWORD=$(POSTGRES_PASSWORD) ./database/init.sh
+	CONTAINER_NAME=french_news_dev_db PGDATABASE=$(POSTGRES_DB) PGUSER=$(POSTGRES_USER) PGPASSWORD=$(POSTGRES_PASSWORD) ./database/init.sh
 	@echo "\033[32m✓ Development database initialized!\033[0m"
 
 db-init-test:  ## Initialize test database schema
 	@echo "\033[34m◆ Initializing test database...\033[0m"
 	@$(MAKE) db-start-test > /dev/null 2>&1
-	PGHOST=localhost PGPORT=5433 PGDATABASE=french_news_test PGUSER=news_user PGPASSWORD=test_password ./database/init.sh
+	CONTAINER_NAME=french_news_test_db PGDATABASE=french_news_test PGUSER=news_user PGPASSWORD=test_password ./database/init.sh
 	@echo "\033[32m✓ Test database initialized!\033[0m"
 
 db-stop:  ## Stop all databases

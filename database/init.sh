@@ -1,18 +1,20 @@
 #!/bin/bash
 # Database initialization script
-# Applies schema to database specified by connection parameters
+# Applies schema to database via Docker container
 
 set -e
 
 # Usage check
-if [ -z "$PGHOST" ] || [ -z "$PGDATABASE" ] || [ -z "$PGUSER" ]; then
-    echo "Error: Missing required environment variables (PGHOST, PGDATABASE, PGUSER)"
+if [ -z "$CONTAINER_NAME" ] || [ -z "$PGDATABASE" ] || [ -z "$PGUSER" ]; then
+    echo "Error: Missing required environment variables (CONTAINER_NAME, PGDATABASE, PGUSER)"
     exit 1
 fi
 
-echo "Initializing database: $PGDATABASE on $PGHOST:${PGPORT:-5432}"
+echo "Initializing database: $PGDATABASE in container $CONTAINER_NAME"
 
-# Apply schema
-PGPASSWORD="${PGPASSWORD:-}" psql -h "$PGHOST" -p "${PGPORT:-5432}" -U "$PGUSER" -d "$PGDATABASE" -f "$(dirname "$0")/schema.sql"
+# Copy schema to container and apply it
+docker cp "$(dirname "$0")/schema.sql" "$CONTAINER_NAME:/tmp/schema.sql"
+docker exec -e PGPASSWORD="${PGPASSWORD:-}" "$CONTAINER_NAME" \
+    psql -U "$PGUSER" -d "$PGDATABASE" -f /tmp/schema.sql
 
 echo "✓ Database initialized successfully"

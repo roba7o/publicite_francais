@@ -43,11 +43,19 @@ def test_database():
 
     Uses the application's own database initialization and connection management.
     """
-    from database.database import initialize_database
+    from database.database import initialize_database, get_session
+    from sqlalchemy import text
+    from pathlib import Path
 
-    # Initialize database using application's own function
+    # Initialize database connection
     success = initialize_database()
     assert success, "Failed to initialize test database"
+
+    # Apply schema to ensure tables exist
+    schema_sql = Path("database/schema.sql").read_text()
+    with get_session() as session:
+        session.execute(text(schema_sql))
+        session.commit()
 
     # Tests will use get_session() from the application
     yield "initialized"

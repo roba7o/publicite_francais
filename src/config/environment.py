@@ -68,7 +68,7 @@ if ENVIRONMENT == "test":
         "port": _get_int("POSTGRES_PORT_TEST", 5433),
         "database": os.getenv("POSTGRES_DB_TEST", "french_news_test"),
         "user": os.getenv("POSTGRES_USER", "news_user"),
-        "password": os.getenv("POSTGRES_PASSWORD", "test_password"),
+        "password": os.getenv("POSTGRES_PASSWORD_TEST", "test_password"),
     }
 else:  # development
     DATABASE_CONFIG = {
