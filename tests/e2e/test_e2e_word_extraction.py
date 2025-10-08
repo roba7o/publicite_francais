@@ -3,15 +3,38 @@ E2E Test: Complete Word Extraction Pipeline
 
 Single comprehensive test that runs the full pipeline once and validates:
 - Articles are stored
-- Words are extracted  
+- Words are extracted
 - Data integrity is maintained
 """
 
 import subprocess
 
+import pytest
 from sqlalchemy import text
 
 from database.database import get_session
+
+
+# Expected word counts per article (from static fixtures)
+# Each tuple: (url_pattern, expected_count, tolerance_pct)
+EXPECTED_WORD_COUNTS = [
+    ("creation-d-un-etat-de-nouvelle-caledonie", 1014, 5),
+    ("elisabeth-borne-recadre-son-ministre", 428, 5),
+    ("infographie-de-32-milliards-en-2017", 486, 5),
+    ("nouvelle-caledonie-une-majorite-de-la-classe", 572, 5),
+    ("canada-quelque-chose-mysterieux-tue-grands-requins", 539, 5),
+    ("civilisation-alien-vacarme-radar-aeroport", 529, 5),
+    ("europe-dissuasion-nuclaire-russie-angleterre", 518, 5),
+    ("regle-baillon-mondial-trump-entraver-acces", 496, 5),
+    ("comment-investir-son-argent-avec-un-cashback", 839, 5),
+    ("les-astuces-pour-eviter-les-arnaques-en-ligne", 217, 5),
+    ("pas-d-armement-offensif-francois-bayrou", 231, 5),
+    ("vous-voulez-savoir-si-quelqu-un-vous-ment", 471, 5),
+    ("fendez-jusqua-100-buches-par-heure", 478, 5),
+    ("icone-de-la-tendance-cette-paire-de-nike", 434, 5),
+    ("intemperies-dans-le-lot-des-fils-electriques", 211, 5),
+    ("tyrolienne-au-dessus-du-lot-2-km-de-cordes", 619, 5),
+]
 
 
 def test_complete_word_extraction_pipeline(clean_test_db):
@@ -38,17 +61,54 @@ def test_complete_word_extraction_pipeline(clean_test_db):
         article_count = session.execute(
             text("SELECT COUNT(*) FROM raw_articles")
         ).scalar()
-        assert article_count >= 12, f"Expected >= 12 articles, got {article_count}"
+        assert article_count >= 16, f"Expected >= 16 articles, got {article_count}"
         print(f"✓ Articles stored: {article_count}")
 
-        # 2. Verify words extracted
-        word_count = session.execute(
+        # 2. Verify total words extracted
+        total_word_count = session.execute(
             text("SELECT COUNT(*) FROM word_facts")
         ).scalar()
-        assert word_count > 0, "No words extracted"
-        print(f"✓ Words extracted: {word_count}")
+        expected_total = 8082
+        tolerance = expected_total * 0.05
+        assert abs(total_word_count - expected_total) <= tolerance, \
+            f"Expected ~{expected_total} words (±5%), got {total_word_count}"
+        print(f"✓ Total words extracted: {total_word_count} (expected: {expected_total} ±5%)")
 
-        # 3. Verify French words present (no filtering)
+        # 3. Verify word count per article
+        failed_assertions = []
+        for url_pattern, expected_count, tolerance_pct in EXPECTED_WORD_COUNTS:
+            result = session.execute(
+                text("""
+                    SELECT ra.url, COUNT(wf.id) as word_count
+                    FROM raw_articles ra
+                    LEFT JOIN word_facts wf ON wf.article_id = ra.id
+                    WHERE ra.url LIKE :pattern
+                    GROUP BY ra.url
+                """),
+                {"pattern": f"%{url_pattern}%"}
+            ).fetchone()
+
+            if result is None:
+                failed_assertions.append(f"Article not found: {url_pattern}")
+                continue
+
+            url, actual_count = result
+            tolerance = expected_count * (tolerance_pct / 100.0)
+            min_count = int(expected_count - tolerance)
+            max_count = int(expected_count + tolerance)
+
+            if not (min_count <= actual_count <= max_count):
+                failed_assertions.append(
+                    f"{url_pattern}: expected {expected_count} ±{tolerance_pct}% "
+                    f"({min_count}-{max_count}), got {actual_count}"
+                )
+
+        if failed_assertions:
+            pytest.fail("\n".join(["Word count mismatches:"] + failed_assertions))
+
+        print(f"✓ All {len(EXPECTED_WORD_COUNTS)} articles have correct word counts (±5%)")
+
+        # 4. Verify French words present (no filtering)
         french_words = ['le', 'la', 'de', 'et']
         for word in french_words:
             count = session.execute(
@@ -58,7 +118,7 @@ def test_complete_word_extraction_pipeline(clean_test_db):
             assert count > 0, f"Common French word '{word}' not found"
         print(f"✓ French words detected: {french_words}")
 
-        # 4. Verify foreign key integrity
+        # 5. Verify foreign key integrity
         orphaned = session.execute(
             text("""
                 SELECT COUNT(*)
@@ -70,7 +130,7 @@ def test_complete_word_extraction_pipeline(clean_test_db):
         assert orphaned == 0, f"Found {orphaned} orphaned word_facts"
         print("✓ Foreign key integrity verified")
 
-        # 5. Verify star schema join works
+        # 6. Verify star schema join works
         result = session.execute(
             text("""
                 SELECT ra.site, wf.word, COUNT(*) as frequency
