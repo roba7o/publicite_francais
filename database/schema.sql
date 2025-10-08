@@ -3,7 +3,13 @@
 -- =============================================================================
 -- Star Schema Design:
 --   - raw_articles: Dimension table (one row per unique article URL)
+--     - scraped_at: When the HTML was scraped from the web
 --   - word_facts: Fact table (one row per word occurrence)
+--     - scraped_at: When the word was extracted from HTML
+--     - Links to raw_articles via article_id foreign key
+--
+-- Note: The two scraped_at timestamps may differ because articles are scraped
+-- first, then words are extracted in a separate processing step.
 --
 -- Uses standard public schema for all environments
 -- =============================================================================
@@ -15,7 +21,7 @@ CREATE TABLE IF NOT EXISTS raw_articles (
     url TEXT NOT NULL UNIQUE,              -- Unique constraint: one article per URL
     raw_html TEXT NOT NULL,                -- Complete HTML content
     site TEXT NOT NULL,                    -- News site identifier (e.g., "slate.fr")
-    scraped_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    scraped_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,  -- When HTML was fetched from web
     response_status INTEGER,                -- HTTP response status (e.g., 200)
     content_length INTEGER,                 -- Length of raw_html
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -32,7 +38,7 @@ CREATE TABLE IF NOT EXISTS word_facts (
         REFERENCES raw_articles(id)
         ON DELETE CASCADE,
     position_in_article INTEGER NOT NULL,   -- Position of word in article (0-indexed)
-    scraped_at TIMESTAMP WITH TIME ZONE NOT NULL
+    scraped_at TIMESTAMP WITH TIME ZONE NOT NULL  -- When word was extracted (may differ from article scraped_at)
 );
 
 -- =============================================================================
