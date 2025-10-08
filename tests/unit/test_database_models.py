@@ -6,8 +6,6 @@ Tests core behavior for clean architecture:
 - WordFact: Individual vocabulary facts
 """
 
-from unittest.mock import patch
-
 import pytest
 
 from database.models import RawArticle, WordFact
@@ -118,13 +116,14 @@ def test_to_dict_conversion(sample_html):
 
 # === WordFact Model Tests ===
 
+
 def test_word_fact_creation():
     """Test WordFact can be created with required fields."""
     word_fact = WordFact(
         word="économie",
         article_id="test-article-id",
         position_in_article=5,
-        scraped_at="2025-01-01T10:00:00"
+        scraped_at="2025-01-01T10:00:00",
     )
 
     assert word_fact.word == "économie"
@@ -142,7 +141,7 @@ def test_word_fact_validation():
             word="",
             article_id="test-id",
             position_in_article=0,
-            scraped_at="2025-01-01T10:00:00"
+            scraped_at="2025-01-01T10:00:00",
         )
 
     # Missing article_id should fail
@@ -151,7 +150,7 @@ def test_word_fact_validation():
             word="test",
             article_id="",
             position_in_article=0,
-            scraped_at="2025-01-01T10:00:00"
+            scraped_at="2025-01-01T10:00:00",
         )
 
     # Negative position should fail
@@ -160,7 +159,7 @@ def test_word_fact_validation():
             word="test",
             article_id="test-id",
             position_in_article=-1,
-            scraped_at="2025-01-01T10:00:00"
+            scraped_at="2025-01-01T10:00:00",
         )
 
 
@@ -170,7 +169,7 @@ def test_word_fact_to_dict():
         word="français",
         article_id="article-123",
         position_in_article=10,
-        scraped_at="2025-01-01T10:00:00"
+        scraped_at="2025-01-01T10:00:00",
     )
 
     result = word_fact.to_dict()

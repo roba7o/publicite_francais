@@ -27,12 +27,10 @@ def test_articles_exist_in_database(clean_test_db):
 
     # Run the test data pipeline to populate with fixtures
     import subprocess
+
     print("Running test data pipeline...")
     result = subprocess.run(
-        ["make", "run-test-data"],
-        capture_output=True,
-        text=True,
-        timeout=60
+        ["make", "run-test-data"], capture_output=True, text=True, timeout=60
     )
     assert result.returncode == 0, f"Pipeline failed: {result.stderr}"
     print("✓ Test data pipeline completed")
@@ -44,7 +42,7 @@ def test_articles_exist_in_database(clean_test_db):
         "slate.fr": EXPECTED_PER_SITE,
         "franceinfo.fr": EXPECTED_PER_SITE,
         "tf1info.fr": EXPECTED_PER_SITE,
-        "ladepeche.fr": EXPECTED_PER_SITE
+        "ladepeche.fr": EXPECTED_PER_SITE,
     }
 
     # Connect and count articles using application's database layer
@@ -63,9 +61,7 @@ def test_articles_exist_in_database(clean_test_db):
 
         # Verify each site has exact expected count
         sites = session.execute(
-            text(
-                "SELECT site, COUNT(*) FROM raw_articles GROUP BY site ORDER BY site"
-            )
+            text("SELECT site, COUNT(*) FROM raw_articles GROUP BY site ORDER BY site")
         ).fetchall()
 
         print("Articles by site:")

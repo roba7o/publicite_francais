@@ -26,14 +26,6 @@ class WordExtractor:
             r"\b[a-zA-ZàâäçéèêëïîôöùûüÿñæœÀÂÄÇÉÈÊËÏÎÔÖÙÛÜŸÑÆŒ''-]+\b"
         )
 
-        # Words to skip (too common/not useful for vocabulary)
-        self.skip_words = {
-            'le', 'la', 'les', 'un', 'une', 'des', 'du', 'de', 'et', 'ou',
-            'est', 'sont', 'a', 'ont', 'dans', 'sur', 'avec', 'pour', 'par',
-            'ce', 'cette', 'ces', 'il', 'elle', 'ils', 'elles', 'qui', 'que',
-            'se', 'sa', 'son', 'ses', 'nous', 'vous', 'leur', 'leurs'
-        }
-
     def extract_words_from_article(self, article: RawArticle) -> list[WordFact]:
         """
         Extract French words from article and return as WordFact objects.
@@ -64,7 +56,7 @@ class WordExtractor:
                     word=word,
                     article_id=article.id,
                     position_in_article=position,
-                    scraped_at=extraction_time
+                    scraped_at=extraction_time,
                 )
                 word_facts.append(word_fact)
 
@@ -79,19 +71,16 @@ class WordExtractor:
         """
         Extract and normalize French words from text.
 
+        No filtering applied - all French words are captured.
+        Filtering (stopwords, frequency, etc.) will be handled in dbt.
+
         Args:
             text: Extracted article text
 
         Returns:
-            List of normalized French words
+            List of normalized French words (lowercase)
         """
-        # Find all words matching French pattern
+        # Find all words matching French pattern and normalize to lowercase
         words = self.french_word_pattern.findall(text.lower())
 
-        # Filter out common words and short words
-        filtered_words = [
-            word for word in words
-            if len(word) >= 3 and word not in self.skip_words
-        ]
-
-        return filtered_words
+        return words

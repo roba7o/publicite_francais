@@ -423,7 +423,9 @@ def store_word_fact(word_fact: WordFact) -> bool:
         return False
 
 
-def store_word_facts_batch(word_facts: list[WordFact], batch_size: int = 500) -> tuple[int, int]:
+def store_word_facts_batch(
+    word_facts: list[WordFact], batch_size: int = 500
+) -> tuple[int, int]:
     """
     Store multiple word facts with batch processing.
 
@@ -447,7 +449,7 @@ def store_word_facts_batch(word_facts: list[WordFact], batch_size: int = 500) ->
             failed_count = 0
 
             for i in range(0, len(word_fact_dicts), batch_size):
-                batch = word_fact_dicts[i:i + batch_size]
+                batch = word_fact_dicts[i : i + batch_size]
 
                 try:
                     word_facts_table = table(
@@ -470,7 +472,9 @@ def store_word_facts_batch(word_facts: list[WordFact], batch_size: int = 500) ->
                     failed_count += len(batch)
 
             if DEBUG:
-                logger.info(f"Word facts batch complete: {successful_count} successful, {failed_count} failed")
+                logger.info(
+                    f"Word facts batch complete: {successful_count} successful, {failed_count} failed"
+                )
 
             return successful_count, failed_count
 

@@ -5,7 +5,6 @@ These tests use the application's own database functions and connection
 management for proper integration testing.
 """
 
-import pytest
 from sqlalchemy import text
 
 from database.database import store_articles_batch, store_article, get_session
@@ -59,9 +58,7 @@ def test_store_batch_articles(clean_test_db):
 
     # Verify all in database - single schema
     with get_session() as session:
-        count = session.execute(
-            text("SELECT COUNT(*) FROM raw_articles")
-        ).fetchone()[0]
+        count = session.execute(text("SELECT COUNT(*) FROM raw_articles")).fetchone()[0]
         assert count == 3
 
         # Check each article

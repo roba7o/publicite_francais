@@ -23,42 +23,39 @@ def sample_article():
     return RawArticle(
         url="https://test.fr/article",
         raw_html="<html><body><p>Test content</p></body></html>",
-        site="test.fr"
+        site="test.fr",
     )
 
 
 def test_extractor_initialization(extractor):
-    """Test WordExtractor initializes with correct patterns."""
+    """Test WordExtractor initializes with correct pattern."""
     assert extractor.french_word_pattern is not None
-    assert len(extractor.skip_words) > 0
-    assert 'le' in extractor.skip_words
-    assert 'la' in extractor.skip_words
 
 
-@patch('trafilatura.extract')
+@patch("trafilatura.extract")
 def test_extract_words_success(mock_extract, extractor, sample_article):
     """Test successful word extraction from article."""
     # Mock trafilatura to return French text
-    mock_extract.return_value = "L'économie française traverse une période difficile avec inflation."
+    mock_extract.return_value = (
+        "L'économie française traverse une période difficile avec inflation."
+    )
 
     word_facts = extractor.extract_words_from_article(sample_article)
 
-    # Should extract meaningful French words (excluding common words)
+    # Should extract all French words (no filtering)
     assert len(word_facts) > 0
     assert all(isinstance(wf, WordFact) for wf in word_facts)
 
-    # Check word content
+    # Check word content - all words should be present
     words = [wf.word for wf in word_facts]
     assert "l'économie" in words  # French contractions kept as single words
     assert "française" in words
     assert "traverse" in words
+    assert "une" in words  # Common words NOT filtered
     assert "période" in words
     assert "difficile" in words
+    assert "avec" in words  # Common words NOT filtered
     assert "inflation" in words
-
-    # Should filter out common words
-    assert "une" not in words
-    assert "avec" not in words
 
     # Check metadata
     for i, wf in enumerate(word_facts):
@@ -67,7 +64,7 @@ def test_extract_words_success(mock_extract, extractor, sample_article):
         assert wf.scraped_at is not None
 
 
-@patch('trafilatura.extract')
+@patch("trafilatura.extract")
 def test_extract_words_no_content(mock_extract, extractor, sample_article):
     """Test extraction when trafilatura returns no content."""
     mock_extract.return_value = None
@@ -77,7 +74,7 @@ def test_extract_words_no_content(mock_extract, extractor, sample_article):
     assert word_facts == []
 
 
-@patch('trafilatura.extract')
+@patch("trafilatura.extract")
 def test_extract_words_exception(mock_extract, extractor, sample_article):
     """Test extraction handles trafilatura exceptions gracefully."""
     mock_extract.side_effect = Exception("Trafilatura error")
@@ -101,25 +98,25 @@ def test_french_word_pattern(extractor):
 
 
 def test_word_filtering(extractor):
-    """Test filtering of common words and short words."""
+    """Test that NO filtering is applied - all words are captured."""
     text = "Le chat mange une pomme dans la cuisine avec de l'eau"
     words = extractor._extract_french_words(text)
 
-    # Should keep meaningful words
+    # Should capture ALL words (no filtering)
     assert "chat" in words
     assert "mange" in words
     assert "pomme" in words
     assert "cuisine" in words
 
-    # Should filter common words
-    assert "le" not in words
-    assert "une" not in words
-    assert "dans" not in words
-    assert "la" not in words
-    assert "avec" not in words
-    assert "de" not in words
+    # Should also include common words (NOT filtered)
+    assert "le" in words
+    assert "une" in words
+    assert "dans" in words
+    assert "la" in words
+    assert "avec" in words
+    assert "de" in words
 
-    # Should filter short words
+    # Short words also captured (no length filtering)
     assert "l'" not in words
 
 
@@ -140,14 +137,10 @@ def test_word_normalization(extractor):
 
 def test_position_tracking(extractor):
     """Test that word positions are tracked correctly."""
-    with patch('trafilatura.extract') as mock_extract:
+    with patch("trafilatura.extract") as mock_extract:
         mock_extract.return_value = "premier second troisième quatrième"
 
-        article = RawArticle(
-            url="test.fr/pos",
-            raw_html="<p>test</p>",
-            site="test.fr"
-        )
+        article = RawArticle(url="test.fr/pos", raw_html="<p>test</p>", site="test.fr")
 
         word_facts = extractor.extract_words_from_article(article)
 
@@ -165,26 +158,25 @@ def test_position_tracking(extractor):
 
 def test_empty_text_handling(extractor):
     """Test handling of empty or whitespace-only text."""
-    with patch('trafilatura.extract') as mock_extract:
+    with patch("trafilatura.extract") as mock_extract:
         mock_extract.return_value = "   \n\t   "
 
-        article = RawArticle(
-            url="test.fr/empty",
-            raw_html="<p></p>",
-            site="test.fr"
-        )
+        article = RawArticle(url="test.fr/empty", raw_html="<p></p>", site="test.fr")
 
         word_facts = extractor.extract_words_from_article(article)
 
         assert word_facts == []
 
 
-@pytest.mark.parametrize("french_text,expected_words", [
-    ("C'est formidable", ["c'est", "formidable"]),
-    ("Jean-Pierre mange", ["jean-pierre", "mange"]),
-    ("L'hôtel français", ["l'hôtel", "français"]),
-    ("Rendez-vous demain", ["rendez-vous", "demain"]),
-])
+@pytest.mark.parametrize(
+    "french_text,expected_words",
+    [
+        ("C'est formidable", ["c'est", "formidable"]),
+        ("Jean-Pierre mange", ["jean-pierre", "mange"]),
+        ("L'hôtel français", ["l'hôtel", "français"]),
+        ("Rendez-vous demain", ["rendez-vous", "demain"]),
+    ],
+)
 def test_complex_french_patterns(extractor, french_text, expected_words):
     """Test extraction of complex French word patterns."""
     words = extractor._extract_french_words(french_text)
