@@ -14,9 +14,8 @@ the centralized config system.
 # Pipeline quality thresholds
 MIN_SUCCESS_RATE_THRESHOLD = 50.0
 
-# dbt schema configuration mapping
+# dbt schema configuration mapping (aligned with two-environment system)
 DBT_SCHEMA_CONFIG = {
     "test": "dbt_test",
-    "dev": "dbt_staging",
-    "prod": "dbt_prod",
+    "development": "dbt_staging",
 }
