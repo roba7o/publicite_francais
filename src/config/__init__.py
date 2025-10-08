@@ -16,7 +16,6 @@ from .environment import (
     CONCURRENT_FETCHERS,
     FETCH_TIMEOUT,
 )
-from .site_configs import SCRAPER_CONFIGS
 
 __all__ = [
     "DEBUG",
@@ -24,5 +23,4 @@ __all__ = [
     "DATABASE_CONFIG",
     "CONCURRENT_FETCHERS",
     "FETCH_TIMEOUT",
-    "SCRAPER_CONFIGS",
 ]
