@@ -169,12 +169,12 @@ def get_session() -> Generator[Session, None, None]:
         session.close()  # always closes the session (cleanup, returns connection to pool)
 
 
-def store_raw_article(raw_article: RawArticle) -> bool:
+def store_article(article: RawArticle) -> bool:
     """
     Store raw article data in clean single schema.
 
     Args:
-        raw_article: Raw scraped data with auto-generated UUID
+        article: Raw scraped data with auto-generated UUID
 
     Returns:
         True if stored successfully, False on error
@@ -194,24 +194,24 @@ def store_raw_article(raw_article: RawArticle) -> bool:
             )
 
             stmt = raw_articles_table.insert().values(
-                id=raw_article.id,
-                url=raw_article.url,
-                raw_html=raw_article.raw_html,
-                site=raw_article.site,
-                scraped_at=raw_article.scraped_at,
-                response_status=raw_article.response_status,
-                content_length=raw_article.content_length,
+                id=article.id,
+                url=article.url,
+                raw_html=article.raw_html,
+                site=article.site,
+                scraped_at=article.scraped_at,
+                response_status=article.response_status,
+                content_length=article.content_length,
             )
 
             session.execute(stmt)
 
             if DEBUG:
-                logger.info("Raw article stored successfully (pure ELT)")
+                logger.info("Article stored successfully")
             return True
 
     except Exception as e:
         # Exception automatically triggers rollback in context manager
-        logger.error(f"Failed to store raw article: {str(e)}")
+        logger.error(f"Failed to store article: {str(e)}")
         return False
 
 
@@ -330,7 +330,7 @@ def _fallback_individual_inserts(articles: list[RawArticle]) -> tuple[int, int]:
 
     for article in articles:
         try:
-            if store_raw_article(article):
+            if store_article(article):
                 successful_count += 1
             else:
                 failed_count += 1

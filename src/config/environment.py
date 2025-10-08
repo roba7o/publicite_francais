@@ -1,55 +1,85 @@
 """
-Simple environment configuration management.
+Environment configuration management.
 
-Direct access to environment variables with type safety and defaults.
+Single source of truth for environment-based settings.
+
+Configuration priority:
+1. Environment variables (set externally or in .env)
+2. Defaults defined here
+
+Quick config (when not using env vars):
+- Set DEFAULT_ENVIRONMENT to switch between 'development' and 'test'
+- Set DEFAULT_DEBUG to control logging verbosity
 """
 
 import os
 
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
 load_dotenv()
 
 
-# type helpers for reading env vars -> os.getenv returns Optional[str]
-def get_bool(key: str, default: bool = False) -> bool:
-    value = os.getenv(key, str(default)).lower()
-    return value in ("true", "1", "yes", "on")
-
-
-def get_int(key: str, default: int) -> int:
+def _get_int(key: str, default: int) -> int:
+    """Parse integer from environment variable."""
     try:
         return int(os.getenv(key, str(default)))
     except (ValueError, TypeError):
         return default
 
 
-# Environment configuration
-ENVIRONMENT = os.getenv("ENVIRONMENT", "development").lower()
-VALID_ENVIRONMENTS = {"development", "test", "production"}
-IS_TEST = ENVIRONMENT == "test"
-DEBUG = ENVIRONMENT == "development"
+def _get_bool(key: str, default: bool) -> bool:
+    """Parse boolean from environment variable."""
+    value = os.getenv(key)
+    if value is None:
+        return default
+    return value.lower() in ("true", "1", "yes", "on")
 
-# Validate environment
-if ENVIRONMENT not in VALID_ENVIRONMENTS:
+
+# ============================================================================
+# QUICK CONFIG - Edit these defaults when not using environment variables
+# ============================================================================
+# Examples:
+#   Run dev with debug:    DEFAULT_ENVIRONMENT = "development", DEFAULT_DEBUG = True
+#   Run dev without debug: DEFAULT_ENVIRONMENT = "development", DEFAULT_DEBUG = False
+#   Run tests with debug:  DEFAULT_ENVIRONMENT = "test", DEFAULT_DEBUG = True
+#   Run tests quietly:     DEFAULT_ENVIRONMENT = "test", DEFAULT_DEBUG = False
+# ============================================================================
+DEFAULT_ENVIRONMENT = "development"  # Options: "development" or "test"
+DEFAULT_DEBUG = False  # Set True to enable verbose logging
+
+
+# ============================================================================
+# Environment setup (uses env vars if set, otherwise uses defaults above)
+# ============================================================================
+ENVIRONMENT = os.getenv("ENVIRONMENT", DEFAULT_ENVIRONMENT).lower()
+
+if ENVIRONMENT not in {"development", "test"}:
     raise ValueError(
-        f"Invalid ENVIRONMENT: {ENVIRONMENT}. Must be one of: {VALID_ENVIRONMENTS}"
+        f"Invalid ENVIRONMENT: {ENVIRONMENT}. Must be 'development' or 'test'"
     )
 
+DEBUG = _get_bool("DEBUG", DEFAULT_DEBUG)
+
+
 # Database configuration
-DATABASE_CONFIG = {
-    "host": os.getenv("POSTGRES_HOST", "localhost"),
-    "port": get_int("POSTGRES_PORT", 5432),
-    "database": os.getenv("POSTGRES_DB", "french_news"),
-    "user": os.getenv("POSTGRES_USER", "news_user"),
-    "password": os.getenv("POSTGRES_PASSWORD", ""),
-}
+if ENVIRONMENT == "test":
+    DATABASE_CONFIG = {
+        "host": os.getenv("POSTGRES_HOST", "localhost"),
+        "port": _get_int("POSTGRES_PORT_TEST", 5433),
+        "database": os.getenv("POSTGRES_DB_TEST", "french_news_test"),
+        "user": os.getenv("POSTGRES_USER", "news_user"),
+        "password": os.getenv("POSTGRES_PASSWORD", "test_password"),
+    }
+else:  # development
+    DATABASE_CONFIG = {
+        "host": os.getenv("POSTGRES_HOST", "localhost"),
+        "port": _get_int("POSTGRES_PORT", 5432),
+        "database": os.getenv("POSTGRES_DB", "french_news"),
+        "user": os.getenv("POSTGRES_USER", "news_user"),
+        "password": os.getenv("POSTGRES_PASSWORD", ""),
+    }
 
-# Processing settings
-CONCURRENT_FETCHERS = get_int("CONCURRENT_FETCHERS", 3)
-FETCH_TIMEOUT = get_int("FETCH_TIMEOUT", 30)
 
-
-# Single schema approach - no environment-based schema switching
-# All environments use the public schema with separate databases
+# Application settings
+CONCURRENT_FETCHERS = _get_int("CONCURRENT_FETCHERS", 3)
+FETCH_TIMEOUT = _get_int("FETCH_TIMEOUT", 30)

@@ -8,9 +8,8 @@ management for proper integration testing.
 import pytest
 from sqlalchemy import text
 
-from database.database import store_articles_batch, store_raw_article, get_session
+from database.database import store_articles_batch, store_article, get_session
 from database.models import RawArticle
-from config.environment import get_news_data_schema
 
 
 def test_store_single_article(clean_test_db):
@@ -22,17 +21,15 @@ def test_store_single_article(clean_test_db):
     )
 
     # Store using application's database function
-    result = store_raw_article(article)
+    result = store_article(article)
     assert result is True
 
-    # Verify in database using application's database layer
-    schema = get_news_data_schema()
-
+    # Verify in database - single schema, no conditionals
     with get_session() as session:
         row = session.execute(
-            text(f"""
-            SELECT url, site, extracted_text, title, extraction_status
-            FROM {schema}.raw_articles
+            text("""
+            SELECT url, site, raw_html
+            FROM raw_articles
             WHERE id = :id
         """),
             {"id": article.id},
@@ -41,9 +38,7 @@ def test_store_single_article(clean_test_db):
         assert row is not None
         assert row[0] == article.url
         assert row[1] == article.site
-        assert row[2] == article.extracted_text  # Trafilatura extraction
-        assert row[3] == article.title
-        assert row[4] == article.extraction_status
+        assert row[2] == article.raw_html
 
 
 def test_store_batch_articles(clean_test_db):
@@ -62,21 +57,19 @@ def test_store_batch_articles(clean_test_db):
     assert successful == 3
     assert failed == 0
 
-    # Verify all in database using application's database layer
-    schema = get_news_data_schema()
-
+    # Verify all in database - single schema
     with get_session() as session:
         count = session.execute(
-            text(f"SELECT COUNT(*) FROM {schema}.raw_articles")
+            text("SELECT COUNT(*) FROM raw_articles")
         ).fetchone()[0]
         assert count == 3
 
         # Check each article
         for article in articles:
             row = session.execute(
-                text(f"""
+                text("""
                 SELECT url, site, raw_html
-                FROM {schema}.raw_articles
+                FROM raw_articles
                 WHERE id = :id
             """),
                 {"id": article.id},
@@ -102,17 +95,15 @@ def test_duplicate_urls_allowed(clean_test_db):
     )
 
     # Store both using application's database function
-    assert store_raw_article(article1) is True
-    assert store_raw_article(article2) is True
+    assert store_article(article1) is True
+    assert store_article(article2) is True
 
-    # Verify both stored with different UUIDs using application's database layer
-    schema = get_news_data_schema()
-
+    # Verify both stored with different UUIDs - single schema
     with get_session() as session:
         rows = session.execute(
-            text(f"""
+            text("""
             SELECT id, url, raw_html
-            FROM {schema}.raw_articles
+            FROM raw_articles
             WHERE url = :url
             ORDER BY scraped_at
         """),
