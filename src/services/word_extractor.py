@@ -6,7 +6,6 @@ denormalized WordFact objects for database storage.
 """
 
 import re
-from datetime import datetime
 
 import trafilatura
 
@@ -48,15 +47,16 @@ class WordExtractor:
             words = self._extract_french_words(extracted_text)
 
             # Create WordFact objects
+            # Use article's scraped_at timestamp for consistency
+            # (extraction happens immediately after scraping in the same pipeline)
             word_facts = []
-            extraction_time = datetime.now().isoformat()
 
             for position, word in enumerate(words):
                 word_fact = WordFact(
                     word=word,
                     article_id=article.id,
                     position_in_article=position,
-                    scraped_at=extraction_time,
+                    scraped_at=article.scraped_at,
                 )
                 word_facts.append(word_fact)
 
