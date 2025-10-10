@@ -348,10 +348,10 @@ def _fallback_individual_inserts(articles: list[RawArticle]) -> tuple[int, int]:
 
 def clear_test_database() -> bool:
     """
-    Clear all data from test database using application's database layer.
+    Clear all data from test database (TRUNCATE tables).
 
-    This function provides a safe way to clean the test database for testing
-    isolation. Only works in test environment for safety.
+    Delegates to scripts/sh/clear_tables.sh for consistency with other DB operations.
+    Only works in test environment for safety.
 
     Returns:
         True if cleared successfully, False on error
@@ -359,6 +359,10 @@ def clear_test_database() -> bool:
     Raises:
         ValueError: If called outside test environment
     """
+    import os
+    import subprocess
+    from pathlib import Path
+
     if ENVIRONMENT != "test":
         raise ValueError(
             f"clear_test_database can only be called in test environment, "
@@ -366,14 +370,32 @@ def clear_test_database() -> bool:
         )
 
     try:
-        # Clean schema approach - use public schema only
-        # Truncate parent table with CASCADE to automatically clear child tables
+        # Get database config for test environment
+        db_config = DATABASE_CONFIG
 
-        with get_session() as session:
-            # Truncate parent table (raw_articles) with CASCADE
-            # This automatically truncates word_facts due to foreign key CASCADE
-            session.execute(text("TRUNCATE TABLE raw_articles CASCADE"))
-            # Note: get_session() context manager handles commit automatically
+        # Build environment variables for shell script
+        env = os.environ.copy()
+        env.update({
+            "CONTAINER_NAME": "french_news_test_db",
+            "PGDATABASE": db_config["database"],
+            "PGUSER": db_config["user"],
+        })
+
+        # Get path to shell script
+        script_path = Path(__file__).parent.parent.parent / "scripts" / "sh" / "clear_tables.sh"
+
+        # Execute shell script
+        result = subprocess.run(
+            [str(script_path)],
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+
+        if result.returncode != 0:
+            logger.error(f"Failed to clear test database: {result.stderr}")
+            return False
 
         if DEBUG:
             logger.info("Successfully cleared test database")
