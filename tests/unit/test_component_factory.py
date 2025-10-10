@@ -1,11 +1,11 @@
 import pytest
-from tests.fixtures.helpers import DummyClass
+from fixtures.helpers import DummyClass
 
 from core.component_factory import ComponentFactory
 
 
 def test_import_class_happy():
-    class_path = "tests.fixtures.helpers.DummyClass"
+    class_path = "fixtures.helpers.DummyClass"
     imported_class = ComponentFactory.import_class(class_path)
     assert imported_class is DummyClass
 

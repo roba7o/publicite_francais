@@ -52,7 +52,7 @@ def test_domain_validation_passes(validator, monkeypatch):
 
     result = validator._validate_domain_and_log("https://test.com/article", "test.com")
 
-    assert result is True
+    assert result
 
 
 def test_domain_validation_fails(validator, monkeypatch):
@@ -65,7 +65,7 @@ def test_domain_validation_fails(validator, monkeypatch):
 
     result = validator._validate_domain_and_log("https://wrong.com/article", "test.com")
 
-    assert result is False
+    assert not result
     assert len(warning_calls) == 1
 
 
@@ -75,7 +75,7 @@ def test_title_validation_with_h1(validator, soup_with_h1):
         soup_with_h1, "https://test.com/article"
     )
 
-    assert result is True
+    assert result
 
 
 def test_title_validation_without_h1(validator, soup_without_h1, monkeypatch):
@@ -89,7 +89,7 @@ def test_title_validation_without_h1(validator, soup_without_h1, monkeypatch):
         soup_without_h1, "https://test.com/article"
     )
 
-    assert result is False
+    assert not result
     assert len(warning_calls) == 1
 
 

@@ -42,7 +42,3 @@ def get_site_configs() -> list[dict]:
             "soup_validator_kwargs": {"debug": DEBUG},
         },
     ]
-
-
-# Static list for backward compatibility (tests)
-SCRAPER_CONFIGS = get_site_configs()

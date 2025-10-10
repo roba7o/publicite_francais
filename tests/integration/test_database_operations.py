@@ -5,16 +5,14 @@ These tests use the application's own database functions and connection
 management for proper integration testing.
 """
 
-import pytest
 from sqlalchemy import text
 
-from database.database import store_articles_batch, store_raw_article, get_session
+from database.database import store_articles_batch, store_article, get_session
 from database.models import RawArticle
-from config.environment import get_news_data_schema
 
 
 def test_store_single_article(clean_test_db):
-    """Test storing a single article."""
+    """Test storing a single article (metadata only, no HTML)."""
     article = RawArticle(
         url="https://slate.fr/test-article",
         raw_html="<html><h1>Breaking News</h1><p>Important story</p></html>",
@@ -22,17 +20,15 @@ def test_store_single_article(clean_test_db):
     )
 
     # Store using application's database function
-    result = store_raw_article(article)
-    assert result is True
+    result = store_article(article)
+    assert result
 
-    # Verify in database using application's database layer
-    schema = get_news_data_schema()
-
+    # Verify metadata stored in dim_articles (no raw_html)
     with get_session() as session:
         row = session.execute(
-            text(f"""
-            SELECT url, site, extracted_text, title, extraction_status
-            FROM {schema}.raw_articles
+            text("""
+            SELECT url, site
+            FROM dim_articles
             WHERE id = :id
         """),
             {"id": article.id},
@@ -41,13 +37,11 @@ def test_store_single_article(clean_test_db):
         assert row is not None
         assert row[0] == article.url
         assert row[1] == article.site
-        assert row[2] == article.extracted_text  # Trafilatura extraction
-        assert row[3] == article.title
-        assert row[4] == article.extraction_status
+        # raw_html is NOT stored in dim_articles
 
 
 def test_store_batch_articles(clean_test_db):
-    """Test storing multiple articles in batch."""
+    """Test storing multiple articles in batch (metadata only)."""
     articles = [
         RawArticle(
             url=f"https://franceinfo.fr/article-{i}",
@@ -62,21 +56,17 @@ def test_store_batch_articles(clean_test_db):
     assert successful == 3
     assert failed == 0
 
-    # Verify all in database using application's database layer
-    schema = get_news_data_schema()
-
+    # Verify all in database
     with get_session() as session:
-        count = session.execute(
-            text(f"SELECT COUNT(*) FROM {schema}.raw_articles")
-        ).fetchone()[0]
+        count = session.execute(text("SELECT COUNT(*) FROM dim_articles")).fetchone()[0]
         assert count == 3
 
-        # Check each article
+        # Check each article metadata
         for article in articles:
             row = session.execute(
-                text(f"""
-                SELECT url, site, raw_html
-                FROM {schema}.raw_articles
+                text("""
+                SELECT url, site
+                FROM dim_articles
                 WHERE id = :id
             """),
                 {"id": article.id},
@@ -85,11 +75,11 @@ def test_store_batch_articles(clean_test_db):
             assert row is not None
             assert row[0] == article.url
             assert row[1] == article.site
-            assert row[2] == article.raw_html
+            # raw_html is NOT stored
 
 
-def test_duplicate_urls_allowed(clean_test_db):
-    """Test that duplicate URLs are stored with different UUIDs."""
+def test_duplicate_urls_rejected(clean_test_db):
+    """Test that duplicate URLs are rejected by UNIQUE constraint."""
     article1 = RawArticle(
         url="https://lemonde.fr/same-story",
         raw_html="<html><h1>First Version</h1></html>",
@@ -101,26 +91,22 @@ def test_duplicate_urls_allowed(clean_test_db):
         site="lemonde.fr",
     )
 
-    # Store both using application's database function
-    assert store_raw_article(article1) is True
-    assert store_raw_article(article2) is True
+    # Store first article - should succeed
+    assert store_article(article1)
 
-    # Verify both stored with different UUIDs using application's database layer
-    schema = get_news_data_schema()
+    # Store second article with same URL - should fail due to UNIQUE constraint
+    assert not store_article(article2)
 
+    # Verify only one article stored
     with get_session() as session:
         rows = session.execute(
-            text(f"""
-            SELECT id, url, raw_html
-            FROM {schema}.raw_articles
+            text("""
+            SELECT id, url
+            FROM dim_articles
             WHERE url = :url
-            ORDER BY scraped_at
         """),
             {"url": "https://lemonde.fr/same-story"},
         ).fetchall()
 
-        assert len(rows) == 2
-        assert rows[0][0] != rows[1][0]  # Different UUIDs
-        assert rows[0][1] == rows[1][1]  # Same URL
-        assert "First Version" in rows[0][2]
-        assert "Updated Version" in rows[1][2]
+        assert len(rows) == 1
+        assert rows[0][1] == "https://lemonde.fr/same-story"

@@ -1,13 +1,15 @@
 """
-Database connection and session management for French news scraper.
+Database connection and data operations for French news scraper.
 
 Provides:
 1. Database connection setup using SQLAlchemy
 2. Session factory for database operations
 3. Context manager for safe transaction handling
+4. Data operations (DML): INSERT, TRUNCATE
 
-The main purpose is to create the session factory, which is used by repository
-classes to get database sessions with proper transaction handling.
+NOTE: This module handles DATA operations only.
+Schema operations (DDL: CREATE/DROP tables) are handled by scripts/sh/
+to keep Python runtime code separate from DevOps automation.
 """
 
 import time
@@ -24,8 +26,8 @@ from sqlalchemy.orm import (
 from sqlalchemy.pool import QueuePool  # for optimized connection pooling
 from sqlalchemy.sql import column, table  # for dynamic table references
 
-from config.environment import DATABASE_CONFIG, DEBUG, ENVIRONMENT, get_news_data_schema
-from database.models import RawArticle
+from config.environment import DATABASE_CONFIG, DEBUG, ENVIRONMENT
+from database.models import RawArticle, WordFact
 from utils.structured_logger import get_logger
 
 logger = get_logger(__name__)
@@ -169,75 +171,45 @@ def get_session() -> Generator[Session, None, None]:
         session.close()  # always closes the session (cleanup, returns connection to pool)
 
 
-def store_raw_article(raw_article: RawArticle) -> bool:
+def store_article(article: RawArticle) -> bool:
     """
-    Store raw article data with UUID-based uniqueness.
-
-    Each article gets a unique UUID, allowing duplicate URLs to be stored
-    as separate entries. This follows pure ELT approach where all scraped
-    data is preserved and deduplication is handled downstream by dbt.
+    Store raw article data in clean single schema.
 
     Args:
-        raw_article: Raw scraped data with auto-generated UUID
+        article: Raw scraped data with auto-generated UUID
 
     Returns:
         True if stored successfully, False on error
     """
-    schema_name = get_news_data_schema()
-
     try:
         with get_session() as session:
-            # Ensure schema exists (simple, idempotent check)
-            session.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema_name}"))
-
-            # Use table() for cleaner insert
-            raw_articles_table = table(
-                "raw_articles",
+            # Use table() for cleaner insert - public schema only
+            dim_articles_table = table(
+                "dim_articles",
                 column("id"),
                 column("url"),
-                column("raw_html"),
                 column("site"),
                 column("scraped_at"),
                 column("response_status"),
-                column("content_length"),
-                column("extracted_text"),
-                column("title"),
-                column("author"),
-                column("date_published"),
-                column("language"),
-                column("summary"),
-                column("keywords"),
-                column("extraction_status"),
-                schema=schema_name,
             )
 
-            stmt = raw_articles_table.insert().values(
-                id=raw_article.id,
-                url=raw_article.url,
-                raw_html=raw_article.raw_html,
-                site=raw_article.site,
-                scraped_at=raw_article.scraped_at,
-                response_status=raw_article.response_status,
-                content_length=raw_article.content_length,
-                extracted_text=raw_article.extracted_text,
-                title=raw_article.title,
-                author=raw_article.author,
-                date_published=raw_article.date_published,
-                language=raw_article.language,
-                summary=raw_article.summary,
-                keywords=raw_article.keywords,
-                extraction_status=raw_article.extraction_status,
+            stmt = dim_articles_table.insert().values(
+                id=article.id,
+                url=article.url,
+                site=article.site,
+                scraped_at=article.scraped_at,
+                response_status=article.response_status,
             )
 
             session.execute(stmt)
 
             if DEBUG:
-                logger.info("Raw article stored successfully (pure ELT)")
+                logger.info("Article stored successfully")
             return True
 
     except Exception as e:
         # Exception automatically triggers rollback in context manager
-        logger.error(f"Failed to store raw article: {str(e)}")
+        logger.error(f"Failed to store article: {str(e)}")
         return False
 
 
@@ -264,7 +236,7 @@ def store_articles_batch(
     if not articles:
         return 0, 0
 
-    schema_name = get_news_data_schema()
+    # Clean schema approach - use public schema only
 
     # Memory management: estimate size and chunk if needed for this batch
     estimated_size_mb = (
@@ -295,39 +267,25 @@ def store_articles_batch(
 
     try:
         with get_session() as session:
-            # Ensure schema exists (simple, idempotent check)
-            session.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema_name}"))
-
             # Use SQLAlchemy's optimized bulk insert
             # Convert articles to dictionaries for bulk_insert_mappings
             article_dicts = [article.to_dict() for article in articles]
 
-            # Use the raw_articles table metadata for bulk insert
-            raw_articles_table = table(
-                "raw_articles",
+            # Use the dim_articles table metadata for bulk insert
+            dim_articles_table = table(
+                "dim_articles",
                 column("id"),
                 column("url"),
-                column("raw_html"),
                 column("site"),
                 column("scraped_at"),
                 column("response_status"),
-                column("content_length"),
-                column("extracted_text"),
-                column("title"),
-                column("author"),
-                column("date_published"),
-                column("language"),
-                column("summary"),
-                column("keywords"),
-                column("extraction_status"),
-                schema=schema_name,
             )
 
             # Execute bulk insert
             """
-            SQL: INSERT INTO schema.raw_articles (columns...) VALUES (...), (...), ...
+            SQL: INSERT INTO dim_articles (columns...) VALUES (...), (...), ...
             """
-            session.execute(raw_articles_table.insert(), article_dicts)
+            session.execute(dim_articles_table.insert(), article_dicts)
 
             if DEBUG:
                 logger.info(
@@ -368,7 +326,7 @@ def _fallback_individual_inserts(articles: list[RawArticle]) -> tuple[int, int]:
 
     for article in articles:
         try:
-            if store_raw_article(article):
+            if store_article(article):
                 successful_count += 1
             else:
                 failed_count += 1
@@ -384,10 +342,10 @@ def _fallback_individual_inserts(articles: list[RawArticle]) -> tuple[int, int]:
 
 def clear_test_database() -> bool:
     """
-    Clear all data from test database using application's database layer.
+    Clear all data from test database (TRUNCATE tables).
 
-    This function provides a safe way to clean the test database for testing
-    isolation. Only works in test environment for safety.
+    Delegates to scripts/sh/clear_tables.sh for consistency with other DB operations.
+    Only works in test environment for safety.
 
     Returns:
         True if cleared successfully, False on error
@@ -395,6 +353,10 @@ def clear_test_database() -> bool:
     Raises:
         ValueError: If called outside test environment
     """
+    import os
+    import subprocess
+    from pathlib import Path
+
     if ENVIRONMENT != "test":
         raise ValueError(
             f"clear_test_database can only be called in test environment, "
@@ -402,18 +364,144 @@ def clear_test_database() -> bool:
         )
 
     try:
-        schema = get_news_data_schema()
+        # Get database config for test environment
+        db_config = DATABASE_CONFIG
 
-        with get_session() as session:
-            # Clear all tables in the test schema
-            session.execute(text(f"TRUNCATE TABLE {schema}.raw_articles CASCADE"))
-            session.commit()
+        # Build environment variables for shell script
+        env = os.environ.copy()
+        env.update({
+            "CONTAINER_NAME": "french_news_test_db",
+            "PGDATABASE": db_config["database"],
+            "PGUSER": db_config["user"],
+        })
+
+        # Get path to shell script
+        script_path = Path(__file__).parent.parent.parent / "scripts" / "sh" / "clear_tables.sh"
+
+        # Execute shell script
+        result = subprocess.run(
+            [str(script_path)],
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+
+        if result.returncode != 0:
+            logger.error(f"Failed to clear test database: {result.stderr}")
+            return False
 
         if DEBUG:
-            logger.info(f"Successfully cleared test database schema: {schema}")
+            logger.info("Successfully cleared test database")
 
         return True
 
     except Exception as e:
         logger.error(f"Failed to clear test database: {e}")
         return False
+
+
+def store_word_fact(word_fact: WordFact) -> bool:
+    """
+    Store a single word fact.
+
+    Args:
+        word_fact: WordFact object to store
+
+    Returns:
+        True if stored successfully, False on error
+    """
+    try:
+        with get_session() as session:
+            word_facts_table = table(
+                "word_facts",
+                column("id"),
+                column("word"),
+                column("article_id"),
+                column("position_in_article"),
+                column("scraped_at"),
+            )
+
+            stmt = word_facts_table.insert().values(
+                id=word_fact.id,
+                word=word_fact.word,
+                article_id=word_fact.article_id,
+                position_in_article=word_fact.position_in_article,
+                scraped_at=word_fact.scraped_at,
+            )
+
+            session.execute(stmt)
+
+            if DEBUG:
+                logger.info(f"Word fact stored: {word_fact.word}")
+
+            return True
+
+    except Exception as e:
+        logger.error(f"Failed to store word fact: {e}")
+        return False
+
+
+def store_word_facts_batch(
+    word_facts: list[WordFact], batch_size: int = 500
+) -> tuple[int, int]:
+    """
+    Store multiple word facts with batch processing.
+
+    Args:
+        word_facts: List of WordFact objects to store
+        batch_size: Number of word facts to process at once
+
+    Returns:
+        Tuple of (successful_count, failed_count)
+    """
+    if not word_facts:
+        return 0, 0
+
+    try:
+        with get_session() as session:
+            # Convert to dictionaries for bulk insert
+            word_fact_dicts = [wf.to_dict() for wf in word_facts]
+
+            # Process in batches to avoid memory issues
+            successful_count = 0
+            failed_count = 0
+
+            for i in range(0, len(word_fact_dicts), batch_size):
+                batch = word_fact_dicts[i : i + batch_size]
+
+                try:
+                    word_facts_table = table(
+                        "word_facts",
+                        column("id"),
+                        column("word"),
+                        column("article_id"),
+                        column("position_in_article"),
+                        column("scraped_at"),
+                    )
+
+                    session.execute(word_facts_table.insert(), batch)
+                    successful_count += len(batch)
+
+                    if DEBUG:
+                        logger.info(f"Stored batch of {len(batch)} word facts")
+
+                except IntegrityError as e:
+                    # Integrity error indicates a data generation bug
+                    logger.error(f"Integrity error in batch (indicates data bug): {e}")
+                    failed_count += len(batch)
+
+                except Exception as e:
+                    logger.error(f"Unexpected error storing word facts batch: {e}")
+                    failed_count += len(batch)
+
+            if DEBUG:
+                logger.info(
+                    f"Word facts batch complete: {successful_count} successful, {failed_count} failed"
+                )
+
+            return successful_count, failed_count
+
+    except Exception as e:
+        logger.error(f"Failed to store word facts batch: {e}")
+        return 0, len(word_facts)

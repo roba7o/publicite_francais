@@ -12,7 +12,6 @@ Note: ENVIRONMENT=test is automatically set by tests/conftest.py
 from sqlalchemy import text
 
 from database.database import get_session
-from config.environment import get_news_data_schema
 
 
 def test_articles_exist_in_database(clean_test_db):
@@ -24,19 +23,14 @@ def test_articles_exist_in_database(clean_test_db):
 
     print("\n=== Stage 2: Testing Database Storage ===")
 
-    # Get the schema name
-    schema = get_news_data_schema()
-    print(f"Using database schema: {schema}")
     print("✓ Database already cleaned by clean_test_db fixture")
 
     # Run the test data pipeline to populate with fixtures
     import subprocess
+
     print("Running test data pipeline...")
     result = subprocess.run(
-        ["make", "run-test-data"],
-        capture_output=True,
-        text=True,
-        timeout=60
+        ["make", "run-test-data"], capture_output=True, text=True, timeout=60
     )
     assert result.returncode == 0, f"Pipeline failed: {result.stderr}"
     print("✓ Test data pipeline completed")
@@ -48,13 +42,13 @@ def test_articles_exist_in_database(clean_test_db):
         "slate.fr": EXPECTED_PER_SITE,
         "franceinfo.fr": EXPECTED_PER_SITE,
         "tf1info.fr": EXPECTED_PER_SITE,
-        "ladepeche.fr": EXPECTED_PER_SITE
+        "ladepeche.fr": EXPECTED_PER_SITE,
     }
 
     # Connect and count articles using application's database layer
     with get_session() as session:
         total_count = session.execute(
-            text(f"SELECT COUNT(*) FROM {schema}.raw_articles")
+            text("SELECT COUNT(*) FROM dim_articles")
         ).scalar()
 
         print(f"Articles found in database: {total_count}")
@@ -67,9 +61,7 @@ def test_articles_exist_in_database(clean_test_db):
 
         # Verify each site has exact expected count
         sites = session.execute(
-            text(
-                f"SELECT site, COUNT(*) FROM {schema}.raw_articles GROUP BY site ORDER BY site"
-            )
+            text("SELECT site, COUNT(*) FROM dim_articles GROUP BY site ORDER BY site")
         ).fetchall()
 
         print("Articles by site:")
