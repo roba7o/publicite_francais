@@ -9,6 +9,6 @@ if [ -z "$CONTAINER_NAME" ] || [ -z "$PGDATABASE" ] || [ -z "$PGUSER" ]; then
 fi
 
 # Truncate tables with CASCADE
-docker exec "$CONTAINER_NAME" psql -U "$PGUSER" -d "$PGDATABASE" -c "TRUNCATE TABLE raw_articles CASCADE" > /dev/null 2>&1
+docker exec "$CONTAINER_NAME" psql -U "$PGUSER" -d "$PGDATABASE" -c "TRUNCATE TABLE dim_articles CASCADE" > /dev/null 2>&1
 
 exit 0

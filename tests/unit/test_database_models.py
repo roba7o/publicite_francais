@@ -36,7 +36,6 @@ def test_initialization_with_required_fields(sample_html):
     assert article.site == "test.com"
     assert article.id is not None
     assert article.scraped_at is not None
-    assert article.content_length == len(sample_html)
 
 
 @pytest.mark.parametrize("missing_field", ["url", "raw_html", "site"])
@@ -74,24 +73,13 @@ def test_initialization_with_optional_fields(sample_html):
         raw_html=sample_html,
         site="test.com",
         response_status=200,
-        content_length=1000,
     )
 
     assert article.response_status == 200
-    assert article.content_length == 1000  # Should not be overridden
-
-
-def test_content_length_auto_calculation(sample_html):
-    """Test that content_length is calculated automatically when not provided."""
-    article = RawArticle(
-        url="https://test.com/article", raw_html=sample_html, site="test.com"
-    )
-
-    assert article.content_length == len(sample_html)
 
 
 def test_to_dict_conversion(sample_html):
-    """Test conversion to dictionary for database storage."""
+    """Test conversion to dictionary for database storage (metadata only)."""
     article = RawArticle(
         url="https://test.com/article",
         raw_html=sample_html,
@@ -103,15 +91,12 @@ def test_to_dict_conversion(sample_html):
 
     assert isinstance(result, dict)
     assert result["url"] == "https://test.com/article"
-    assert result["raw_html"] == sample_html
     assert result["site"] == "test.com"
     assert result["response_status"] == 200
     assert "id" in result
     assert "scraped_at" in result
-    assert "content_length" in result
-    # Clean model - no extraction fields
-    assert "extracted_text" not in result
-    assert "extraction_status" not in result
+    # raw_html should NOT be in the dict (not persisted to dim_articles)
+    assert "raw_html" not in result
 
 
 # === WordFact Model Tests ===

@@ -12,6 +12,6 @@ echo "Dropping all tables from $PGDATABASE in container $CONTAINER_NAME"
 
 # Drop tables with CASCADE
 docker exec "$CONTAINER_NAME" psql -U "$PGUSER" -d "$PGDATABASE" -c "DROP TABLE IF EXISTS word_facts CASCADE"
-docker exec "$CONTAINER_NAME" psql -U "$PGUSER" -d "$PGDATABASE" -c "DROP TABLE IF EXISTS raw_articles CASCADE"
+docker exec "$CONTAINER_NAME" psql -U "$PGUSER" -d "$PGDATABASE" -c "DROP TABLE IF EXISTS dim_articles CASCADE"
 
 echo "✓ Tables dropped successfully"

@@ -73,10 +73,10 @@ def test_word_extraction_and_storage_flow(clean_test_db):
         result = session.execute(
             text(
                 """
-                SELECT ra.url, wf.word, wf.position_in_article
+                SELECT da.url, wf.word, wf.position_in_article
                 FROM word_facts wf
-                JOIN raw_articles ra ON wf.article_id = ra.id
-                WHERE ra.id = :id
+                JOIN dim_articles da ON wf.article_id = da.id
+                WHERE da.id = :id
                 ORDER BY wf.position_in_article
             """
             ),

@@ -48,7 +48,7 @@ def test_articles_exist_in_database(clean_test_db):
     # Connect and count articles using application's database layer
     with get_session() as session:
         total_count = session.execute(
-            text("SELECT COUNT(*) FROM raw_articles")
+            text("SELECT COUNT(*) FROM dim_articles")
         ).scalar()
 
         print(f"Articles found in database: {total_count}")
@@ -61,7 +61,7 @@ def test_articles_exist_in_database(clean_test_db):
 
         # Verify each site has exact expected count
         sites = session.execute(
-            text("SELECT site, COUNT(*) FROM raw_articles GROUP BY site ORDER BY site")
+            text("SELECT site, COUNT(*) FROM dim_articles GROUP BY site ORDER BY site")
         ).fetchall()
 
         print("Articles by site:")

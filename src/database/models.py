@@ -2,8 +2,11 @@
 Data models for the French news scraper with clean architecture.
 
 Separate concerns:
-- RawArticle: Store raw HTML content only
-- WordFact: Individual words for vocabulary learning (denormalized)
+- RawArticle: Transient container for scraped HTML (used in memory only)
+- WordFact: Individual words for vocabulary learning (stored in DB)
+
+Note: raw_html is NOT persisted to database - only metadata is stored in dim_articles.
+HTML is processed in memory via trafilatura to extract words, then discarded.
 """
 
 from dataclasses import dataclass, field
@@ -16,15 +19,19 @@ __all__ = ["RawArticle", "WordFact"]
 @dataclass
 class RawArticle:
     """
-    Raw scraped article data - no processing, just storage.
+    Transient container for scraped article data.
 
-    Clean separation: only handles raw HTML storage.
-    Word processing happens separately via WordExtractor service.
+    Used in-memory during processing:
+    1. Scraper creates RawArticle with HTML
+    2. WordExtractor processes raw_html via trafilatura
+    3. Only metadata stored to dim_articles (HTML discarded)
+
+    The raw_html field exists only for word extraction, never persisted.
     """
 
     # Required fields
     url: str
-    raw_html: str  # Complete HTML content as text
+    raw_html: str  # Complete HTML content (transient, not stored)
     site: str  # News site identifier
 
     # Auto-generated fields
@@ -33,27 +40,24 @@ class RawArticle:
 
     # Optional metadata
     response_status: int | None = None
-    content_length: int | None = None
 
     def __post_init__(self) -> None:
-        """Validate required fields and set content length."""
+        """Validate required fields."""
         if not self.url or not self.raw_html or not self.site:
             raise ValueError("url, raw_html, and site are required")
 
-        # Set content_length if not provided
-        if self.content_length is None:
-            self.content_length = len(self.raw_html)
-
     def to_dict(self) -> dict:
-        """Convert to dictionary for database storage."""
+        """
+        Convert to dictionary for database storage (metadata only).
+
+        Note: raw_html is intentionally excluded - it's never persisted.
+        """
         return {
             "id": self.id,
             "url": self.url,
-            "raw_html": self.raw_html,
             "site": self.site,
             "scraped_at": self.scraped_at,
             "response_status": self.response_status,
-            "content_length": self.content_length,
         }
 
 

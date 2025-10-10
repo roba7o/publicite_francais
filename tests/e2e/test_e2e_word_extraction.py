@@ -45,7 +45,7 @@ def within_tolerance(actual: int, expected: int, tolerance_pct: float) -> bool:
 
 def test_complete_word_extraction_pipeline(clean_test_db):
     """
-    Test complete pipeline: HTML fixtures → raw_articles + word_facts.
+    Test complete pipeline: HTML fixtures → dim_articles + word_facts.
 
     Runs pipeline once, then validates all critical aspects.
     """
@@ -65,7 +65,7 @@ def test_complete_word_extraction_pipeline(clean_test_db):
     with get_session() as session:
         # 1. Verify articles stored
         article_count = session.execute(
-            text("SELECT COUNT(*) FROM raw_articles")
+            text("SELECT COUNT(*) FROM dim_articles")
         ).scalar()
         assert article_count >= 16, f"Expected >= 16 articles, got {article_count}"
         print(f"✓ Articles stored: {article_count}")
@@ -88,11 +88,11 @@ def test_complete_word_extraction_pipeline(clean_test_db):
         for url_pattern, expected_count, tolerance_pct in EXPECTED_WORD_COUNTS:
             result = session.execute(
                 text("""
-                    SELECT ra.url, COUNT(wf.id) as word_count
-                    FROM raw_articles ra
-                    LEFT JOIN word_facts wf ON wf.article_id = ra.id
-                    WHERE ra.url LIKE :pattern
-                    GROUP BY ra.url
+                    SELECT da.url, COUNT(wf.id) as word_count
+                    FROM dim_articles da
+                    LEFT JOIN word_facts wf ON wf.article_id = da.id
+                    WHERE da.url LIKE :pattern
+                    GROUP BY da.url
                 """),
                 {"pattern": f"%{url_pattern}%"},
             ).fetchone()
@@ -133,8 +133,8 @@ def test_complete_word_extraction_pipeline(clean_test_db):
             text("""
                 SELECT COUNT(*)
                 FROM word_facts wf
-                LEFT JOIN raw_articles ra ON wf.article_id = ra.id
-                WHERE ra.id IS NULL
+                LEFT JOIN dim_articles da ON wf.article_id = da.id
+                WHERE da.id IS NULL
             """)
         ).scalar()
         assert orphaned == 0, f"Found {orphaned} orphaned word_facts"
@@ -143,11 +143,11 @@ def test_complete_word_extraction_pipeline(clean_test_db):
         # 6. Verify star schema join works
         result = session.execute(
             text("""
-                SELECT ra.site, wf.word, COUNT(*) as frequency
+                SELECT da.site, wf.word, COUNT(*) as frequency
                 FROM word_facts wf
-                JOIN raw_articles ra ON wf.article_id = ra.id
+                JOIN dim_articles da ON wf.article_id = da.id
                 WHERE wf.word = 'le'
-                GROUP BY ra.site, wf.word
+                GROUP BY da.site, wf.word
                 ORDER BY frequency DESC
                 LIMIT 1
             """)

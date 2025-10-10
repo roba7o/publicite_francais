@@ -12,7 +12,7 @@ from database.models import RawArticle
 
 
 def test_store_single_article(clean_test_db):
-    """Test storing a single article."""
+    """Test storing a single article (metadata only, no HTML)."""
     article = RawArticle(
         url="https://slate.fr/test-article",
         raw_html="<html><h1>Breaking News</h1><p>Important story</p></html>",
@@ -23,12 +23,12 @@ def test_store_single_article(clean_test_db):
     result = store_article(article)
     assert result
 
-    # Verify in database - single schema, no conditionals
+    # Verify metadata stored in dim_articles (no raw_html)
     with get_session() as session:
         row = session.execute(
             text("""
-            SELECT url, site, raw_html
-            FROM raw_articles
+            SELECT url, site
+            FROM dim_articles
             WHERE id = :id
         """),
             {"id": article.id},
@@ -37,11 +37,11 @@ def test_store_single_article(clean_test_db):
         assert row is not None
         assert row[0] == article.url
         assert row[1] == article.site
-        assert row[2] == article.raw_html
+        # raw_html is NOT stored in dim_articles
 
 
 def test_store_batch_articles(clean_test_db):
-    """Test storing multiple articles in batch."""
+    """Test storing multiple articles in batch (metadata only)."""
     articles = [
         RawArticle(
             url=f"https://franceinfo.fr/article-{i}",
@@ -56,17 +56,17 @@ def test_store_batch_articles(clean_test_db):
     assert successful == 3
     assert failed == 0
 
-    # Verify all in database - single schema
+    # Verify all in database
     with get_session() as session:
-        count = session.execute(text("SELECT COUNT(*) FROM raw_articles")).fetchone()[0]
+        count = session.execute(text("SELECT COUNT(*) FROM dim_articles")).fetchone()[0]
         assert count == 3
 
-        # Check each article
+        # Check each article metadata
         for article in articles:
             row = session.execute(
                 text("""
-                SELECT url, site, raw_html
-                FROM raw_articles
+                SELECT url, site
+                FROM dim_articles
                 WHERE id = :id
             """),
                 {"id": article.id},
@@ -75,7 +75,7 @@ def test_store_batch_articles(clean_test_db):
             assert row is not None
             assert row[0] == article.url
             assert row[1] == article.site
-            assert row[2] == article.raw_html
+            # raw_html is NOT stored
 
 
 def test_duplicate_urls_rejected(clean_test_db):
@@ -101,12 +101,12 @@ def test_duplicate_urls_rejected(clean_test_db):
     with get_session() as session:
         rows = session.execute(
             text("""
-            SELECT id, url, raw_html
-            FROM raw_articles
+            SELECT id, url
+            FROM dim_articles
             WHERE url = :url
         """),
             {"url": "https://lemonde.fr/same-story"},
         ).fetchall()
 
         assert len(rows) == 1
-        assert "First Version" in rows[0][2]
+        assert rows[0][1] == "https://lemonde.fr/same-story"

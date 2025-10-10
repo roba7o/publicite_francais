@@ -184,25 +184,21 @@ def store_article(article: RawArticle) -> bool:
     try:
         with get_session() as session:
             # Use table() for cleaner insert - public schema only
-            raw_articles_table = table(
-                "raw_articles",
+            dim_articles_table = table(
+                "dim_articles",
                 column("id"),
                 column("url"),
-                column("raw_html"),
                 column("site"),
                 column("scraped_at"),
                 column("response_status"),
-                column("content_length"),
             )
 
-            stmt = raw_articles_table.insert().values(
+            stmt = dim_articles_table.insert().values(
                 id=article.id,
                 url=article.url,
-                raw_html=article.raw_html,
                 site=article.site,
                 scraped_at=article.scraped_at,
                 response_status=article.response_status,
-                content_length=article.content_length,
             )
 
             session.execute(stmt)
@@ -275,23 +271,21 @@ def store_articles_batch(
             # Convert articles to dictionaries for bulk_insert_mappings
             article_dicts = [article.to_dict() for article in articles]
 
-            # Use the raw_articles table metadata for bulk insert
-            raw_articles_table = table(
-                "raw_articles",
+            # Use the dim_articles table metadata for bulk insert
+            dim_articles_table = table(
+                "dim_articles",
                 column("id"),
                 column("url"),
-                column("raw_html"),
                 column("site"),
                 column("scraped_at"),
                 column("response_status"),
-                column("content_length"),
             )
 
             # Execute bulk insert
             """
-            SQL: INSERT INTO schema.raw_articles (columns...) VALUES (...), (...), ...
+            SQL: INSERT INTO dim_articles (columns...) VALUES (...), (...), ...
             """
-            session.execute(raw_articles_table.insert(), article_dicts)
+            session.execute(dim_articles_table.insert(), article_dicts)
 
             if DEBUG:
                 logger.info(
