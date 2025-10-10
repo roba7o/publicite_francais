@@ -62,26 +62,3 @@ CREATE INDEX IF NOT EXISTS idx_word_facts_article_id
 CREATE INDEX IF NOT EXISTS idx_word_facts_scraped_at
     ON word_facts(scraped_at);
 
--- =============================================================================
--- Example Queries
--- =============================================================================
---
--- Get word frequency across all articles:
---   SELECT word, COUNT(*) as frequency
---   FROM word_facts
---   GROUP BY word
---   ORDER BY frequency DESC;
---
--- Get words from a specific article:
---   SELECT wf.word, wf.position_in_article
---   FROM word_facts wf
---   JOIN raw_articles ra ON wf.article_id = ra.id
---   WHERE ra.url = 'https://example.com/article';
---
--- Get most common words by site:
---   SELECT ra.site, wf.word, COUNT(*) as frequency
---   FROM word_facts wf
---   JOIN raw_articles ra ON wf.article_id = ra.id
---   GROUP BY ra.site, wf.word
---   ORDER BY frequency DESC;
--- =============================================================================
