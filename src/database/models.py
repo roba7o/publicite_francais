@@ -7,7 +7,7 @@ Separate concerns:
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from uuid import uuid4
 
 __all__ = ["RawArticle", "WordFact"]
@@ -29,7 +29,7 @@ class RawArticle:
 
     # Auto-generated fields
     id: str = field(default_factory=lambda: str(uuid4()))
-    scraped_at: str = field(default_factory=lambda: datetime.now().isoformat())
+    scraped_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     # Optional metadata
     response_status: int | None = None
@@ -70,7 +70,7 @@ class WordFact:
     word: str  # The French word (normalized/cleaned)
     article_id: str  # Reference to RawArticle.id
     position_in_article: int  # Word position for context
-    scraped_at: str  # When the word was extracted
+    scraped_at: datetime  # When the word was extracted
 
     # Auto-generated fields
     id: str = field(default_factory=lambda: str(uuid4()))
