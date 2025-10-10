@@ -29,3 +29,4 @@ CLAUDE.md
 misc/
 .env.cloud
 cloud-sql-proxy
+.env.cloud.docker

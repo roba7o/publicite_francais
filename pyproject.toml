@@ -21,6 +21,7 @@ dependencies = [
     "tldextract>=5.0.0",
     "trafilatura>=1.8.0",
     "sqlparse>=0.4.0",
+    "rich>=13.0.0",
 ]
 
 [project.optional-dependencies]
