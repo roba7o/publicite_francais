@@ -43,8 +43,8 @@ class WordExtractor:
                 logger.warning(f"No text extracted from article {article.id}")
                 return []
 
-            # Extract French words
-            words = self._extract_french_words(extracted_text)
+            # Extract French words (find all words matching pattern, normalize to lowercase)
+            words = self.french_word_pattern.findall(extracted_text.lower())
 
             # Create WordFact objects
             # Use article's scraped_at timestamp for consistency
@@ -66,21 +66,3 @@ class WordExtractor:
         except Exception as e:
             logger.warning(f"Failed to extract words from article {article.id}: {e}")
             return []  # Fail gracefully
-
-    def _extract_french_words(self, text: str) -> list[str]:
-        """
-        Extract and normalize French words from text.
-
-        No filtering applied - all French words are captured.
-        Filtering (stopwords, frequency, etc.) will be handled in dbt.
-
-        Args:
-            text: Extracted article text
-
-        Returns:
-            List of normalized French words (lowercase)
-        """
-        # Find all words matching French pattern and normalize to lowercase
-        words = self.french_word_pattern.findall(text.lower())
-
-        return words

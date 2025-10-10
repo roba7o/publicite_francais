@@ -87,7 +87,7 @@ def test_extract_words_exception(mock_extract, extractor, sample_article):
 def test_french_word_pattern(extractor):
     """Test French word pattern recognition."""
     text = "Voici des mots français: économie, café, naïf, être, coûter"
-    words = extractor._extract_french_words(text)
+    words = extractor.french_word_pattern.findall(text.lower())
 
     # Should capture French words with accents
     assert "économie" in words
@@ -100,7 +100,7 @@ def test_french_word_pattern(extractor):
 def test_word_filtering(extractor):
     """Test that NO filtering is applied - all words are captured."""
     text = "Le chat mange une pomme dans la cuisine avec de l'eau"
-    words = extractor._extract_french_words(text)
+    words = extractor.french_word_pattern.findall(text.lower())
 
     # Should capture ALL words (no filtering)
     assert "chat" in words
@@ -123,7 +123,7 @@ def test_word_filtering(extractor):
 def test_word_normalization(extractor):
     """Test word normalization (lowercase)."""
     text = "ÉCONOMIE Française POLITIQUE"
-    words = extractor._extract_french_words(text)
+    words = extractor.french_word_pattern.findall(text.lower())
 
     # Should normalize to lowercase
     assert "économie" in words
@@ -179,7 +179,7 @@ def test_empty_text_handling(extractor):
 )
 def test_complex_french_patterns(extractor, french_text, expected_words):
     """Test extraction of complex French word patterns."""
-    words = extractor._extract_french_words(french_text)
+    words = extractor.french_word_pattern.findall(french_text.lower())
 
     for expected in expected_words:
         assert expected in words
