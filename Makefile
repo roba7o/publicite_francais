@@ -17,7 +17,7 @@ SRC := src
 MAIN_MODULE := main
 
 .DEFAULT_GOAL := help
-.PHONY: run run-test-data test test-unit test-integration test-e2e test-quick lint format fix clean db-start db-init db-rebuild db-drop db-clear db-stop db-clean help
+.PHONY: run run-cloud run-test-data test test-unit test-integration test-e2e test-quick lint format fix clean db-start db-init db-rebuild db-drop db-clear db-stop db-clean help
 
 # Database environment configuration (empty by default, requires ENV flag)
 
@@ -26,6 +26,14 @@ MAIN_MODULE := main
 run:  ## Run scraper in development mode (live scraping)
 	@echo "\033[34m◆ Running scraper in development mode...\033[0m"
 	ENVIRONMENT=development PYTHONPATH=$(SRC) $(PYTHON) -m $(MAIN_MODULE)
+
+run-cloud:  ## Run scraper using Cloud SQL (requires .env.cloud and proxy running)
+	@echo "\033[35m◆ Running scraper with Cloud SQL...\033[0m"
+	@if [ ! -f .env.cloud ]; then \
+		echo "\033[31m✗ Error: .env.cloud not found\033[0m"; \
+		exit 1; \
+	fi
+	@bash -c 'set -a; source .env.cloud; set +a; ENVIRONMENT=development PYTHONPATH=$(SRC) $(PYTHON) -m $(MAIN_MODULE)'
 
 run-test-data:  ## Run scraper with test data (test environment)
 	@echo "\033[33m◆ Starting test database...\033[0m"
