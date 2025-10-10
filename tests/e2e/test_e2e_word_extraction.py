@@ -37,10 +37,16 @@ EXPECTED_WORD_COUNTS = [
 ]
 
 
+def within_tolerance(actual: int, expected: int, tolerance_pct: float) -> bool:
+    """Check if actual value is within tolerance percentage of expected."""
+    tolerance = expected * (tolerance_pct / 100.0)
+    return expected - tolerance <= actual <= expected + tolerance
+
+
 def test_complete_word_extraction_pipeline(clean_test_db):
     """
     Test complete pipeline: HTML fixtures → raw_articles + word_facts.
-    
+
     Runs pipeline once, then validates all critical aspects.
     """
     print("\n=== E2E: Complete Word Extraction Pipeline ===")
@@ -68,11 +74,14 @@ def test_complete_word_extraction_pipeline(clean_test_db):
         total_word_count = session.execute(
             text("SELECT COUNT(*) FROM word_facts")
         ).scalar()
+        assert total_word_count is not None
         expected_total = 8082
-        tolerance = expected_total * 0.05
-        assert abs(total_word_count - expected_total) <= tolerance, \
+        assert within_tolerance(total_word_count, expected_total, 5), (
             f"Expected ~{expected_total} words (±5%), got {total_word_count}"
-        print(f"✓ Total words extracted: {total_word_count} (expected: {expected_total} ±5%)")
+        )
+        print(
+            f"✓ Total words extracted: {total_word_count} (expected: {expected_total} ±5%)"
+        )
 
         # 3. Verify word count per article
         failed_assertions = []
@@ -85,7 +94,7 @@ def test_complete_word_extraction_pipeline(clean_test_db):
                     WHERE ra.url LIKE :pattern
                     GROUP BY ra.url
                 """),
-                {"pattern": f"%{url_pattern}%"}
+                {"pattern": f"%{url_pattern}%"},
             ).fetchone()
 
             if result is None:
@@ -93,27 +102,28 @@ def test_complete_word_extraction_pipeline(clean_test_db):
                 continue
 
             url, actual_count = result
-            tolerance = expected_count * (tolerance_pct / 100.0)
-            min_count = int(expected_count - tolerance)
-            max_count = int(expected_count + tolerance)
 
-            if not (min_count <= actual_count <= max_count):
+            if not within_tolerance(actual_count, expected_count, tolerance_pct):
+                tolerance = expected_count * (tolerance_pct / 100.0)
+                min_count = int(expected_count - tolerance)
+                max_count = int(expected_count + tolerance)
                 failed_assertions.append(
-                    f"{url_pattern}: expected {expected_count} ±{tolerance_pct}% "
-                    f"({min_count}-{max_count}), got {actual_count}"
+                    f"{url_pattern}: {actual_count} not in range [{min_count}, {max_count}]"
                 )
 
         if failed_assertions:
             pytest.fail("\n".join(["Word count mismatches:"] + failed_assertions))
 
-        print(f"✓ All {len(EXPECTED_WORD_COUNTS)} articles have correct word counts (±5%)")
+        print(
+            f"✓ All {len(EXPECTED_WORD_COUNTS)} articles have correct word counts (±5%)"
+        )
 
         # 4. Verify French words present (no filtering)
-        french_words = ['le', 'la', 'de', 'et']
+        french_words = ["le", "la", "de", "et"]
         for word in french_words:
             count = session.execute(
                 text("SELECT COUNT(*) FROM word_facts WHERE word = :word"),
-                {"word": word}
+                {"word": word},
             ).scalar()
             assert count > 0, f"Common French word '{word}' not found"
         print(f"✓ French words detected: {french_words}")
@@ -143,6 +153,8 @@ def test_complete_word_extraction_pipeline(clean_test_db):
             """)
         ).fetchone()
         assert result is not None, "Star schema join failed"
-        print(f"✓ Star schema join works: {result[0]} has '{result[1]}' {result[2]} times")
+        print(
+            f"✓ Star schema join works: {result[0]} has '{result[1]}' {result[2]} times"
+        )
 
     print("✓ Complete E2E pipeline test passed")
