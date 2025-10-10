@@ -27,3 +27,5 @@ CLAUDE.md
 
 # misc
 misc/
+.env.cloud
+cloud-sql-proxy
