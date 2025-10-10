@@ -1,13 +1,15 @@
 """
-Database connection and session management for French news scraper.
+Database connection and data operations for French news scraper.
 
 Provides:
 1. Database connection setup using SQLAlchemy
 2. Session factory for database operations
 3. Context manager for safe transaction handling
+4. Data operations (DML): INSERT, TRUNCATE
 
-The main purpose is to create the session factory, which is used by repository
-classes to get database sessions with proper transaction handling.
+NOTE: This module handles DATA operations only.
+Schema operations (DDL: CREATE/DROP tables) are handled by scripts/sh/
+to keep Python runtime code separate from DevOps automation.
 """
 
 import time
@@ -380,32 +382,6 @@ def clear_test_database() -> bool:
 
     except Exception as e:
         logger.error(f"Failed to clear test database: {e}")
-        return False
-
-
-def apply_schema() -> bool:
-    """
-    Apply database schema from schema.sql file.
-
-    Returns:
-        True if schema applied successfully, False on error
-    """
-    try:
-        from pathlib import Path
-
-        schema_path = Path(__file__).parent.parent.parent / "database" / "schema.sql"
-        schema_sql = schema_path.read_text()
-
-        with get_session() as session:
-            session.execute(text(schema_sql))
-
-        if DEBUG:
-            logger.info("Database schema applied successfully")
-
-        return True
-
-    except Exception as e:
-        logger.error(f"Failed to apply schema: {e}")
         return False
 
 

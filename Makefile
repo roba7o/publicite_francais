@@ -17,7 +17,7 @@ SRC := src
 MAIN_MODULE := main
 
 .DEFAULT_GOAL := help
-.PHONY: run run-test-data test test-unit test-integration test-e2e test-quick lint format fix clean db-start db-start-test db-init db-init-test db-stop db-clean help
+.PHONY: run run-test-data test test-unit test-integration test-e2e test-quick lint format fix clean db-start db-start-test db-init db-init-test db-rebuild db-rebuild-test db-stop db-clean help
 
 # ==================== CORE COMMANDS ====================
 
@@ -71,14 +71,26 @@ db-start-test:  ## Start test database (port 5433)
 db-init:  ## Initialize development database schema
 	@echo "\033[34m◆ Initializing development database...\033[0m"
 	@$(MAKE) db-start > /dev/null 2>&1
-	ENVIRONMENT=development PYTHONPATH=$(SRC) $(PYTHON) -c "from database.database import initialize_database, apply_schema; initialize_database(); apply_schema()"
+	CONTAINER_NAME=french_news_dev_db PGDATABASE=$(POSTGRES_DB) PGUSER=$(POSTGRES_USER) ./scripts/sh/apply_schema.sh
 	@echo "\033[32m✓ Development database initialized!\033[0m"
 
 db-init-test:  ## Initialize test database schema
 	@echo "\033[34m◆ Initializing test database...\033[0m"
 	@$(MAKE) db-start-test > /dev/null 2>&1
-	ENVIRONMENT=test PYTHONPATH=$(SRC) $(PYTHON) -c "from database.database import initialize_database, apply_schema; initialize_database(); apply_schema()"
+	CONTAINER_NAME=french_news_test_db PGDATABASE=french_news_test PGUSER=news_user ./scripts/sh/apply_schema.sh
 	@echo "\033[32m✓ Test database initialized!\033[0m"
+
+db-rebuild:  ## Rebuild development database from scratch (DESTRUCTIVE!)
+	@echo "\033[31m◆ Rebuilding development database...\033[0m"
+	@$(MAKE) db-start > /dev/null 2>&1
+	CONTAINER_NAME=french_news_dev_db PGDATABASE=$(POSTGRES_DB) PGUSER=$(POSTGRES_USER) ./scripts/sh/rebuild_db.sh
+	@echo "\033[32m✓ Database rebuilt!\033[0m"
+
+db-rebuild-test:  ## Rebuild test database from scratch (DESTRUCTIVE!)
+	@echo "\033[31m◆ Rebuilding test database...\033[0m"
+	@$(MAKE) db-start-test > /dev/null 2>&1
+	CONTAINER_NAME=french_news_test_db PGDATABASE=french_news_test PGUSER=news_user ./scripts/sh/rebuild_db.sh
+	@echo "\033[32m✓ Database rebuilt!\033[0m"
 
 db-stop:  ## Stop all databases
 	@echo "\033[33m◆ Stopping all databases...\033[0m"
@@ -133,6 +145,8 @@ help:  ## Show available commands
 	@echo "  \033[36mdb-start-test  \033[0m Start test database (5433)"
 	@echo "  \033[36mdb-init        \033[0m Initialize dev database schema"
 	@echo "  \033[36mdb-init-test   \033[0m Initialize test database schema"
+	@echo "  \033[36mdb-rebuild     \033[0m Rebuild dev database (DESTRUCTIVE!)"
+	@echo "  \033[36mdb-rebuild-test\033[0m Rebuild test database (DESTRUCTIVE!)"
 	@echo "  \033[36mdb-stop        \033[0m Stop all databases"
 	@echo "  \033[36mdb-clean       \033[0m Remove all data (DESTRUCTIVE!)"
 	@echo ""
