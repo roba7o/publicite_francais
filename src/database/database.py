@@ -383,6 +383,32 @@ def clear_test_database() -> bool:
         return False
 
 
+def apply_schema() -> bool:
+    """
+    Apply database schema from schema.sql file.
+
+    Returns:
+        True if schema applied successfully, False on error
+    """
+    try:
+        from pathlib import Path
+
+        schema_path = Path(__file__).parent.parent.parent / "database" / "schema.sql"
+        schema_sql = schema_path.read_text()
+
+        with get_session() as session:
+            session.execute(text(schema_sql))
+
+        if DEBUG:
+            logger.info("Database schema applied successfully")
+
+        return True
+
+    except Exception as e:
+        logger.error(f"Failed to apply schema: {e}")
+        return False
+
+
 def store_word_fact(word_fact: WordFact) -> bool:
     """
     Store a single word fact.
