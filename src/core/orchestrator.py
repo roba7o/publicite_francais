@@ -1,4 +1,4 @@
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, TimeoutError, as_completed
 
 from config.environment import CONCURRENT_FETCHERS, DEBUG, FETCH_TIMEOUT, ENVIRONMENT
 from core.component_factory import ComponentFactory
@@ -34,13 +34,13 @@ class ArticleOrchestrator:
             if not urls:
                 return 0, 0
 
-            self.logger.info(f"{len(urls[:5])} URLs found for {config['site']}")
+            self.logger.info(f"{len(urls)} URLs found for {config['site']}")
             target_urls = urls
             sites = []
 
             # Concurrent URL fetching
             max_workers = CONCURRENT_FETCHERS
-            fetch_timeout = FETCH_TIMEOUT
+            per_request_timeout = FETCH_TIMEOUT  # Timeout per individual request
 
             # Submitting all jobs
             with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -49,14 +49,23 @@ class ArticleOrchestrator:
                     for url in target_urls
                 }
 
-                # Collecting results as they complete
-                for future in as_completed(future_to_url, timeout=fetch_timeout):
+                # Collecting results as they complete (no global timeout)
+                for future in as_completed(future_to_url):
                     url = future_to_url[future]
                     try:
-                        soup = future.result()
+                        # Apply timeout per-request, not globally
+                        soup = future.result(timeout=per_request_timeout)
                         if soup:
                             sites.append((soup, url))
-                    except Exception:
+                    except TimeoutError:
+                        if DEBUG:
+                            self.logger.debug(
+                                f"Timeout fetching {url} (>{per_request_timeout}s)"
+                            )
+                        continue
+                    except Exception as e:
+                        if DEBUG:
+                            self.logger.debug(f"Error fetching {url}: {e}")
                         continue
 
             self.logger.info(
