@@ -1,9 +1,10 @@
 """
-Grabbing top 8 articles from ladepeche.fr which are then passed on to parser
+URL collector for ladepeche.fr articles
 """
 
 from urllib.parse import urljoin
 
+from config.environment import MAX_ARTICLES
 from core.components.url_collectors.base_url_collector import BaseUrlCollector
 
 
@@ -12,10 +13,19 @@ class LadepecheFrUrlCollector(BaseUrlCollector):
         super().__init__(debug)
         self.base_url = "https://www.ladepeche.fr"
 
-    def get_article_urls(self) -> list[str]:
+    def get_article_urls(self, max_articles=None) -> list[str]:
         """
-        Get the URLs of the top 8 articles from the Ladepeche.fr homepage.
+        Get article URLs from Ladepeche.fr homepage.
+
+        Args:
+            max_articles: Maximum number of articles to return.
+                         If None, uses MAX_ARTICLES from config (default: unlimited)
+
+        Returns:
+            List of article URLs
         """
+        if max_articles is None:
+            max_articles = MAX_ARTICLES
         try:
             response = self._make_request(self.base_url)
             soup = self.parse_html_fast(response.content)
@@ -26,8 +36,9 @@ class LadepecheFrUrlCollector(BaseUrlCollector):
             news_links = soup.select("a.new__title")
 
             urls = []
-            # Get top 8 articles
-            for link in news_links[:8]:
+            # Apply limit if specified, otherwise get all links
+            links_to_process = news_links[:max_articles] if max_articles else news_links
+            for link in links_to_process:
                 href = link.get("href")
                 if href and isinstance(href, str):
                     # Build full URL

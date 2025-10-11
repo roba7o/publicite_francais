@@ -51,12 +51,16 @@ class BaseUrlCollector(WebMixin, ABC):
         self.base_url = ""  # Must be set by subclasses
 
     @abstractmethod
-    def get_article_urls(self) -> list[str]:
+    def get_article_urls(self, max_articles=None) -> list[str]:
         """
         Extract article URLs from the news site.
 
         This method must be implemented by all subclasses to extract
         article URLs from their respective news sites.
+
+        Args:
+            max_articles: Maximum number of articles to return.
+                         If None, uses MAX_ARTICLES from config (default: unlimited)
 
         Returns:
             List of article URLs as strings

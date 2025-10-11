@@ -8,6 +8,7 @@ from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
 
+from config.environment import MAX_ARTICLES
 from core.components.url_collectors.base_url_collector import BaseUrlCollector
 
 
@@ -55,14 +56,19 @@ class TF1InfoUrlCollector(BaseUrlCollector):
             self.logger.error(f"Request failed for {url}: {str(e)}")
             raise
 
-    def get_article_urls(self, max_articles=8) -> list[str]:
+    def get_article_urls(self, max_articles=None) -> list[str]:
         """
         Extract article URLs from TF1 Info homepage
+
         Args:
-            max_articles (int): Maximum number of articles to return
+            max_articles: Maximum number of articles to return.
+                         If None, uses MAX_ARTICLES from config (default: unlimited)
+
         Returns:
-            List[str]: List of article URLs
+            List of article URLs
         """
+        if max_articles is None:
+            max_articles = MAX_ARTICLES
         try:
             response = self._make_request(self.base_url)
             # Use html.parser instead of lxml to avoid parsing issues
@@ -75,8 +81,10 @@ class TF1InfoUrlCollector(BaseUrlCollector):
             if not urls:
                 urls = self._extract_from_html(soup)
 
-            # Return unique URLs up to max_articles
-            unique_urls = self._deduplicate_urls(urls)[:max_articles]
+            # Return unique URLs up to max_articles (or all if max_articles is None)
+            unique_urls = self._deduplicate_urls(urls)
+            if max_articles:
+                unique_urls = unique_urls[:max_articles]
             self._log_results(unique_urls)
             return unique_urls
 

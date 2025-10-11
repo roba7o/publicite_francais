@@ -369,14 +369,18 @@ def clear_test_database() -> bool:
 
         # Build environment variables for shell script
         env = os.environ.copy()
-        env.update({
-            "CONTAINER_NAME": "french_news_test_db",
-            "PGDATABASE": db_config["database"],
-            "PGUSER": db_config["user"],
-        })
+        env.update(
+            {
+                "CONTAINER_NAME": "french_news_test_db",
+                "PGDATABASE": db_config["database"],
+                "PGUSER": db_config["user"],
+            }
+        )
 
         # Get path to shell script
-        script_path = Path(__file__).parent.parent.parent / "scripts" / "sh" / "clear_tables.sh"
+        script_path = (
+            Path(__file__).parent.parent.parent / "scripts" / "sh" / "clear_tables.sh"
+        )
 
         # Execute shell script
         result = subprocess.run(
