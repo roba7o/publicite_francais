@@ -4,6 +4,7 @@ from urllib.parse import urljoin
 
 from bs4 import Tag
 
+from config.environment import MAX_ARTICLES
 from core.components.url_collectors.base_url_collector import BaseUrlCollector
 
 
@@ -12,7 +13,19 @@ class FranceInfoUrlCollector(BaseUrlCollector):
         super().__init__(debug)
         self.base_url = "https://www.franceinfo.fr/"
 
-    def get_article_urls(self, max_articles=8) -> list[str]:
+    def get_article_urls(self, max_articles=None) -> list[str]:
+        """
+        Get article URLs from FranceInfo homepage.
+
+        Args:
+            max_articles: Maximum number of articles to return.
+                         If None, uses MAX_ARTICLES from config (default: unlimited)
+
+        Returns:
+            List of article URLs
+        """
+        if max_articles is None:
+            max_articles = MAX_ARTICLES
         try:
             time.sleep(random.uniform(1, 3))
             response = self._make_request(self.base_url)
@@ -24,7 +37,11 @@ class FranceInfoUrlCollector(BaseUrlCollector):
                 return []
 
             urls = []
-            for card in article_cards[:max_articles]:
+            # Apply limit if specified, otherwise get all cards
+            cards_to_process = (
+                article_cards[:max_articles] if max_articles else article_cards
+            )
+            for card in cards_to_process:
                 if isinstance(card, Tag):
                     link = card.find("a", class_="card-article-m__link")
                     if link and isinstance(link, Tag) and link.has_attr("href"):

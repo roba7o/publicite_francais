@@ -369,14 +369,18 @@ def clear_test_database() -> bool:
 
         # Build environment variables for shell script
         env = os.environ.copy()
-        env.update({
-            "CONTAINER_NAME": "french_news_test_db",
-            "PGDATABASE": db_config["database"],
-            "PGUSER": db_config["user"],
-        })
+        env.update(
+            {
+                "CONTAINER_NAME": "french_news_test_db",
+                "PGDATABASE": db_config["database"],
+                "PGUSER": db_config["user"],
+            }
+        )
 
         # Get path to shell script
-        script_path = Path(__file__).parent.parent.parent / "scripts" / "sh" / "clear_tables.sh"
+        script_path = (
+            Path(__file__).parent.parent.parent / "scripts" / "sh" / "clear_tables.sh"
+        )
 
         # Execute shell script
         result = subprocess.run(
@@ -458,50 +462,46 @@ def store_word_facts_batch(
     if not word_facts:
         return 0, 0
 
-    try:
-        with get_session() as session:
-            # Convert to dictionaries for bulk insert
-            word_fact_dicts = [wf.to_dict() for wf in word_facts]
+    # Convert to dictionaries for bulk insert
+    word_fact_dicts = [wf.to_dict() for wf in word_facts]
 
-            # Process in batches to avoid memory issues
-            successful_count = 0
-            failed_count = 0
+    # Process in batches to avoid memory issues
+    successful_count = 0
+    failed_count = 0
 
-            for i in range(0, len(word_fact_dicts), batch_size):
-                batch = word_fact_dicts[i : i + batch_size]
+    for i in range(0, len(word_fact_dicts), batch_size):
+        batch = word_fact_dicts[i : i + batch_size]
 
-                try:
-                    word_facts_table = table(
-                        "word_facts",
-                        column("id"),
-                        column("word"),
-                        column("article_id"),
-                        column("position_in_article"),
-                        column("scraped_at"),
-                    )
-
-                    session.execute(word_facts_table.insert(), batch)
-                    successful_count += len(batch)
-
-                    if DEBUG:
-                        logger.info(f"Stored batch of {len(batch)} word facts")
-
-                except IntegrityError as e:
-                    # Integrity error indicates a data generation bug
-                    logger.error(f"Integrity error in batch (indicates data bug): {e}")
-                    failed_count += len(batch)
-
-                except Exception as e:
-                    logger.error(f"Unexpected error storing word facts batch: {e}")
-                    failed_count += len(batch)
-
-            if DEBUG:
-                logger.info(
-                    f"Word facts batch complete: {successful_count} successful, {failed_count} failed"
+        try:
+            # Each batch gets its own session/transaction
+            with get_session() as session:
+                word_facts_table = table(
+                    "word_facts",
+                    column("id"),
+                    column("word"),
+                    column("article_id"),
+                    column("position_in_article"),
+                    column("scraped_at"),
                 )
 
-            return successful_count, failed_count
+                session.execute(word_facts_table.insert(), batch)
+                successful_count += len(batch)
 
-    except Exception as e:
-        logger.error(f"Failed to store word facts batch: {e}")
-        return 0, len(word_facts)
+                if DEBUG:
+                    logger.info(f"Stored batch of {len(batch)} word facts")
+
+        except IntegrityError as e:
+            # Integrity error indicates a data generation bug
+            logger.error(f"Integrity error in batch (indicates data bug): {e}")
+            failed_count += len(batch)
+
+        except Exception as e:
+            logger.error(f"Unexpected error storing word facts batch: {e}")
+            failed_count += len(batch)
+
+    if DEBUG:
+        logger.info(
+            f"Word facts batch complete: {successful_count} successful, {failed_count} failed"
+        )
+
+    return successful_count, failed_count

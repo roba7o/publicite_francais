@@ -83,3 +83,8 @@ else:  # development
 # Application settings
 CONCURRENT_FETCHERS = _get_int("CONCURRENT_FETCHERS", 3)
 FETCH_TIMEOUT = _get_int("FETCH_TIMEOUT", 30)
+
+# Scraping limits - Set to None for unlimited articles
+# Override with MAX_ARTICLES env var (e.g., MAX_ARTICLES=50)
+_max_articles_env = os.getenv("MAX_ARTICLES")
+MAX_ARTICLES = int(_max_articles_env) if _max_articles_env else None

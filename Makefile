@@ -17,7 +17,7 @@ SRC := src
 MAIN_MODULE := main
 
 .DEFAULT_GOAL := help
-.PHONY: run run-test-data test test-unit test-integration test-e2e test-quick lint format fix clean db-start db-init db-rebuild db-drop db-clear db-stop db-clean help
+.PHONY: run run-cloud docker-build docker-cloud run-test-data test test-unit test-integration test-e2e test-quick lint format fix clean db-start db-init db-rebuild db-drop db-clear db-stop db-clean help
 
 # Database environment configuration (empty by default, requires ENV flag)
 
@@ -26,6 +26,28 @@ MAIN_MODULE := main
 run:  ## Run scraper in development mode (live scraping)
 	@echo "\033[34m◆ Running scraper in development mode...\033[0m"
 	ENVIRONMENT=development PYTHONPATH=$(SRC) $(PYTHON) -m $(MAIN_MODULE)
+
+run-cloud:  ## Run scraper using Cloud SQL (requires .env.cloud and proxy running)
+	@echo "\033[35m◆ Running scraper with Cloud SQL...\033[0m"
+	@if [ ! -f .env.cloud ]; then \
+		echo "\033[31m✗ Error: .env.cloud not found\033[0m"; \
+		exit 1; \
+	fi
+	@bash -c 'set -a; source .env.cloud; set +a; ENVIRONMENT=development PYTHONPATH=$(SRC) $(PYTHON) -m $(MAIN_MODULE)'
+
+docker-build:  ## Build Docker image for scraper
+	@echo "\033[36m◆ Building Docker image...\033[0m"
+	docker build -t french-news-scraper .
+	@echo "\033[32m✓ Docker image built: french-news-scraper\033[0m"
+
+docker-cloud:  ## Run scraper in Docker using Cloud SQL (requires .env.cloud.docker and proxy running)
+	@echo "\033[35m◆ Running Docker container with Cloud SQL...\033[0m"
+	@if [ ! -f .env.cloud.docker ]; then \
+		echo "\033[31m✗ Error: .env.cloud.docker not found\033[0m"; \
+		echo "Create it with POSTGRES_HOST=host.docker.internal"; \
+		exit 1; \
+	fi
+	docker run --rm --env-file .env.cloud.docker french-news-scraper
 
 run-test-data:  ## Run scraper with test data (test environment)
 	@echo "\033[33m◆ Starting test database...\033[0m"
