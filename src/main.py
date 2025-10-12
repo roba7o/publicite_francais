@@ -18,9 +18,9 @@ def main() -> int | None:
     logger = get_logger(__name__)
 
     try:
-        mode = ENVIRONMENT.upper()
-
-        visual_header("French News Collection", f"Database pipeline in {mode} mode")
+        visual_header(
+            "French News Collection", f"Database pipeline in {ENVIRONMENT.upper()} mode"
+        )
 
         # Database is always required (no CSV fallback)
 
