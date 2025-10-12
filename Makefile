@@ -1,13 +1,11 @@
 # ========= Makefile for French News Scraper =========
 
-# Check if .env file exists
-ifeq (,$(wildcard .env))
-$(error .env file missing! Run 'cp .env.example .env' and configure it first)
-endif
+# Load .env if it exists (optional)
+-include .env
 
-# Load environment variables from .env
-include .env
-export $(shell sed 's/=.*//' .env)
+# Default values (override with .env)
+POSTGRES_USER ?= news_user
+POSTGRES_DB ?= french_news
 
 # Project configuration
 PYTHON := ./venv/bin/python
@@ -19,11 +17,9 @@ MAIN_MODULE := main
 .DEFAULT_GOAL := help
 .PHONY: run run-cloud docker-build docker-cloud run-test-data test test-unit test-integration test-e2e test-quick lint format fix clean db-start db-init db-rebuild db-drop db-clear db-stop db-clean help
 
-# Database environment configuration (empty by default, requires ENV flag)
-
 # ==================== CORE COMMANDS ====================
 
-run:  ## Run scraper in development mode (live scraping)
+run:  ## Run scraper with live scrapes
 	@echo "\033[34m◆ Running scraper in development mode...\033[0m"
 	ENVIRONMENT=development PYTHONPATH=$(SRC) $(PYTHON) -m $(MAIN_MODULE)
 
