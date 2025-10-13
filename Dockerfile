@@ -2,7 +2,7 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Copy project files
+# Copy dependency specification and source (needed for pip install -e .)
 COPY pyproject.toml .
 COPY src/ ./src/
 
