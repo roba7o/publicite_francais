@@ -55,8 +55,9 @@ def initialize_database(echo: bool | None = None) -> bool:
         )
 
         # Allow override of echo for migrations
+        # Default to False for clean output (enable with echo=True when needed)
         if echo is None:
-            echo = DEBUG
+            echo = False
 
         # Determine pool parameters based on environment
         is_test = ENVIRONMENT == "test"
@@ -490,9 +491,12 @@ def store_word_facts_batch(
                 if DEBUG:
                     logger.info(f"Stored batch of {len(batch)} word facts")
 
-        except IntegrityError as e:
-            # Integrity error indicates a data generation bug
-            logger.error(f"Integrity error in batch (indicates data bug): {e}")
+        except IntegrityError:
+            # Integrity error indicates article_id FK constraint violation
+            # Usually caused by article deduplication or concurrent processing
+            logger.warning(
+                f"Integrity error: skipped {len(batch)} words (FK constraint violation)"
+            )
             failed_count += len(batch)
 
         except Exception as e:

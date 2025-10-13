@@ -6,7 +6,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 
 from core.orchestrator import ArticleOrchestrator
-from database.models import RawArticle
+from database.models import RawArticle, SourceStats
 
 
 @pytest.fixture
@@ -73,10 +73,12 @@ class TestArticleOrchestrator:
             ),
             patch("database.store_articles_batch", return_value=(1, 0)) as mock_store,
         ):
-            processed, attempted = orchestrator.process_site(mock_site_config)
+            stats = orchestrator.process_site(mock_site_config)
 
-            assert processed == 1
-            assert attempted == 1
+            assert stats is not None
+            assert isinstance(stats, SourceStats)
+            assert stats.stored == 1
+            assert stats.attempted == 1
 
             # Verify component creation was called
             orchestrator.component_factory.create_collector.assert_called_once_with(
@@ -127,10 +129,13 @@ class TestArticleOrchestrator:
             ),
             patch("database.store_articles_batch", return_value=(1, 0)) as mock_store,
         ):
-            processed, attempted = orchestrator.process_site(mock_site_config)
+            stats = orchestrator.process_site(mock_site_config)
 
-            assert processed == 1
-            assert attempted == 1
+            assert stats is not None
+
+
+            assert stats.stored == 1
+            assert stats.attempted == 1
 
             # Verify URL collection was called
             mock_collector.get_article_urls.assert_called_once()
@@ -145,25 +150,23 @@ class TestArticleOrchestrator:
             mock_store.assert_called_once()
 
     def test_process_site_disabled(self, orchestrator):
-        """Test processing disabled site returns zeros."""
+        """Test processing disabled site returns None."""
         disabled_config = {"site": "disabled.fr", "enabled": False}
 
-        processed, attempted = orchestrator.process_site(disabled_config)
+        stats = orchestrator.process_site(disabled_config)
 
-        assert processed == 0
-        assert attempted == 0
+        assert stats is None
 
     def test_process_site_component_failure(self, orchestrator, mock_site_config):
-        """Test handling component creation failure."""
+        """Test handling component creation failure returns None."""
         with patch.object(
             orchestrator.component_factory,
             "create_collector",
             side_effect=Exception("Component error"),
         ):
-            processed, attempted = orchestrator.process_site(mock_site_config)
+            stats = orchestrator.process_site(mock_site_config)
 
-            assert processed == 0
-            assert attempted == 0
+            assert stats is None
 
     def test_process_site_no_urls(self, orchestrator, mock_site_config):
         """Test handling when no URLs are found."""
@@ -186,10 +189,9 @@ class TestArticleOrchestrator:
             ),
             patch("core.orchestrator.ENVIRONMENT", "development"),
         ):
-            processed, attempted = orchestrator.process_site(mock_site_config)
+            stats = orchestrator.process_site(mock_site_config)
 
-            assert processed == 0
-            assert attempted == 0
+            assert stats is None
 
     def test_process_all_sites(self, orchestrator):
         """Test processing multiple sites."""
@@ -202,24 +204,18 @@ class TestArticleOrchestrator:
         with patch.object(orchestrator, "process_site") as mock_process:
             # Mock returns: (processed, attempted)
             mock_process.side_effect = [
-                (2, 3),
-                (1, 2),
+                SourceStats("site1.fr", 3, 2, 1, 1000, [500, 500]),
+                SourceStats("site2.fr", 2, 1, 1, 500, [500]),
             ]  # Only 2 calls for enabled sites
 
-            total_processed, total_attempted = orchestrator.process_all_sites(
+            orchestrator.process_all_sites(
                 site_configs
             )
-
-            assert total_processed == 3  # 2 + 1
-            assert total_attempted == 5  # 3 + 2
             assert mock_process.call_count == 2  # Only enabled sites
 
     def test_process_all_sites_empty_list(self, orchestrator):
         """Test processing empty site list."""
-        total_processed, total_attempted = orchestrator.process_all_sites([])
-
-        assert total_processed == 0
-        assert total_attempted == 0
+        orchestrator.process_all_sites([])
 
     @patch("core.orchestrator.ENVIRONMENT", "test")
     def test_process_site_no_test_sources(self, orchestrator, mock_site_config):
@@ -242,10 +238,9 @@ class TestArticleOrchestrator:
                 return_value=mock_validator,
             ),
         ):
-            processed, attempted = orchestrator.process_site(mock_site_config)
+            stats = orchestrator.process_site(mock_site_config)
 
-            assert processed == 0
-            assert attempted == 0
+            assert stats is None
 
     @patch("core.orchestrator.ENVIRONMENT", "test")
     def test_process_site_validation_failure(self, orchestrator, mock_site_config):
@@ -271,7 +266,10 @@ class TestArticleOrchestrator:
                 return_value=mock_validator,
             ),
         ):
-            processed, attempted = orchestrator.process_site(mock_site_config)
+            stats = orchestrator.process_site(mock_site_config)
 
-            assert processed == 0
-            assert attempted == 1  # One source attempted
+            assert stats is not None
+
+
+            assert stats.stored == 0
+            assert stats.attempted == 1  # One source attempted

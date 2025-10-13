@@ -85,6 +85,85 @@ def visual_summary(
     console.print(panel)
 
 
+def visual_source_summary(
+    source_stats: list,
+    total_attempted: int,
+    total_stored: int,
+    total_deduplicated: int,
+    total_words: int,
+    all_word_counts: list[int],
+    success_rate: float,
+) -> None:
+    """Display detailed per-source summary table with statistics."""
+    # Acronymize source names for compact display
+    def acronymize(name: str) -> str:
+        """Convert source names to short acronyms."""
+        mapping = {
+            "tf1info.fr": "TF1Info",
+            "franceinfo.fr": "FranceI",
+            "slate.fr": "Slate",
+            "ladepeche.fr": "LaDepech",
+        }
+        return mapping.get(name, name[:8])
+
+    # Create summary table
+    table = Table(
+        title="Pipeline Summary by Source",
+        show_header=True,
+        header_style="bold cyan",
+        border_style="blue",
+        show_lines=False,
+        padding=(0, 1),
+    )
+
+    # Define columns
+    table.add_column("Source", style="cyan", justify="left")
+    table.add_column("Attempt", justify="right")
+    table.add_column("Stored", justify="right", style="green")
+    table.add_column("Dedup", justify="right", style="yellow")
+    table.add_column("Rate", justify="right")
+    table.add_column("Words", justify="right", style="magenta")
+    table.add_column("Avg", justify="right")
+    table.add_column("Min", justify="right", style="dim")
+    table.add_column("Max", justify="right", style="dim")
+
+    # Add rows for each source
+    for stats in source_stats:
+        table.add_row(
+            acronymize(stats.site_name),
+            str(stats.attempted),
+            str(stats.stored),
+            str(stats.deduplicated),
+            f"{stats.success_rate:.1f}%",
+            f"{stats.total_words:,}",
+            str(stats.avg_words),
+            str(stats.min_words),
+            str(stats.max_words),
+        )
+
+    # Add separator and total row
+    table.add_section()
+    avg_all = int(sum(all_word_counts) / len(all_word_counts)) if all_word_counts else 0
+    min_all = min(all_word_counts) if all_word_counts else 0
+    max_all = max(all_word_counts) if all_word_counts else 0
+
+    table.add_row(
+        "[bold]TOTAL[/bold]",
+        f"[bold]{total_attempted}[/bold]",
+        f"[bold green]{total_stored}[/bold green]",
+        f"[bold yellow]{total_deduplicated}[/bold yellow]",
+        f"[bold]{success_rate:.1f}%[/bold]",
+        f"[bold magenta]{total_words:,}[/bold magenta]",
+        f"[bold]{avg_all}[/bold]",
+        f"[bold dim]{min_all}[/bold dim]",
+        f"[bold dim]{max_all}[/bold dim]",
+    )
+
+    console.print()
+    console.print(table)
+    console.print()
+
+
 def visual_status(message: str, status_type: str = "info") -> None:
     """Display status message with appropriate styling."""
     status_styles = {

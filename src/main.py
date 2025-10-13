@@ -1,7 +1,6 @@
 import sys
 
 from config.environment import ENVIRONMENT
-from config.settings import MIN_SUCCESS_RATE_THRESHOLD
 from config.site_configs import get_site_configs
 from core.orchestrator import ArticleOrchestrator
 from database.database import initialize_database
@@ -36,16 +35,7 @@ def main() -> int | None:
 
         # Execute pipeline
         processor = ArticleOrchestrator()
-        processed, attempted = processor.process_all_sites(site_configs)
-
-        # Calculate results
-        success_rate = (processed / attempted * 100) if attempted > 0 else 0
-
-        # Quality check
-        if success_rate < MIN_SUCCESS_RATE_THRESHOLD:
-            logger.warning(
-                f"Low success rate ({success_rate:.1f}%) - check logs for issues (soup componetnts may be dated)"
-            )
+        processor.process_all_sites(site_configs)
 
         return 0
 
