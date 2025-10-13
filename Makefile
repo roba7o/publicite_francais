@@ -19,9 +19,10 @@ MAIN_MODULE := main
 
 # ==================== CORE COMMANDS ====================
 
-run:  ## Run scraper with live scrapes
+run:  ## Run scraper with live scrapes (use: make run ART_NUM=10 to limit per source)
 	@echo "\033[34m◆ Running scraper in development mode...\033[0m"
-	ENVIRONMENT=development PYTHONPATH=$(SRC) $(PYTHON) -m $(MAIN_MODULE)
+	$(if $(ART_NUM),@echo "\033[33m  Limiting to $(ART_NUM) articles per source\033[0m",)
+	ENVIRONMENT=development MAX_ARTICLES=$(or $(ART_NUM),) PYTHONPATH=$(SRC) $(PYTHON) -m $(MAIN_MODULE)
 
 run-cloud:  ## Run scraper using Cloud SQL (requires .env.cloud and proxy running)
 	@echo "\033[35m◆ Running scraper with Cloud SQL...\033[0m"
