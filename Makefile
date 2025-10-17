@@ -62,7 +62,7 @@ run-test-data:  ## Run scraper with test data (test environment)
 
 test:  ## Run all tests
 	@echo "\033[34m◆ Running complete test suite...\033[0m"
-	ENVIRONMENT=test PYTHONPATH=$(SRC):. $(PYTEST) tests/ -v
+	ENVIRONMENT=test PYTHONPATH=$(SRC):. $(PYTEST) tests/ -v $(PYTEST_ARGS)
 
 test-unit:  ## Run unit tests only
 	@echo "\033[34m◆ Running unit tests...\033[0m"

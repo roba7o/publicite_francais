@@ -39,11 +39,29 @@ jobs:
         run: make lint
         continue-on-error: true  # Don't fail on lint warnings
 
-      # 6. Run tests
+      # 6. Run tests with reporting
       - name: Run tests
-        run: make test
+        run: make test PYTEST_ARGS="--junitxml=test-results.xml --html=test-report.html --self-contained-html"
 
       # 7. Stop database (cleanup)
       - name: Stop database
         if: always()
         run: make db-stop
+
+      # 8. Publish test results to GitHub
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: test-results.xml
+          check_name: Test Results
+
+      # 9. Upload test reports as artifacts
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            test-results.xml
+            test-report.html
