@@ -47,11 +47,3 @@ jobs:
       - name: Stop database
         if: always()
         run: make db-stop
-
-      # 8. Upload test results (optional)
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: .pytest_cache/
