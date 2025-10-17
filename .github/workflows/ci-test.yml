@@ -1,9 +1,9 @@
 name: CI - Run Tests
 
-# Trigger on every push to any branch and all PRs
+# Run on PRs and pushes to main branch only
 on:
   push:
-    branches: ['**']
+    branches: [main]
   pull_request:
     branches: [main]
 
