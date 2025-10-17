@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, UTC
 from uuid import uuid4
 
-__all__ = ["RawArticle", "WordFact"]
+__all__ = ["RawArticle", "WordFact", "SourceStats"]
 
 
 @dataclass
@@ -96,3 +96,35 @@ class WordFact:
             "position_in_article": self.position_in_article,
             "scraped_at": self.scraped_at,
         }
+
+
+@dataclass
+class SourceStats:
+    """Statistics for a single news source."""
+
+    site_name: str
+    attempted: int
+    stored: int
+    deduplicated: int
+    total_words: int
+    word_counts: list[int]  # Individual article word counts
+
+    @property
+    def success_rate(self) -> float:
+        """Calculate success rate percentage."""
+        return (self.stored / self.attempted * 100) if self.attempted > 0 else 0.0
+
+    @property
+    def avg_words(self) -> int:
+        """Calculate average words per article."""
+        return int(sum(self.word_counts) / len(self.word_counts)) if self.word_counts else 0
+
+    @property
+    def min_words(self) -> int:
+        """Get minimum word count."""
+        return min(self.word_counts) if self.word_counts else 0
+
+    @property
+    def max_words(self) -> int:
+        """Get maximum word count."""
+        return max(self.word_counts) if self.word_counts else 0

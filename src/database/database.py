@@ -55,8 +55,9 @@ def initialize_database(echo: bool | None = None) -> bool:
         )
 
         # Allow override of echo for migrations
+        # Default to False for clean output (enable with echo=True when needed)
         if echo is None:
-            echo = DEBUG
+            echo = False
 
         # Determine pool parameters based on environment
         is_test = ENVIRONMENT == "test"
@@ -207,9 +208,18 @@ def store_article(article: RawArticle) -> bool:
                 logger.info("Article stored successfully")
             return True
 
+    except IntegrityError as e:
+        # Integrity error indicates duplicate URL (expected behavior)
+        logger.warning(f"Failed to store article: {type(e).__name__}")
+        if DEBUG:
+            logger.debug(f"SQL error details: {str(e)}")
+        return False
+
     except Exception as e:
-        # Exception automatically triggers rollback in context manager
-        logger.error(f"Failed to store article: {str(e)}")
+        # Unexpected database errors
+        logger.error(f"Failed to store article: {type(e).__name__}")
+        if DEBUG:
+            logger.debug(f"SQL error details: {str(e)}")
         return False
 
 
@@ -296,11 +306,15 @@ def store_articles_batch(
 
     except IntegrityError as e:
         # Handle unique constraint violations or other integrity issues
-        logger.warning(f"Batch insert integrity error: {str(e)}")
+        logger.warning(f"Batch insert integrity error: {type(e).__name__}")
+        if DEBUG:
+            logger.debug(f"SQL error details: {str(e)}")
         return _fallback_individual_inserts(articles)
 
     except Exception as e:
-        logger.error(f"Batch insert failed: {str(e)}")
+        logger.error(f"Batch insert failed: {type(e).__name__}")
+        if DEBUG:
+            logger.debug(f"SQL error details: {str(e)}")
         return _fallback_individual_inserts(articles)
 
 
@@ -331,7 +345,9 @@ def _fallback_individual_inserts(articles: list[RawArticle]) -> tuple[int, int]:
             else:
                 failed_count += 1
         except Exception as e:
-            logger.error(f"Individual insert failed for article {article.id}: {str(e)}")
+            logger.error(f"Individual insert failed for article {article.id}: {type(e).__name__}")
+            if DEBUG:
+                logger.debug(f"SQL error details: {str(e)}")
             failed_count += 1
 
     logger.info(
@@ -442,7 +458,9 @@ def store_word_fact(word_fact: WordFact) -> bool:
             return True
 
     except Exception as e:
-        logger.error(f"Failed to store word fact: {e}")
+        logger.error(f"Failed to store word fact: {type(e).__name__}")
+        if DEBUG:
+            logger.debug(f"SQL error details: {str(e)}")
         return False
 
 
@@ -490,13 +508,18 @@ def store_word_facts_batch(
                 if DEBUG:
                     logger.info(f"Stored batch of {len(batch)} word facts")
 
-        except IntegrityError as e:
-            # Integrity error indicates a data generation bug
-            logger.error(f"Integrity error in batch (indicates data bug): {e}")
+        except IntegrityError:
+            # Integrity error indicates article_id FK constraint violation
+            # Usually caused by article deduplication or concurrent processing
+            logger.warning(
+                f"Integrity error: skipped {len(batch)} words (FK constraint violation)"
+            )
             failed_count += len(batch)
 
         except Exception as e:
-            logger.error(f"Unexpected error storing word facts batch: {e}")
+            logger.error(f"Unexpected error storing word facts batch: {type(e).__name__}")
+            if DEBUG:
+                logger.debug(f"SQL error details: {str(e)}")
             failed_count += len(batch)
 
     if DEBUG:

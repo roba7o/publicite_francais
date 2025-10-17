@@ -13,10 +13,14 @@ Quick config (when not using env vars):
 """
 
 import os
+from datetime import datetime
 
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# Generate unique RUN_ID for this execution
+RUN_ID = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 
 def _get_int(key: str, default: int) -> int:
@@ -88,3 +92,14 @@ FETCH_TIMEOUT = _get_int("FETCH_TIMEOUT", 30)
 # Override with MAX_ARTICLES env var (e.g., MAX_ARTICLES=50)
 _max_articles_env = os.getenv("MAX_ARTICLES")
 MAX_ARTICLES = int(_max_articles_env) if _max_articles_env else None
+
+# Logging configuration
+LOG_TO_FILE = _get_bool("LOG_TO_FILE", True)  # Default to file logging
+
+# Create logs directory if it doesn't exist
+_logs_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "logs")
+os.makedirs(_logs_dir, exist_ok=True)
+
+# Generate timestamped log file path
+LOG_FILE_PATH = os.path.join(_logs_dir, f"{RUN_ID}.log")
+LOG_LATEST_PATH = os.path.join(_logs_dir, "latest.log")

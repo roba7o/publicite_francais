@@ -1,13 +1,11 @@
 # ========= Makefile for French News Scraper =========
 
-# Check if .env file exists
-ifeq (,$(wildcard .env))
-$(error .env file missing! Run 'cp .env.example .env' and configure it first)
-endif
+# Load .env if it exists (optional)
+-include .env
 
-# Load environment variables from .env
-include .env
-export $(shell sed 's/=.*//' .env)
+# Default values (override with .env)
+POSTGRES_USER ?= news_user
+POSTGRES_DB ?= french_news
 
 # Project configuration
 PYTHON := ./venv/bin/python
@@ -19,13 +17,12 @@ MAIN_MODULE := main
 .DEFAULT_GOAL := help
 .PHONY: run run-cloud docker-build docker-cloud run-test-data test test-unit test-integration test-e2e test-quick lint format fix clean db-start db-init db-rebuild db-drop db-clear db-stop db-clean help
 
-# Database environment configuration (empty by default, requires ENV flag)
-
 # ==================== CORE COMMANDS ====================
 
-run:  ## Run scraper in development mode (live scraping)
+run:  ## Run scraper with live scrapes (use: make run ART_NUM=10 to limit per source)
 	@echo "\033[34m◆ Running scraper in development mode...\033[0m"
-	ENVIRONMENT=development PYTHONPATH=$(SRC) $(PYTHON) -m $(MAIN_MODULE)
+	$(if $(ART_NUM),@echo "\033[33m  Limiting to $(ART_NUM) articles per source\033[0m",)
+	ENVIRONMENT=development MAX_ARTICLES=$(or $(ART_NUM),) PYTHONPATH=$(SRC) $(PYTHON) -m $(MAIN_MODULE)
 
 run-cloud:  ## Run scraper using Cloud SQL (requires .env.cloud and proxy running)
 	@echo "\033[35m◆ Running scraper with Cloud SQL...\033[0m"
@@ -42,12 +39,19 @@ docker-build:  ## Build Docker image for scraper
 
 docker-cloud:  ## Run scraper in Docker using Cloud SQL (requires .env.cloud.docker and proxy running)
 	@echo "\033[35m◆ Running Docker container with Cloud SQL...\033[0m"
+	$(if $(ART_NUM),@echo "\033[33m  Limiting to $(ART_NUM) articles per source\033[0m",)
 	@if [ ! -f .env.cloud.docker ]; then \
 		echo "\033[31m✗ Error: .env.cloud.docker not found\033[0m"; \
-		echo "Create it with POSTGRES_HOST=host.docker.internal"; \
+		echo "Create it with POSTGRES_HOST=127.0.0.1 (for --network host)"; \
 		exit 1; \
 	fi
-	docker run --rm --env-file .env.cloud.docker french-news-scraper
+	docker run --rm \
+		--network host \
+		-v $(PWD)/logs:/app/logs \
+		-e MAX_ARTICLES=$(or $(ART_NUM),) \
+		-e DEBUG=$(or $(DEBUG),false) \
+		--env-file .env.cloud.prod \
+		french-news-scraper
 
 run-test-data:  ## Run scraper with test data (test environment)
 	@echo "\033[33m◆ Starting test database...\033[0m"
@@ -58,7 +62,7 @@ run-test-data:  ## Run scraper with test data (test environment)
 
 test:  ## Run all tests
 	@echo "\033[34m◆ Running complete test suite...\033[0m"
-	ENVIRONMENT=test PYTHONPATH=$(SRC):. $(PYTEST) tests/ -v
+	ENVIRONMENT=test PYTHONPATH=$(SRC):. $(PYTEST) tests/ -v $(PYTEST_ARGS)
 
 test-unit:  ## Run unit tests only
 	@echo "\033[34m◆ Running unit tests...\033[0m"
@@ -195,7 +199,16 @@ help:  ## Show available commands
 	@echo ""
 	@echo "\033[1m\033[36m========== CORE COMMANDS ==========\033[0m"
 	@echo "\033[36mrun              \033[0m Run scraper in development mode"
+	@echo "\033[36mrun-cloud        \033[0m Run scraper with Cloud SQL"
 	@echo "\033[36mrun-test-data    \033[0m Run scraper with test data"
+	@echo ""
+	@echo "\033[33mDocker:\033[0m"
+	@echo "  \033[36mdocker-build   \033[0m Build Docker image"
+	@echo "  \033[36mdocker-cloud   \033[0m Run scraper in Docker with Cloud SQL"
+	@echo ""
+	@echo "  Examples:"
+	@echo "    make docker-cloud ART_NUM=10        # Limit articles"
+	@echo "    make docker-cloud ART_NUM=5 DEBUG=true  # With debug"
 	@echo ""
 	@echo "\033[33mTesting:\033[0m"
 	@echo "  \033[36mtest           \033[0m Run all tests"

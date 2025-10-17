@@ -25,8 +25,15 @@ class RichFormatter(logging.Formatter):
         return f"[{record.name}] {record.getMessage()}"
 
 
-def setup_logging():
-    """Setup logging once for entire application."""
+def setup_logging(log_to_file: bool = False, log_file_path: str = "scraper.log"):
+    """Setup logging once for entire application.
+
+    Args:
+        log_to_file: If True, also write logs to file (no colors/formatting)
+        log_file_path: Path to log file (default: scraper.log)
+    """
+    import os
+
     root_logger = logging.getLogger()
 
     if root_logger.handlers:
@@ -40,14 +47,37 @@ def setup_logging():
         rich_tracebacks=True,
     )
     rich_handler.setFormatter(RichFormatter())
-
     root_logger.addHandler(rich_handler)
-    root_logger.setLevel(logging.INFO)
+
+    # Optional: File handler for persistent logs
+    if log_to_file:
+        file_handler = logging.FileHandler(log_file_path, mode='w')
+        file_formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
+        )
+        file_handler.setFormatter(file_formatter)
+        root_logger.addHandler(file_handler)
+
+        # Create symlink to latest.log
+        from config.environment import LOG_LATEST_PATH
+        try:
+            if os.path.exists(LOG_LATEST_PATH) or os.path.islink(LOG_LATEST_PATH):
+                os.remove(LOG_LATEST_PATH)
+            os.symlink(os.path.basename(log_file_path), LOG_LATEST_PATH)
+        except Exception:
+            # Non-critical failure, continue without symlink
+            pass
+
+    # Set log level based on DEBUG environment variable
+    from config.environment import DEBUG
+    root_logger.setLevel(logging.DEBUG if DEBUG else logging.INFO)
 
 
 def get_logger(name: str):
     """Get logger for module with Rich formatting."""
-    setup_logging()  # sets up only once if handlers already exist
+    from config.environment import LOG_TO_FILE, LOG_FILE_PATH
+    setup_logging(log_to_file=LOG_TO_FILE, log_file_path=LOG_FILE_PATH)
     return logging.getLogger(name)
 
 
@@ -83,6 +113,85 @@ def visual_summary(
         padding=(1, 2),
     )
     console.print(panel)
+
+
+def visual_source_summary(
+    source_stats: list,
+    total_attempted: int,
+    total_stored: int,
+    total_deduplicated: int,
+    total_words: int,
+    all_word_counts: list[int],
+    success_rate: float,
+) -> None:
+    """Display detailed per-source summary table with statistics."""
+    # Acronymize source names for compact display
+    def acronymize(name: str) -> str:
+        """Convert source names to short acronyms."""
+        mapping = {
+            "tf1info.fr": "TF1Info",
+            "franceinfo.fr": "FranceI",
+            "slate.fr": "Slate",
+            "ladepeche.fr": "LaDepech",
+        }
+        return mapping.get(name, name[:8])
+
+    # Create summary table
+    table = Table(
+        title="Pipeline Summary by Source",
+        show_header=True,
+        header_style="bold cyan",
+        border_style="blue",
+        show_lines=False,
+        padding=(0, 1),
+    )
+
+    # Define columns
+    table.add_column("Source", style="cyan", justify="left")
+    table.add_column("Attempt", justify="right")
+    table.add_column("Stored", justify="right", style="green")
+    table.add_column("Dedup", justify="right", style="yellow")
+    table.add_column("Rate", justify="right")
+    table.add_column("Words", justify="right", style="magenta")
+    table.add_column("Avg", justify="right")
+    table.add_column("Min", justify="right", style="dim")
+    table.add_column("Max", justify="right", style="dim")
+
+    # Add rows for each source
+    for stats in source_stats:
+        table.add_row(
+            acronymize(stats.site_name),
+            str(stats.attempted),
+            str(stats.stored),
+            str(stats.deduplicated),
+            f"{stats.success_rate:.1f}%",
+            f"{stats.total_words:,}",
+            str(stats.avg_words),
+            str(stats.min_words),
+            str(stats.max_words),
+        )
+
+    # Add separator and total row
+    table.add_section()
+    avg_all = int(sum(all_word_counts) / len(all_word_counts)) if all_word_counts else 0
+    min_all = min(all_word_counts) if all_word_counts else 0
+    max_all = max(all_word_counts) if all_word_counts else 0
+
+    table.add_row(
+        "[bold]TOTAL[/bold]",
+        f"[bold]{total_attempted}[/bold]",
+        f"[bold green]{total_stored}[/bold green]",
+        f"[bold yellow]{total_deduplicated}[/bold yellow]",
+        f"[bold]{success_rate:.1f}%[/bold]",
+        f"[bold magenta]{total_words:,}[/bold magenta]",
+        f"[bold]{avg_all}[/bold]",
+        f"[bold dim]{min_all}[/bold dim]",
+        f"[bold dim]{max_all}[/bold dim]",
+    )
+
+    console.print()
+    console.print(table)
+    console.print()
 
 
 def visual_status(message: str, status_type: str = "info") -> None:

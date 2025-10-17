@@ -6,6 +6,10 @@ __pycache__/
 # Testing
 .pytest_cache/
 .mypy_cache/
+test-results.xml
+test-report.html
+htmlcov/
+.coverage
 
 # Environment
 venv/
@@ -30,3 +34,5 @@ misc/
 .env.cloud
 cloud-sql-proxy
 .env.cloud.docker
+
+docs/

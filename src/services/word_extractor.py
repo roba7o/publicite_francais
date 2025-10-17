@@ -60,9 +60,9 @@ class WordExtractor:
                 )
                 word_facts.append(word_fact)
 
-            logger.info(f"Extracted {len(word_facts)} words from article {article.id}")
+            logger.debug(f"Extracted {len(word_facts)} words from article {article.id}")
             return word_facts
 
         except Exception as e:
-            logger.warning(f"Failed to extract words from article {article.id}: {e}")
+            logger.debug(f"Failed to extract words from article {article.id}: {e}")
             return []  # Fail gracefully

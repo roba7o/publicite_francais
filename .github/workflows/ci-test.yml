@@ -1,0 +1,73 @@
+name: CI - Run Tests
+
+# Run on PRs and pushes to main branch only
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Required permissions for test reporting
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Check out code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Set up Python
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # 3. Create venv and install dependencies
+      - name: Create venv and install dependencies
+        run: |
+          python -m venv venv
+          ./venv/bin/pip install --upgrade pip
+          ./venv/bin/pip install -e .[dev]
+
+      # 4. Start PostgreSQL test database
+      - name: Start test database
+        run: make db-start ENV=test
+
+      # 5. Run linter
+      - name: Lint code
+        run: make lint
+        continue-on-error: true  # Don't fail on lint warnings
+
+      # 6. Run tests with reporting
+      - name: Run tests
+        run: make test PYTEST_ARGS="--junitxml=test-results.xml --html=test-report.html --self-contained-html"
+
+      # 7. Stop database (cleanup)
+      - name: Stop database
+        if: always()
+        run: make db-stop
+
+      # 8. Publish test results to GitHub
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: test-results.xml
+          check_name: Test Results
+
+      # 9. Upload test reports as artifacts
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            test-results.xml
+            test-report.html
