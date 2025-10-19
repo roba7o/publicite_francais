@@ -15,7 +15,7 @@ SRC := src
 MAIN_MODULE := main
 
 .DEFAULT_GOAL := help
-.PHONY: run run-cloud docker-build docker-cloud run-test-data test test-unit test-integration test-e2e test-quick lint format fix clean db-start db-init db-rebuild db-drop db-clear db-stop db-clean help
+.PHONY: run run-cloud docker-build docker-cloud run-test-data test test-unit test-integration test-e2e test-quick fix clean db-start db-init db-rebuild db-drop db-clear db-clean help
 
 # ==================== CORE COMMANDS ====================
 
@@ -161,10 +161,6 @@ db-clear:  ## Clear all data (requires ENV=dev or ENV=test)
 	fi
 	@echo "\033[32m✓ Data cleared!\033[0m"
 
-db-stop:  ## Stop all databases
-	@echo "\033[33m◆ Stopping all databases...\033[0m"
-	docker compose down
-
 db-clean:  ## Remove all containers and volumes (DESTRUCTIVE!)
 	@echo "\033[31m⚠ WARNING: This will destroy ALL data!\033[0m"
 	@read -p "Are you sure? (y/N): " confirm && [ "$$confirm" = "y" ] || exit 1
@@ -173,12 +169,6 @@ db-clean:  ## Remove all containers and volumes (DESTRUCTIVE!)
 	@echo "\033[32m✓ Cleanup complete!\033[0m"
 
 # ==================== CODE QUALITY ====================
-
-lint:  ## Run ruff linting
-	$(RUFF) check $(SRC) tests
-
-format:  ## Auto-format code
-	$(RUFF) format $(SRC) tests
 
 fix:  ## Auto-format and fix linting issues
 	@echo "\033[36m▶ Running ruff...\033[0m"
@@ -224,7 +214,6 @@ help:  ## Show available commands
 	@echo "  \033[36mdb-rebuild     \033[0m Rebuild database (DESTRUCTIVE!)"
 	@echo "  \033[36mdb-drop        \033[0m Drop all tables"
 	@echo "  \033[36mdb-clear       \033[0m Clear all data"
-	@echo "  \033[36mdb-stop        \033[0m Stop all databases"
 	@echo "  \033[36mdb-clean       \033[0m Remove all data (DESTRUCTIVE!)"
 	@echo ""
 	@echo "  Examples:"
@@ -232,8 +221,6 @@ help:  ## Show available commands
 	@echo "    make db-drop ENV=test  # Drop test tables"
 	@echo ""
 	@echo "\033[33mCode Quality:\033[0m"
-	@echo "  \033[36mlint           \033[0m Run ruff linting"
-	@echo "  \033[36mformat         \033[0m Auto-format code"
 	@echo "  \033[36mfix            \033[0m Format + fix linting"
 	@echo "  \033[36mclean          \033[0m Remove cache files"
 	@echo ""
