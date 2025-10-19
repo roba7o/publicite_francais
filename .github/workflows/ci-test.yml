@@ -52,7 +52,7 @@ jobs:
       # 7. Stop database (cleanup)
       - name: Stop database
         if: always()
-        run: make db-stop
+        run: docker compose down
 
       # 8. Publish test results to GitHub
       - name: Publish test results
