@@ -188,39 +188,55 @@ make fix
 
 Each site requires its own URL collector and soup validator due to different HTML structures.
 
+## System Architecture
+
+![System Architecture](system-design.drawio.png)
+
 ## Cloud Deployment
 
-**Current Setup:**
-- Database: Cloud SQL (PostgreSQL 15, db-f1-micro, us-central1)
-- Application: Docker on Compute Engine VM (e2-micro)
-- Cost: ~$15/month
-- Connection: Cloud SQL Proxy (secure tunnel)
+**Infrastructure:**
+- Database: Cloud SQL PostgreSQL 15 (us-central1)
+- Compute: GCE e2-small VM (upgraded from e2-micro after OOM issues)
+- Registry: Artifact Registry (auto-built via GitHub Actions)
+- Scheduling: Cron (daily 2 AM UTC)
+- Cost: ~$20/month
 
-**Deployment:**
+**CI/CD Pipeline:**
+1. Push to `main` branch
+2. GitHub Actions builds Docker image
+3. Image pushed to Artifact Registry
+4. VM pulls latest image on schedule
+5. Cron runs container daily
+
+**Manual Operations:**
 ```bash
 # SSH to VM
 gcloud compute ssh french-news-vm --zone=us-central1-a
 
-# Pull latest
-cd publicite_francais && git pull origin main
+# Check cron schedule
+crontab -l
 
-# Rebuild and run
-docker build -t french-news-scraper .
-~/run-scraper.sh
+# Run manually (pulls latest image from registry)
+~/prod/run-scraper.sh
+
+# View logs
+cat ~/logs/latest.log
+ls -lh ~/logs/  # All historical runs
 ```
 
 **Logs:**
-```bash
-# View in GCP Console
-https://console.cloud.google.com/logs?project=french-news-scraper
 
-# Or via CLI
-gcloud logging read "resource.type=gce_instance" --limit 50
-```
+Logs are stored as timestamped files on the VM at `~/logs/`:
+- Format: `{YYYYMMDD_HHMMSS}.log` (e.g., `20251019_020000.log`)
+- Symlink: `latest.log` points to most recent run
+- Retention: Manual cleanup (kept indefinitely by default)
 
-**Health Check:**
 ```bash
-make health-check  # Verifies DB connection without running full scraper
+# View latest run
+gcloud compute ssh french-news-vm --zone=us-central1-a --command "cat ~/logs/latest.log"
+
+# List all runs
+gcloud compute ssh french-news-vm --zone=us-central1-a --command "ls -lh ~/logs/"
 ```
 
 ## Project Structure
