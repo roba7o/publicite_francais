@@ -35,4 +35,5 @@ misc/
 cloud-sql-proxy
 .env.cloud.docker
 
+# docs
 docs/
