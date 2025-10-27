@@ -10,12 +10,15 @@
 -- 2. Extract words immediately
 -- 3. Store dim_articles metadata + word_facts
 --
--- Uses standard public schema for all environments
+-- Seperate Schema for different layers
 -- =============================================================================
+CREATE SCHEMA IF NOT EXISTS core;
+CREATE SCHEMA IF NOT EXISTS staging;
+CREATE SCHEMA IF NOT EXISTS analytics;
 
 -- Dimension Table: Article Metadata
 -- Stores metadata only (no HTML content)
-CREATE TABLE IF NOT EXISTS dim_articles (
+CREATE TABLE IF NOT EXISTS core.dim_articles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     url TEXT NOT NULL UNIQUE,              -- Unique constraint: one article per URL
     site TEXT NOT NULL,                    -- News site identifier (e.g., "slate.fr")
@@ -28,7 +31,7 @@ CREATE TABLE IF NOT EXISTS dim_articles (
 -- Fact Table: Word Facts
 -- Denormalized vocabulary table for French language learning
 -- One row per word occurrence (no deduplication)
-CREATE TABLE IF NOT EXISTS word_facts (
+CREATE TABLE IF NOT EXISTS core.word_facts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     word TEXT NOT NULL,                     -- French word (normalized, lowercase)
     article_id UUID NOT NULL                -- Foreign key to dim_articles
@@ -44,18 +47,18 @@ CREATE TABLE IF NOT EXISTS word_facts (
 
 -- Dimension Articles indexes
 CREATE INDEX IF NOT EXISTS idx_dim_articles_site
-    ON dim_articles(site);
+    ON coredim_articles(site);
 
 CREATE INDEX IF NOT EXISTS idx_dim_articles_scraped_at
-    ON dim_articles(scraped_at);
+    ON core.dim_articles(scraped_at);
 
 -- Word Facts indexes (for vocabulary queries)
 CREATE INDEX IF NOT EXISTS idx_word_facts_word
-    ON word_facts(word);
+    ON core.word_facts(word);
 
 CREATE INDEX IF NOT EXISTS idx_word_facts_article_id
-    ON word_facts(article_id);
+    ON core.word_facts(article_id);
 
 CREATE INDEX IF NOT EXISTS idx_word_facts_scraped_at
-    ON word_facts(scraped_at);
+    ON core.word_facts(scraped_at);
 
